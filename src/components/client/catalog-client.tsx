@@ -2,7 +2,7 @@
 
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
-import { useLanguage } from "../../context/language-context";
+import { useLanguage } from "@/context/language-context";
 
 // This would typically come from a database or API
 const products = [

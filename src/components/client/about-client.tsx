@@ -1,7 +1,6 @@
 'use client';
 
 import { Container, Section } from "../ui";
-import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
 
 export default function AboutClient() {

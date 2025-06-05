@@ -2,7 +2,7 @@
 
 import { Card } from "./ui";
 import Image from 'next/image';
-import { useLanguage } from "../context/language-context";
+import { useLanguage } from "@/context/language-context";
 
 const products = [
   {

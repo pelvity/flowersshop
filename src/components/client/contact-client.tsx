@@ -1,7 +1,7 @@
 'use client';
 
 import { Container, Section } from "../ui";
-import { useLanguage } from "../../context/language-context";
+import { useLanguage } from "@/context/language-context";
 import Contact from "../contact";
 
 export default function ContactClient() {

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Button } from "./ui";
-import { useLanguage } from "../context/language-context";
+import { useLanguage } from "@/context/language-context";
 
 export default function Hero() {
   const { t } = useLanguage();

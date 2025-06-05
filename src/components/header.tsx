@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "./ui";
 import LanguageSwitcher from "./language-switcher";
-import { useLanguage } from "../context/language-context";
+import { useLanguage } from "@/context/language-context";
 
 export default function Header() {
   const { t } = useLanguage();
