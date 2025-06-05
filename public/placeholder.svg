@@ -1,0 +1,7 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#fce7f3" />
+  <circle cx="200" cy="150" r="70" fill="#fbcfe8" />
+  <circle cx="200" cy="150" r="50" fill="#f9a8d4" />
+  <circle cx="200" cy="150" r="30" fill="#f472b6" />
+  <text x="200" y="220" font-family="Arial" font-size="16" text-anchor="middle" fill="#9d174d">Flower Image</text>
+</svg> 
