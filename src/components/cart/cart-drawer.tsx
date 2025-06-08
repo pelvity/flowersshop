@@ -1,0 +1,221 @@
+'use client';
+
+import React from 'react';
+import { useCart } from '@/context/cart-context';
+import { X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import Image from 'next/image';
+import { useLanguage } from '@/context/language-context';
+import getRepositories from '@/lib/repositories';
+import Link from 'next/link';
+
+export default function CartDrawer() {
+  const { 
+    items, 
+    totalItems, 
+    totalPrice, 
+    isCartOpen, 
+    closeCart, 
+    removeItem, 
+    updateItemQuantity 
+  } = useCart();
+  const { t } = useLanguage();
+  const repositories = React.useMemo(() => getRepositories(), []);
+  
+  return (
+    <>
+      {/* Cart side panel - always in DOM but transforms based on isCartOpen */}
+      <div 
+        className={`fixed inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col z-50 transform transition-transform duration-300 ease-in-out ${
+          isCartOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-pink-100">
+          <h2 className="text-xl font-medium text-pink-700 flex items-center">
+            <ShoppingCart className="mr-2" size={20} />
+            {t('cart')} ({totalItems})
+          </h2>
+          <button 
+            onClick={closeCart}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            aria-label="Close cart"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        
+        {/* Cart items */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {items.length === 0 ? (
+            <div className="text-center py-10">
+              <ShoppingCart className="mx-auto text-gray-300 mb-4" size={48} />
+              <p className="text-gray-500">{t('cartEmpty')}</p>
+              <button 
+                onClick={closeCart}
+                className="mt-4 text-pink-600 hover:text-pink-700 font-medium"
+              >
+                {t('continueShopping')}
+              </button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-pink-100">
+              {items.map(item => {
+                // Regular product
+                if (item.productId) {
+                  const product = repositories.products.getById(item.productId);
+                  if (!product) return null;
+                  
+                  return (
+                    <li key={item.id} className="py-4">
+                      <div className="flex items-start">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100">
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            width={80}
+                            height={80}
+                            className="h-full w-full object-cover object-center"
+                          />
+                        </div>
+                        
+                        <div className="ml-4 flex-1">
+                          <div className="flex justify-between">
+                            <h3 className="text-base font-medium text-pink-700">{product.name}</h3>
+                            <p className="text-base font-medium text-amber-600">₴{item.price * item.quantity}</p>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">{product.price} {t('each')}</p>
+                          
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center border border-gray-200 rounded">
+                              <button 
+                                onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                                className="p-1 text-gray-500 hover:text-pink-600"
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span className="px-2 text-gray-700">{item.quantity}</span>
+                              <button 
+                                onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                                className="p-1 text-gray-500 hover:text-pink-600"
+                                aria-label="Increase quantity"
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                            
+                            <button 
+                              onClick={() => removeItem(item.id)}
+                              className="text-gray-400 hover:text-pink-600"
+                              aria-label="Remove item"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                }
+                
+                // Custom bouquet
+                if (item.customBouquet) {
+                  const { name, flowers, basedOn } = item.customBouquet;
+                  const baseProduct = basedOn ? repositories.products.getById(basedOn) : null;
+                  
+                  return (
+                    <li key={item.id} className="py-4">
+                      <div className="flex items-start">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 bg-pink-50 flex items-center justify-center">
+                          <Image
+                            src={baseProduct?.image || "/placeholder.svg"}
+                            alt={name}
+                            width={80}
+                            height={80}
+                            className="h-full w-full object-cover object-center"
+                          />
+                        </div>
+                        
+                        <div className="ml-4 flex-1">
+                          <div className="flex justify-between">
+                            <h3 className="text-base font-medium text-pink-700">{name}</h3>
+                            <p className="text-base font-medium text-amber-600">₴{item.price * item.quantity}</p>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">{t('customBouquet')}</p>
+                          
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center border border-gray-200 rounded">
+                              <button 
+                                onClick={() => updateItemQuantity(item.id, item.quantity - 1)}
+                                className="p-1 text-gray-500 hover:text-pink-600"
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span className="px-2 text-gray-700">{item.quantity}</span>
+                              <button 
+                                onClick={() => updateItemQuantity(item.id, item.quantity + 1)}
+                                className="p-1 text-gray-500 hover:text-pink-600"
+                                aria-label="Increase quantity"
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </div>
+                            
+                            <button 
+                              onClick={() => removeItem(item.id)}
+                              className="text-gray-400 hover:text-pink-600"
+                              aria-label="Remove item"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                }
+                
+                return null;
+              })}
+            </ul>
+          )}
+        </div>
+        
+        {/* Footer */}
+        {items.length > 0 && (
+          <div className="border-t border-pink-100 p-4">
+            <div className="flex justify-between text-base font-medium text-gray-900 mb-4">
+              <p>{t('subtotal')}</p>
+              <p className="text-amber-600">₴{totalPrice}</p>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Link 
+                href="/checkout"
+                className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors text-center"
+                onClick={closeCart}
+              >
+                {t('checkout')}
+              </Link>
+              <button 
+                onClick={closeCart}
+                className="w-full bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 px-6 py-3 rounded-md font-medium transition-colors"
+              >
+                {t('continueShopping')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Invisible close area - only when cart is open */}
+      {isCartOpen && (
+        <div 
+          className="fixed inset-0 z-40 cursor-pointer"
+          onClick={closeCart}
+          aria-hidden="true"
+        ></div>
+      )}
+    </>
+  );
+} 
