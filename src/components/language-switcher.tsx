@@ -9,6 +9,12 @@ export default function LanguageSwitcher() {
     <div className="flex items-center gap-2">
       <span className="text-sm text-gray-600">{t('language')}:</span>
       <button 
+        className={`px-2 py-1 text-xs rounded ${language === 'pl' ? 'bg-pink-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
+        onClick={() => setLanguage('pl')}
+      >
+        PL
+      </button>
+      <button 
         className={`px-2 py-1 text-xs rounded ${language === 'uk' ? 'bg-pink-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}
         onClick={() => setLanguage('uk')}
       >
