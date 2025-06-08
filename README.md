@@ -1,24 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flower Paradise Shop
+
+A modern e-commerce application for a flower shop built with Next.js, TypeScript, and Tailwind CSS.
+
+## Features
+
+- 📱 Responsive design for all devices
+- 🌐 Multilingual support (English and Ukrainian)
+- 🔍 Product catalog with search, filtering, and sorting
+- 🌸 Custom bouquet builder
+- 🛒 Shopping cart with localStorage persistence
+- 💳 Checkout process
+
+## Technical Details
+
+### Repository Pattern
+
+The application uses a repository pattern to abstract data access:
+
+- Data models are defined in `src/lib/repositories/types.ts`
+- Static data is stored in `src/lib/repositories/data.ts`
+- Repository implementations in `src/lib/repositories/index.ts`
+- Cart repository with localStorage in `src/lib/repositories/cart.ts`
+
+### State Management
+
+- React Context API for global state management
+- Shopping cart context in `src/context/cart-context.tsx`
+- Language context in `src/context/language-context.tsx`
+
+### UI Components
+
+- Custom UI components in `src/components/ui`
+- Cart components in `src/components/cart`
+- Page-specific components in `src/components/client`
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+3. Run the development server:
+   ```bash
+   pnpm dev
+   ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Future Improvements
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Integration with a backend API
+- User authentication
+- Order history
+- Admin panel for product management
+- Payment gateway integration
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Email Configuration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The contact form uses Gmail and Nodemailer to send emails. To set this up:
+
+1. Create or use an existing Gmail account
+2. Enable 2-Step Verification in your Google Account security settings
+3. Generate an App Password:
+   - Go to [Google Account App Passwords](https://myaccount.google.com/apppasswords)
+   - Select "Mail" as the app and "Other" as the device (name it "Nodemailer")
+   - Click "Generate"
+   - Copy the 16-character password
+4. Create a `.env.local` file in the project root with:
+   ```
+   EMAIL_USER=your-gmail-address@gmail.com
+   EMAIL_APP_PASSWORD=your-16-character-app-password
+   ```
+
+## Technology Stack
+
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
+- React Hook Form
+- Nodemailer
 
 ## Learn More
 
