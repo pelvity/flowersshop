@@ -3,9 +3,18 @@
 import Image from "next/image";
 import { Button } from "./ui";
 import { useLanguage } from "@/context/language-context";
+import Link from "next/link";
 
 export default function Hero() {
   const { t } = useLanguage();
+  
+  // Function to scroll to the contact section
+  const scrollToContact = () => {
+    const contactSection = document.getElementById('contact-section');
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
   
   return (
     <div className="relative bg-white overflow-hidden">
@@ -32,12 +41,18 @@ export default function Hero() {
               </p>
               <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                 <div className="rounded-md shadow">
-                  <Button size="lg">
-                    {t('viewCatalog')}
-                  </Button>
+                  <Link href="/catalog">
+                    <Button size="lg">
+                      {t('viewCatalog')}
+                    </Button>
+                  </Link>
                 </div>
                 <div className="mt-3 sm:mt-0 sm:ml-3">
-                  <Button variant="outline" size="lg">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={scrollToContact}
+                  >
                     {t('contactUs')}
                   </Button>
                 </div>

@@ -2,12 +2,73 @@
 
 import { Button } from "./ui";
 import { useLanguage } from "@/context/language-context";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { sendEmail } from "@/utils/send-email";
+
+type FormData = {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+};
 
 export default function Contact() {
   const { t } = useLanguage();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    status: 'success' | 'error' | 'idle';
+    message: string;
+  }>({
+    status: 'idle',
+    message: '',
+  });
+  
+  const { 
+    register, 
+    handleSubmit, 
+    reset,
+    formState: { errors } 
+  } = useForm<FormData>();
+  
+  const onSubmit = async (data: FormData) => {
+    setIsSubmitting(true);
+    setSubmitStatus({ status: 'idle', message: '' });
+    
+    try {
+      const result = await sendEmail(data);
+      
+      if (result.success) {
+        setSubmitStatus({
+          status: 'success',
+          message: t('emailSent')
+        });
+        reset(); // Reset form fields on success
+      } else {
+        setSubmitStatus({
+          status: 'error',
+          message: result.error || t('emailError')
+        });
+      }
+    } catch (error) {
+      setSubmitStatus({
+        status: 'error',
+        message: t('emailError')
+      });
+      console.error('Form submission error:', error);
+    } finally {
+      setIsSubmitting(false);
+      // Auto-clear success message after 5 seconds
+      if (submitStatus.status === 'success') {
+        setTimeout(() => {
+          setSubmitStatus({ status: 'idle', message: '' });
+        }, 5000);
+      }
+    }
+  };
   
   return (
-    <section className="py-12 bg-white">
+    <section id="contact-section" className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
@@ -21,34 +82,62 @@ export default function Contact() {
         <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Contact Form */}
           <div className="bg-white p-8 shadow-sm border rounded-lg">
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+              {/* Status Messages */}
+              {submitStatus.status === 'success' && (
+                <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded">
+                  {submitStatus.message}
+                </div>
+              )}
+              {submitStatus.status === 'error' && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded">
+                  {submitStatus.message}
+                </div>
+              )}
+              
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  {t('name')}
+                  {t('name')} *
                 </label>
                 <div className="mt-1">
                   <input
+                    {...register("name", { required: true })}
                     type="text"
                     id="name"
-                    name="name"
-                    className="block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500"
+                    className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
+                      errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder={t('yourName')}
                   />
+                  {errors.name && (
+                    <p className="mt-1 text-sm text-red-600">{t('nameRequired')}</p>
+                  )}
                 </div>
               </div>
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  {t('email')}
+                  {t('contactEmail')} *
                 </label>
                 <div className="mt-1">
                   <input
+                    {...register("email", { 
+                      required: true,
+                      pattern: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i
+                    })}
                     type="email"
                     id="email"
-                    name="email"
-                    className="block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500"
+                    className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
+                      errors.email ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder={t('yourEmail')}
                   />
+                  {errors.email?.type === 'required' && (
+                    <p className="mt-1 text-sm text-red-600">{t('emailRequired')}</p>
+                  )}
+                  {errors.email?.type === 'pattern' && (
+                    <p className="mt-1 text-sm text-red-600">{t('emailInvalid')}</p>
+                  )}
                 </div>
               </div>
               
@@ -58,9 +147,9 @@ export default function Contact() {
                 </label>
                 <div className="mt-1">
                   <input
+                    {...register("phone")}
                     type="tel"
                     id="phone"
-                    name="phone"
                     className="block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500"
                     placeholder={t('yourPhone')}
                   />
@@ -69,22 +158,31 @@ export default function Contact() {
               
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                  {t('message')}
+                  {t('message')} *
                 </label>
                 <div className="mt-1">
                   <textarea
+                    {...register("message", { required: true })}
                     id="message"
-                    name="message"
                     rows={4}
-                    className="block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500"
+                    className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
+                      errors.message ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder={t('howCanWeHelp')}
                   />
+                  {errors.message && (
+                    <p className="mt-1 text-sm text-red-600">{t('messageRequired')}</p>
+                  )}
                 </div>
               </div>
               
               <div>
-                <Button type="submit" className="w-full">
-                  {t('sendMessage')}
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? t('sending') : t('sendMessage')}
                 </Button>
               </div>
             </form>

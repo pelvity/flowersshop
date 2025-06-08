@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "./ui";
 import LanguageSwitcher from "./language-switcher";
 import { useLanguage } from "@/context/language-context";
+import CartButton from "./cart/cart-button";
 
 export default function Header() {
   const { t } = useLanguage();
@@ -24,6 +25,12 @@ export default function Header() {
             <Link href="/catalog" className="text-base font-medium text-gray-700 hover:text-pink-600">
               {t('catalog')}
             </Link>
+            <Link href="/categories" className="text-base font-medium text-gray-700 hover:text-pink-600">
+              {t('categories')}
+            </Link>
+            <Link href="/custom-bouquet" className="text-base font-medium text-gray-700 hover:text-pink-600">
+              {t('customBouquet')}
+            </Link>
             <Link href="/about" className="text-base font-medium text-gray-700 hover:text-pink-600">
               {t('aboutUs')}
             </Link>
@@ -31,12 +38,10 @@ export default function Header() {
               {t('contact')}
             </Link>
           </nav>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
             <LanguageSwitcher />
+            <CartButton />
             <div className="hidden sm:flex">
-              <Button variant="outline" className="mr-3">
-                {t('signIn')}
-              </Button>
               <Button>
                 {t('orderNow')}
               </Button>
@@ -53,6 +58,12 @@ export default function Header() {
           </Link>
           <Link href="/catalog" className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
             {t('catalog')}
+          </Link>
+          <Link href="/categories" className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
+            {t('categories')}
+          </Link>
+          <Link href="/custom-bouquet" className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
+            {t('customBouquet')}
           </Link>
           <Link href="/about" className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
             {t('aboutUs')}
