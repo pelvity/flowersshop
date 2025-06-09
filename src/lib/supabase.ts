@@ -1,5 +1,7 @@
 import { createClient } from '@/utils/supabase/server';
-import type { Database } from '@/types/supabase';
+import { createServerLoggingClient } from '@/utils/supabase-logger';
+import { Database } from '@/types/supabase';
+import { toUUID, generateUUID } from '@/utils/uuid';
 
 // Define types based on Database
 export type Bouquet = Database['public']['Tables']['bouquets']['Row'];
@@ -43,7 +45,7 @@ export async function getBouquetById(id: string) {
         quantity
       )
     `)
-    .eq('id', id)
+    .eq('id', toUUID(id))
     .single();
   
   if (error) {
@@ -61,7 +63,7 @@ export async function getFlowersByIds(ids: string[]) {
   const { data, error } = await supabase
     .from('flowers')
     .select('*')
-    .in('id', ids);
+    .in('id', ids.map(id => toUUID(id)));
   
   if (error) {
     console.error('Error fetching flowers by ids:', error);
@@ -105,7 +107,7 @@ export const FlowerRepository = {
     const { data, error } = await supabase
       .from('flowers')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
       
     if (error) throw error;
@@ -114,9 +116,13 @@ export const FlowerRepository = {
   
   async create(flower: Omit<Flower, 'id' | 'created_at' | 'updated_at'>): Promise<Flower> {
     const supabase = await createClient();
+    const flowerWithId = {
+      ...flower,
+      id: generateUUID()
+    };
     const { data, error } = await supabase
       .from('flowers')
-      .insert([flower])
+      .insert([flowerWithId])
       .select()
       .single();
       
@@ -129,7 +135,7 @@ export const FlowerRepository = {
     const { data, error } = await supabase
       .from('flowers')
       .update(flower)
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .select()
       .single();
       
@@ -142,93 +148,159 @@ export const FlowerRepository = {
     const { error } = await supabase
       .from('flowers')
       .delete()
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   }
 };
 
-// Repository functions for Bouquets
+// Repository functions for Bouquets with enhanced logging
 export const BouquetRepository = {
   async getAll(): Promise<Bouquet[]> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('bouquets')
-      .select('*')
-      .order('name');
+    console.log('[SUPABASE LOG] Fetching all bouquets');
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('bouquets')
+        .select('*')
+        .order('name');
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data || [];
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Fetched ${data?.length || 0} bouquets in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return data || [];
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to fetch bouquets:', error);
+      throw error;
+    }
   },
   
   async getById(id: string): Promise<Bouquet | null> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('bouquets')
-      .select('*')
-      .eq('id', id)
-      .single();
+    console.log(`[SUPABASE LOG] Fetching bouquet with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('bouquets')
+        .select('*')
+        .eq('id', toUUID(id))
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Bouquet fetch completed in ${(endTime - startTime).toFixed(2)}ms. Found: ${data ? 'Yes' : 'No'}`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to fetch bouquet with ID ${id}:`, error);
+      throw error;
+    }
   },
   
   async getBouquetWithFlowers(id: string): Promise<{ bouquet: Bouquet, flowers: BouquetFlower[] }> {
-    const supabase = await createClient();
-    // Get the bouquet
-    const { data: bouquet, error: bouquetError } = await supabase
-      .from('bouquets')
-      .select('*')
-      .eq('id', id)
-      .single();
-      
-    if (bouquetError) throw bouquetError;
+    console.log(`[SUPABASE LOG] Fetching bouquet with flowers. ID: ${id}`);
+    const startTime = performance.now();
     
-    // Get the bouquet flowers with flower details
-    const { data: bouquetFlowers, error: flowersError } = await supabase
-      .from('bouquet_flowers')
-      .select(`
-        id,
-        bouquet_id,
-        flower_id,
-        quantity,
-        created_at,
-        updated_at,
-        flowers(*)
-      `)
-      .eq('bouquet_id', id);
+    try {
+      const supabase = await createServerLoggingClient();
+      // Get the bouquet
+      const { data: bouquet, error: bouquetError } = await supabase
+        .from('bouquets')
+        .select('*')
+        .eq('id', toUUID(id))
+        .single();
+        
+      if (bouquetError) throw bouquetError;
       
-    if (flowersError) throw flowersError;
-    
-    return {
-      bouquet,
-      flowers: bouquetFlowers || []
-    };
+      // Get the bouquet flowers with flower details
+      const { data: bouquetFlowers, error: flowersError } = await supabase
+        .from('bouquet_flowers')
+        .select(`
+          id,
+          bouquet_id,
+          flower_id,
+          quantity,
+          created_at,
+          updated_at,
+          flowers(*)
+        `)
+        .eq('bouquet_id', toUUID(id));
+        
+      if (flowersError) throw flowersError;
+      
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Bouquet with flowers fetch completed in ${(endTime - startTime).toFixed(2)}ms. Flowers count: ${bouquetFlowers?.length || 0}`);
+      
+      return {
+        bouquet,
+        flowers: bouquetFlowers || []
+      };
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to fetch bouquet with flowers. ID: ${id}:`, error);
+      throw error;
+    }
   },
   
   async create(bouquet: Omit<Bouquet, 'id' | 'created_at' | 'updated_at'>): Promise<Bouquet> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('bouquets')
-      .insert([bouquet])
-      .select()
-      .single();
+    console.log('[SUPABASE LOG] Creating new bouquet:', bouquet.name);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
       
-    if (error) throw error;
-    return data;
+      // Generate a UUID for new bouquets
+      const bouquetWithId = {
+        ...bouquet,
+        id: generateUUID()
+      };
+      
+      const { data, error } = await supabase
+        .from('bouquets')
+        .insert([bouquetWithId])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Bouquet created successfully in ${(endTime - startTime).toFixed(2)}ms. ID: ${data.id}`);
+      
+      return data;
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to create bouquet:', error);
+      throw error;
+    }
   },
   
   async update(id: string, bouquet: Partial<Omit<Bouquet, 'id' | 'created_at' | 'updated_at'>>): Promise<Bouquet> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('bouquets')
-      .update(bouquet)
-      .eq('id', id)
-      .select()
-      .single();
+    console.log(`[SUPABASE LOG] Updating bouquet. ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('bouquets')
+        .update(bouquet)
+        .eq('id', toUUID(id))
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Bouquet updated successfully in ${(endTime - startTime).toFixed(2)}ms. ID: ${data.id}`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to update bouquet. ID: ${id}:`, error);
+      throw error;
+    }
   },
   
   async delete(id: string): Promise<void> {
@@ -236,7 +308,7 @@ export const BouquetRepository = {
     const { error } = await supabase
       .from('bouquets')
       .delete()
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   },
@@ -246,9 +318,9 @@ export const BouquetRepository = {
     const { error } = await supabase
       .from('bouquet_flowers')
       .insert([{
-        bouquet_id: bouquetId,
-        flower_id: flowerId,
-        quantity: quantity
+        bouquet_id: toUUID(bouquetId),
+        flower_id: toUUID(flowerId),
+        quantity
       }]);
       
     if (error) throw error;
@@ -259,7 +331,7 @@ export const BouquetRepository = {
     const { error } = await supabase
       .from('bouquet_flowers')
       .update({ quantity })
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   },
@@ -269,7 +341,7 @@ export const BouquetRepository = {
     const { error } = await supabase
       .from('bouquet_flowers')
       .delete()
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   }
@@ -293,7 +365,7 @@ export const CategoryRepository = {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
       
     if (error) throw error;
@@ -302,9 +374,13 @@ export const CategoryRepository = {
   
   async create(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
     const supabase = await createClient();
+    const categoryWithId = {
+      ...category,
+      id: generateUUID()
+    };
     const { data, error } = await supabase
       .from('categories')
-      .insert([category])
+      .insert([categoryWithId])
       .select()
       .single();
       
@@ -317,7 +393,7 @@ export const CategoryRepository = {
     const { data, error } = await supabase
       .from('categories')
       .update(category)
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .select()
       .single();
       
@@ -330,7 +406,7 @@ export const CategoryRepository = {
     const { error } = await supabase
       .from('categories')
       .delete()
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   }
@@ -354,7 +430,7 @@ export const TagRepository = {
     const { data, error } = await supabase
       .from('tags')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
       
     if (error) throw error;
@@ -363,9 +439,13 @@ export const TagRepository = {
   
   async create(tag: Omit<Tag, 'id' | 'created_at' | 'updated_at'>): Promise<Tag> {
     const supabase = await createClient();
+    const tagWithId = {
+      ...tag,
+      id: generateUUID()
+    };
     const { data, error } = await supabase
       .from('tags')
-      .insert([tag])
+      .insert([tagWithId])
       .select()
       .single();
       
@@ -378,7 +458,7 @@ export const TagRepository = {
     const { data, error } = await supabase
       .from('tags')
       .update(tag)
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .select()
       .single();
       
@@ -391,7 +471,7 @@ export const TagRepository = {
     const { error } = await supabase
       .from('tags')
       .delete()
-      .eq('id', id);
+      .eq('id', toUUID(id));
       
     if (error) throw error;
   }
