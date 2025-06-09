@@ -147,6 +147,15 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
         
         if (allFlowersError) throw allFlowersError;
         
+        // Fetch bouquet media
+        const { data: bouquetMedia, error: mediaError } = await supabase
+          .from('bouquet_media')
+          .select('*')
+          .eq('bouquet_id', bouquetId)
+          .order('display_order');
+        
+        if (mediaError) throw mediaError;
+        
         // Transform the bouquet flowers data to the format expected by the component
         const transformedFlowers = [];
         if (bouquetFlowers && bouquetFlowers.length > 0) {
@@ -167,8 +176,34 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
           ...bouquetData,
           price: bouquetData.price.toString(),
           discount_price: bouquetData.discount_price ? bouquetData.discount_price.toString() : '',
-          flowers: transformedFlowers
+          flowers: transformedFlowers,
+          media: bouquetMedia || []
         });
+        
+        // Generate signed URLs for each media file if media exists
+        if (bouquetMedia && bouquetMedia.length > 0) {
+          const updatedMedia = await Promise.all(
+            bouquetMedia.map(async (media) => {
+              let url = '';
+              if (media.file_path) {
+                const { data, error } = await supabase
+                  .storage
+                  .from('bouquet-media')
+                  .createSignedUrl(media.file_path, 3600); // 1 hour expiry
+                
+                if (!error && data) {
+                  url = data.signedUrl;
+                }
+              }
+              return { ...media, url };
+            })
+          );
+          
+          setBouquet(prev => ({
+            ...prev,
+            media: updatedMedia
+          }));
+        }
         
         setCategories(categoriesData || []);
         setAvailableFlowers(allFlowers || []);
