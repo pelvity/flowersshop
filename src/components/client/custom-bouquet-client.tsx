@@ -5,57 +5,44 @@ import { Container, Section, Card } from "../ui";
 import Image from "next/image";
 import { useLanguage } from "@/context/language-context";
 import { Plus, Minus, X, ShoppingCart } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
-import getRepositories from "@/lib/repositories";
-import { Flower, FlowerQuantity, Product } from "@/lib/repositories/types";
-import { calculateCustomBouquetPrice } from "@/lib/repositories";
+import { Flower, FlowerQuantity, calculateCustomBouquetPrice } from "@/lib/supabase";
+import { v4 as uuidv4 } from 'uuid';
 
-export default function CustomBouquetClient() {
+// Update props to include initialFlowers
+interface CustomBouquetClientProps {
+  initialFlowers: Flower[];
+}
+
+export default function CustomBouquetClient({ initialFlowers }: CustomBouquetClientProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get('productId');
   
   // State for custom bouquet
   const [selectedFlowers, setSelectedFlowers] = useState<FlowerQuantity[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [totalPrice, setTotalPrice] = useState(0);
   const [step, setStep] = useState<'template' | 'customize' | 'review'>(
     productId ? 'customize' : 'template'
   );
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { addCustomBouquet } = useCart();
-  // Memoize repositories to prevent recreation on each render
-  const repositories = useMemo(() => getRepositories(), []);
-  
-  // Initialize from a template product if productId is provided
-  useEffect(() => {
-    if (productId) {
-      const product = repositories.products.getById(parseInt(productId));
-      if (product && product.isCustomizable && product.baseFlowers) {
-        setSelectedProduct(product);
-        setSelectedFlowers(product.baseFlowers);
-      }
-    }
-  }, [productId, repositories]);
-  
   // Calculate total price whenever selected flowers change
   useEffect(() => {
-    const newTotalPrice = calculateCustomBouquetPrice(selectedFlowers);
-    setTotalPrice(newTotalPrice);
-  }, [selectedFlowers]);
+    setTotalPrice(calculateCustomBouquetPrice(selectedFlowers, initialFlowers));
+  }, [selectedFlowers, initialFlowers]);
   
   // Filter flowers based on search query
   const filteredFlowers = useMemo(() => {
-    const flowers = repositories.flowers.getAll();
-    if (!searchQuery.trim()) return flowers;
+    if (!searchQuery.trim()) return initialFlowers;
     
-    return flowers.filter(flower => 
+    return initialFlowers.filter(flower => 
       flower.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      flower.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (flower.description && flower.description.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  }, [repositories, searchQuery]);
+  }, [initialFlowers, searchQuery]);
   
   // Helper function to add a flower
   const addFlower = (flower: Flower, color: string) => {
@@ -80,8 +67,8 @@ export default function CustomBouquetClient() {
   
   // Helper function to add a flower with default color
   const addFlowerWithDefaultColor = (flower: Flower) => {
-    // Use the first color as default
-    const defaultColor = flower.colors[0];
+    // Use the first color as default or a fallback
+    const defaultColor = flower.colors && flower.colors.length > 0 ? flower.colors[0] : 'mixed';
     addFlower(flower, defaultColor);
   };
   
@@ -115,27 +102,30 @@ export default function CustomBouquetClient() {
     });
   };
   
-  // Start from scratch with a blank bouquet
-  const startFromScratch = () => {
-    setSelectedProduct(null);
-    setSelectedFlowers([]);
-    setStep('customize');
-  };
-  
-  // Reset to template selection
-  const backToTemplates = () => {
-    setSelectedProduct(null);
-    setSelectedFlowers([]);
-    setStep('template');
-  };
-  
   // Add the custom bouquet to cart
   const addToCart = () => {
-    addCustomBouquet(
-      selectedFlowers,
-      selectedProduct?.id,
-      selectedProduct ? `Custom ${selectedProduct.name}` : 'Custom Bouquet'
-    );
+    // Convert to the format expected by the cart
+    const customBouquet = {
+      id: uuidv4(),
+      customBouquet: {
+        flowers: selectedFlowers.map(sf => ({
+          flowerId: parseInt(sf.flowerId as string), // Convert to number for cart
+          quantity: sf.quantity,
+          color: sf.color
+        })),
+        name: 'Custom Bouquet'
+      },
+      quantity: 1,
+      price: totalPrice
+    };
+    
+    // Add to cart and navigate to cart page
+    const { addProduct } = useCart();
+    const randomId = Math.floor(Math.random() * 10000); // Temporary ID for cart
+    addProduct(randomId, 1);
+    
+    // Go to cart page
+    router.push('/cart');
   };
   
   // Templates view
@@ -150,58 +140,11 @@ export default function CustomBouquetClient() {
       
       <div className="mb-8 text-center">
         <button 
-          onClick={startFromScratch}
+          onClick={() => setStep('customize')}
           className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors"
         >
           {t('startFromScratch')}
         </button>
-      </div>
-      
-      <h2 className="text-2xl font-bold text-pink-700 mb-6 text-center">{t('orChooseTemplate')}</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {repositories.products.getCustomizableProducts().map(product => {
-          const category = repositories.categories.getById(product.categoryId);
-          
-          return (
-            <Card key={product.id} className="flex flex-col overflow-hidden transition-all hover:shadow-lg border border-pink-100 bg-white">
-              <div className="relative">
-                <Image 
-                  src={product.image} 
-                  alt={product.name} 
-                  width={400} 
-                  height={300}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-2 right-2 bg-white border border-pink-200 text-pink-600 text-xs px-3 py-1 rounded-full shadow-sm">
-                  {category?.name}
-                </div>
-              </div>
-              <div className="flex-1 p-6 flex flex-col">
-                <div className="flex-1">
-                  <h3 className="text-xl font-medium text-pink-700">{product.name}</h3>
-                  <p className="mt-2 text-base text-gray-600">{product.description}</p>
-                  <div className="mt-3">
-                    <p className="text-sm text-pink-500">{t('customizable')}</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xl font-medium text-amber-600">{product.price}</span>
-                  <button 
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setSelectedFlowers(product.baseFlowers || []);
-                      setStep('customize');
-                    }}
-                    className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-4 py-2 rounded-md text-sm shadow-sm transition-colors"
-                  >
-                    {t('customize')}
-                  </button>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
       </div>
     </div>
   );
@@ -211,14 +154,14 @@ export default function CustomBouquetClient() {
     <div className="py-8">
       <div className="mb-8 flex justify-between items-center">
         <button 
-          onClick={backToTemplates} 
+          onClick={() => setStep('template')} 
           className="text-pink-600 hover:text-pink-700 font-medium"
         >
           ← {t('backToTemplates')}
         </button>
         
         <h1 className="text-3xl font-bold text-pink-700">
-          {selectedProduct ? t('customize') : t('createCustomBouquet')}
+          {t('createCustomBouquet')}
         </h1>
         
         <button 
@@ -229,13 +172,6 @@ export default function CustomBouquetClient() {
           {t('continueToReview')}
         </button>
       </div>
-      
-      {selectedProduct && (
-        <div className="mb-8 bg-pink-50 p-4 rounded-lg border border-pink-100">
-          <h2 className="text-xl font-medium text-pink-700 mb-2">{t('customize')}: {selectedProduct.name}</h2>
-          <p className="text-gray-600">{selectedProduct.description}</p>
-        </div>
-      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Flower selection panel */}
@@ -275,13 +211,16 @@ export default function CustomBouquetClient() {
                     onClick={() => addFlowerWithDefaultColor(flower)}
                   >
                     <div className="relative mb-3">
-                      <Image 
-                        src={flower.image} 
-                        alt={flower.name} 
-                        width={200} 
-                        height={150}
-                        className="w-full h-32 object-cover rounded-md transition-transform hover:scale-105"
-                      />
+                      <div 
+                        className="w-full h-32 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
+                        style={{ 
+                          backgroundImage: `url(/flowers/${flower.id}.jpg)`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
+                      >
+                        {flower.name.charAt(0)}
+                      </div>
                       <div className="absolute top-0 right-0 bg-pink-100 rounded-bl-md p-1">
                         <Plus size={16} className="text-pink-600" />
                       </div>
@@ -293,7 +232,7 @@ export default function CustomBouquetClient() {
                     <div className="mt-3">
                       <p className="text-sm text-pink-600 mb-2">{t('selectColor')}:</p>
                       <div className="flex flex-wrap gap-2">
-                        {flower.colors.map(color => (
+                        {flower.colors && flower.colors.map(color => (
                           <button
                             key={color}
                             onClick={(e) => {
@@ -331,19 +270,22 @@ export default function CustomBouquetClient() {
             ) : (
               <div className="space-y-4">
                 {selectedFlowers.map((item, index) => {
-                  const flower = repositories.flowers.getById(item.flowerId);
+                  const flower = initialFlowers.find(f => f.id === item.flowerId);
                   if (!flower) return null;
                   
                   return (
                     <div key={index} className="flex items-center justify-between border-b border-pink-50 pb-3">
                       <div className="flex items-center">
-                        <Image 
-                          src={flower.image} 
-                          alt={flower.name} 
-                          width={50} 
-                          height={50}
-                          className="w-12 h-12 object-cover rounded-md"
-                        />
+                        <div 
+                          className="w-12 h-12 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
+                          style={{ 
+                            backgroundImage: `url(/flowers/${flower.id}.jpg)`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                          }}
+                        >
+                          {flower.name.charAt(0)}
+                        </div>
                         <div className="ml-3">
                           <p className="text-pink-700 font-medium">{flower.name}</p>
                           <div className="flex items-center">
@@ -358,7 +300,7 @@ export default function CustomBouquetClient() {
                                 onChange={(e) => changeFlowerColor(index, e.target.value)}
                                 className="text-xs text-pink-600 bg-pink-50 py-1 pl-0 pr-2 border-0 focus:ring-0 focus:outline-none"
                               >
-                                {flower.colors.map(color => (
+                                {flower.colors && flower.colors.map(color => (
                                   <option key={color} value={color}>{color}</option>
                                 ))}
                               </select>
@@ -376,7 +318,7 @@ export default function CustomBouquetClient() {
                         </button>
                         <span className="mx-2 text-gray-700 min-w-[20px] text-center">{item.quantity}</span>
                         <button 
-                          onClick={() => addFlower(flower, item.color || flower.colors[0])}
+                          onClick={() => addFlower(flower, item.color || (flower.colors && flower.colors.length > 0 ? flower.colors[0] : 'mixed'))}
                           className="text-pink-400 hover:text-pink-600 p-1"
                         >
                           <Plus size={14} />
@@ -437,19 +379,22 @@ export default function CustomBouquetClient() {
         <div className="max-w-2xl mx-auto">
           <div className="space-y-4 mb-8">
             {selectedFlowers.map((item, index) => {
-              const flower = repositories.flowers.getById(item.flowerId);
+              const flower = initialFlowers.find(f => f.id === item.flowerId);
               if (!flower) return null;
               
               return (
                 <div key={index} className="flex items-center justify-between border-b border-pink-50 pb-3">
                   <div className="flex items-center">
-                    <Image 
-                      src={flower.image} 
-                      alt={flower.name} 
-                      width={50} 
-                      height={50}
-                      className="w-12 h-12 object-cover rounded-md"
-                    />
+                    <div 
+                      className="w-12 h-12 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
+                      style={{ 
+                        backgroundImage: `url(/flowers/${flower.id}.jpg)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                      }}
+                    >
+                      {flower.name.charAt(0)}
+                    </div>
                     <div className="ml-3">
                       <p className="text-pink-700 font-medium">{flower.name}</p>
                       <p className="text-sm text-gray-500">
@@ -498,18 +443,19 @@ export default function CustomBouquetClient() {
     if (!colorName) return '#FFFFFF';
     
     const colorMap: Record<string, string> = {
-      'Red': '#FF5252',
-      'Pink': '#FF80AB',
-      'White': '#FFFFFF',
-      'Yellow': '#FFD54F',
-      'Orange': '#FFAB40',
-      'Purple': '#CE93D8',
-      'Blue': '#82B1FF',
-      'Green': '#66BB6A',
-      'Coral': '#FF8A65'
+      'red': '#FF5252',
+      'pink': '#FF80AB',
+      'white': '#FFFFFF',
+      'yellow': '#FFD54F',
+      'orange': '#FFAB40',
+      'purple': '#CE93D8',
+      'blue': '#82B1FF',
+      'green': '#66BB6A',
+      'coral': '#FF8A65',
+      'mixed': 'linear-gradient(to right, #FF5252, #FF80AB, #FFD54F, #CE93D8)'
     };
     
-    return colorMap[colorName] || '#FFFFFF';
+    return colorMap[colorName.toLowerCase()] || '#FFFFFF';
   };
   
   return (

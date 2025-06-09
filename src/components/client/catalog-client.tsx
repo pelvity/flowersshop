@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
-import { useLanguage } from "@/context/language-context";
 import { useCart } from "@/context/cart-context";
 import { Search } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -11,9 +10,10 @@ import Link from "next/link";
 import getRepositories from "@/lib/repositories";
 import { Product } from "@/lib/repositories/types";
 import React from "react";
+import { useTranslations } from 'next-intl';
 
 export default function CatalogClient() {
-  const { t } = useLanguage();
+  const t = useTranslations('catalog');
   const { addProduct } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,10 +81,10 @@ export default function CatalogClient() {
             {t('browseSelection')}
           </p>
         </div>
-        
+
         {/* Search Bar */}
         <div className="mb-8 max-w-md mx-auto">
-          <div className="relative">
+              <div className="relative">
             <input
               type="text"
               placeholder={t('searchPlaceholder')}
@@ -162,19 +162,19 @@ export default function CatalogClient() {
                         className="relative cursor-pointer" 
                         onClick={() => navigateToProduct(product.id)}
                       >
-                        <Image 
-                          src={product.image} 
-                          alt={product.name} 
-                          width={400} 
-                          height={300}
-                          className="w-full h-48 object-cover"
-                        />
+                <Image 
+                  src={product.image} 
+                  alt={product.name} 
+                  width={400} 
+                  height={300}
+                  className="w-full h-48 object-cover"
+                />
                         <div className="absolute top-2 right-2 bg-white border border-pink-200 text-pink-600 text-xs px-3 py-1 rounded-full shadow-sm">
                           {category?.name}
-                        </div>
-                      </div>
-                      <div className="flex-1 p-6 flex flex-col">
-                        <div className="flex-1">
+                </div>
+              </div>
+              <div className="flex-1 p-6 flex flex-col">
+                <div className="flex-1">
                           <h3 
                             className="text-xl font-medium text-pink-700 cursor-pointer hover:text-pink-500"
                             onClick={() => navigateToProduct(product.id)}
@@ -189,8 +189,8 @@ export default function CatalogClient() {
                               </span>
                             ))}
                           </div>
-                        </div>
-                        <div className="mt-4 flex items-center justify-between">
+                </div>
+                <div className="mt-4 flex items-center justify-between">
                           <span className="text-xl font-medium text-amber-600">{product.price}</span>
                           <div className="flex space-x-2">
                             {product.isCustomizable && (
@@ -205,12 +205,12 @@ export default function CatalogClient() {
                               onClick={() => handleAddToCart(product.id)}
                               className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-4 py-2 rounded-md text-sm shadow-sm transition-colors"
                             >
-                              {t('addToCart')}
-                            </button>
+                    {t('addToCart')}
+                  </button>
                           </div>
-                        </div>
-                      </div>
-                    </Card>
+                </div>
+              </div>
+            </Card>
                   );
                 })}
               </div>
