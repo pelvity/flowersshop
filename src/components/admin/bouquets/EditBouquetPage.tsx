@@ -37,6 +37,25 @@ type FlowerWithQuantity = {
   quantity: number;
 };
 
+type BouquetMedia = {
+  id: string;
+  bouquet_id: string;
+  media_type: 'image' | 'video';
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  content_type: string;
+  display_order: number;
+  is_thumbnail: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // For local state management
+  file?: File;
+  url?: string;
+  isUploading?: boolean;
+  uploadProgress?: number;
+};
+
 export default function ClientBouquetEditPage({ id, locale }: { id: string; locale: string }) {
   const t = useTranslations('admin');
   const router = useRouter();
@@ -52,7 +71,8 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
     in_stock: true,
     featured: false,
     image_url: '',
-    flowers: [] as { id: string; name: string; quantity: number; price: number; flower_id?: string }[]
+    flowers: [] as { id: string; name: string; quantity: number; price: number; flower_id?: string }[],
+    media: [] as BouquetMedia[]
   });
 
   const [categories, setCategories] = useState<any[]>([]);
@@ -62,6 +82,9 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Filter available flowers based on search term
   const filteredFlowers = availableFlowers.filter(flower => 
