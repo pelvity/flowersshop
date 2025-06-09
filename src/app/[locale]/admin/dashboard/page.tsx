@@ -2,7 +2,9 @@ import { Suspense } from 'react';
 import { BouquetRepository, FlowerRepository, CategoryRepository } from '@/lib/supabase';
 import DashboardClient from '@/components/admin/DashboardClient';
 
-export default async function Dashboard() {
+export default async function Dashboard({ params }: { params: { locale: string } }) {
+  // Get locale safely by awaiting params
+  const { locale } = await params;
   
   // Fetch bouquets, flowers, and categories in parallel
   const [bouquets, flowers, categories] = await Promise.all([
@@ -35,6 +37,7 @@ export default async function Dashboard() {
   return (
     <Suspense fallback={<DashboardLoading />}>
       <DashboardClient 
+        locale={locale}
         initialStats={initialStats}
         initialFeaturedBouquets={initialFeaturedBouquets}
         initialLowStockFlowers={initialLowStockFlowers}

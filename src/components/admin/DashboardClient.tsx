@@ -15,12 +15,14 @@ interface DashboardStats {
 }
 
 interface DashboardClientProps {
+  locale: string;
   initialStats: DashboardStats;
   initialFeaturedBouquets: Bouquet[];
   initialLowStockFlowers: Flower[];
 }
 
 export default function DashboardClient({ 
+  locale,
   initialStats, 
   initialFeaturedBouquets, 
   initialLowStockFlowers 
@@ -37,35 +39,35 @@ export default function DashboardClient({
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Link href="/admin/bouquets/new" className="flex items-center p-3 bg-pink-50 hover:bg-pink-100 rounded-lg transition">
+          <Link href={`/${locale}/admin/bouquets/create`} className="flex items-center p-3 bg-pink-50 hover:bg-pink-100 rounded-lg transition">
             <span className="bg-pink-100 p-2 rounded-md mr-3">
               <Package className="h-5 w-5 text-pink-600" />
             </span>
             <span>Add New Bouquet</span>
           </Link>
           
-          <Link href="/admin/flowers/new" className="flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
+          <Link href={`/${locale}/admin/flowers/create`} className="flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
             <span className="bg-green-100 p-2 rounded-md mr-3">
               <Flower2 className="h-5 w-5 text-green-600" />
             </span>
             <span>Add New Flower</span>
           </Link>
           
-          <Link href="/admin/categories" className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
+          <Link href={`/${locale}/admin/categories`} className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
             <span className="bg-blue-100 p-2 rounded-md mr-3">
               <Tag className="h-5 w-5 text-blue-600" />
             </span>
             <span>Manage Categories</span>
           </Link>
           
-          <Link href="/admin/flowers" className="flex items-center p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
+          <Link href={`/${locale}/admin/flowers`} className="flex items-center p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
             <span className="bg-amber-100 p-2 rounded-md mr-3">
               <Edit className="h-5 w-5 text-amber-600" />
             </span>
             <span>Update Inventory</span>
           </Link>
           
-          <Link href="/admin/bouquets" className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
+          <Link href={`/${locale}/admin/bouquets`} className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
             <span className="bg-purple-100 p-2 rounded-md mr-3">
               <ShoppingBasket className="h-5 w-5 text-purple-600" />
             </span>
@@ -87,7 +89,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/bouquets" className="text-sm text-pink-600 hover:text-pink-800 flex items-center">
+            <Link href={`/${locale}/admin/bouquets`} className="text-sm text-pink-600 hover:text-pink-800 flex items-center">
               View all bouquets
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -105,7 +107,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/flowers" className="text-sm text-green-600 hover:text-green-800 flex items-center">
+            <Link href={`/${locale}/admin/flowers`} className="text-sm text-green-600 hover:text-green-800 flex items-center">
               View all flowers
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -123,7 +125,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/flowers" className="text-sm text-red-600 hover:text-red-800 flex items-center">
+            <Link href={`/${locale}/admin/flowers`} className="text-sm text-red-600 hover:text-red-800 flex items-center">
               Check inventory
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -141,7 +143,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/categories" className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+            <Link href={`/${locale}/admin/categories`} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
               Manage categories
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -159,7 +161,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/bouquets" className="text-sm text-purple-600 hover:text-purple-800 flex items-center">
+            <Link href={`/${locale}/admin/bouquets`} className="text-sm text-purple-600 hover:text-purple-800 flex items-center">
               Manage featured
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
@@ -177,7 +179,7 @@ export default function DashboardClient({
             </span>
           </div>
           <div className="mt-4">
-            <Link href="/admin/bouquets" className="text-sm text-emerald-600 hover:text-emerald-800 flex items-center">
+            <Link href={`/${locale}/admin/bouquets`} className="text-sm text-emerald-600 hover:text-emerald-800 flex items-center">
               View stock levels
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>

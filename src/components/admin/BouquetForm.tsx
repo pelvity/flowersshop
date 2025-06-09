@@ -4,24 +4,36 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Flower2 } from 'lucide-react';
 import { Bouquet, Category, Tag, Flower, BouquetFlower } from '@/lib/supabase';
+import { useParams } from 'next/navigation';
 
 interface BouquetFormProps {
   bouquet?: Bouquet;
   isEdit?: boolean;
+  categories?: Category[];
+  tags?: Tag[];
+  availableFlowers?: Flower[];
 }
 
-interface FlowerWithQuantity extends Flower {
+interface FlowerWithQuantity {
+  id: string;
+  name: string;
+  price: number;
+  description?: string | null;
+  in_stock: number;
   quantity: number;
 }
 
-export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProps) {
+export default function BouquetForm({ bouquet, isEdit = false, categories: initialCategories, tags: initialTags, availableFlowers: initialFlowers }: BouquetFormProps) {
   const router = useRouter();
+  const params = useParams();
+  const locale = params.locale as string;
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [flowers, setFlowers] = useState<Flower[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [tags, setTags] = useState<Tag[]>(initialTags || []);
+  const [flowers, setFlowers] = useState<Flower[]>(initialFlowers || []);
   const [bouquetFlowers, setBouquetFlowers] = useState<FlowerWithQuantity[]>([]);
   
   const [formData, setFormData] = useState({
@@ -43,15 +55,39 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [categoriesData, tagsData, flowersData] = await Promise.all([
-          fetch('/api/categories').then(res => res.json()),
-          fetch('/api/tags').then(res => res.json()),
-          fetch('/api/flowers').then(res => res.json()),
-        ]);
         
-        setCategories(categoriesData);
-        setTags(tagsData);
-        setFlowers(flowersData);
+        // Only fetch categories, tags, and flowers if they weren't provided via props
+        const dataPromises = [];
+        let needsFetching = false;
+        
+        if (!initialCategories) {
+          dataPromises.push(fetch('/api/categories').then(res => res.json()));
+          needsFetching = true;
+        } else {
+          dataPromises.push(Promise.resolve(initialCategories));
+        }
+        
+        if (!initialTags) {
+          dataPromises.push(fetch('/api/tags').then(res => res.json()));
+          needsFetching = true;
+        } else {
+          dataPromises.push(Promise.resolve(initialTags));
+        }
+        
+        if (!initialFlowers) {
+          dataPromises.push(fetch('/api/flowers').then(res => res.json()));
+          needsFetching = true;
+        } else {
+          dataPromises.push(Promise.resolve(initialFlowers));
+        }
+        
+        if (needsFetching) {
+          const [categoriesData, tagsData, flowersData] = await Promise.all(dataPromises);
+          
+          if (!initialCategories) setCategories(categoriesData);
+          if (!initialTags) setTags(tagsData);
+          if (!initialFlowers) setFlowers(flowersData);
+        }
 
         // If editing, fetch the bouquet flowers
         if (isEdit && bouquet) {
@@ -74,7 +110,7 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
     };
     
     fetchData();
-  }, [isEdit, bouquet]);
+  }, [isEdit, bouquet, initialCategories, initialTags, initialFlowers]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -146,20 +182,41 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
     setError(null);
 
     try {
-      // For simplicity in this demo, we'll just alert and redirect
-      // In a real implementation, you would call an API endpoint to save the data
+      // Prepare bouquet data
+      const bouquetData = {
+        ...formData,
+        flowers: bouquetFlowers.map(bf => ({
+          id: bf.id,
+          quantity: bf.quantity
+        }))
+      };
       
-      // Prepare data to display in alert
-      const flowersList = bouquetFlowers.map(bf => `${bf.name} (${bf.quantity})`).join(', ');
-      
-      if (isEdit) {
-        alert(`Bouquet "${formData.name}" updated successfully with flowers: ${flowersList} (This is a demo, no actual API call is made)`);
+      // Make the API call
+      let response;
+      if (isEdit && bouquet) {
+        response = await fetch(`/api/bouquets/${bouquet.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bouquetData),
+        });
       } else {
-        alert(`Bouquet "${formData.name}" created successfully with flowers: ${flowersList} (This is a demo, no actual API call is made)`);
+        response = await fetch('/api/bouquets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bouquetData),
+        });
       }
       
-      // Navigate back to the bouquets list
-      router.push('/admin/bouquets');
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      // Navigate back to the bouquets list with proper locale
+      router.push(`/${locale}/admin/bouquets`);
       router.refresh();
     } catch (err) {
       console.error('Error saving bouquet:', err);
@@ -425,7 +482,7 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
                       disabled={isSubmitting}
                     >
                       <option value="">Select a category</option>
-                      {categories.map((category) => (
+                      {categories?.map((category) => (
                         <option key={category.id} value={category.id}>
                           {category.name}
                         </option>
@@ -437,7 +494,7 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
                     <fieldset>
                       <legend className="text-sm font-medium text-gray-700">Tags</legend>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        {tags.map(tag => (
+                        {tags?.map(tag => (
                           <span 
                             key={tag.id}
                             className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
@@ -493,7 +550,7 @@ export default function BouquetForm({ bouquet, isEdit = false }: BouquetFormProp
                 <button
                   type="button"
                   className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 mr-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-                  onClick={() => router.back()}
+                  onClick={() => router.push(`/${locale}/admin/bouquets`)}
                   disabled={isSubmitting}
                 >
                   Cancel
