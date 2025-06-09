@@ -1,0 +1,53 @@
+{
+  "common": {
+    "header": {
+      "home": "Головна",
+      "about": "Про нас",
+      "contact": "Контакти",
+      "cart": "Кошик"
+    },
+    "footer": {
+      "rights": "Всі права захищені",
+      "privacy": "Політика конфіденційності",
+      "terms": "Умови використання"
+    },
+    "buttons": {
+      "add_to_cart": "Додати в кошик",
+      "view_details": "Детальніше",
+      "checkout": "Оформити замовлення",
+      "continue_shopping": "Продовжити покупки"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Гарні квіти для кожної нагоди",
+      "subtitle": "Свіжі, якісні квіти доставляються з турботою та любов'ю"
+    },
+    "featured": {
+      "title": "Рекомендовані товари",
+      "view_all": "Переглянути всі"
+    }
+  },
+  "product": {
+    "details": "Деталі",
+    "description": "Опис",
+    "related": "Схожі товари",
+    "reviews": "Відгуки"
+  },
+  "catalog": {
+    "ourCollection": "Наша колекція",
+    "browseSelection": "Переглядайте нашу прекрасну колекцію квітів та букетів",
+    "searchPlaceholder": "Шукати квіти...",
+    "categories": "Категорії",
+    "allCategories": "Всі категорії",
+    "tags": "Теги",
+    "noResults": "Товари не знайдено",
+    "addToCart": "Додати в кошик",
+    "customize": "Налаштувати"
+  },
+  "entities": {
+    "bouquets": {},
+    "categories": {},
+    "flowers": {}
+  }
+}

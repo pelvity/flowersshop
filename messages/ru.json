@@ -1,0 +1,53 @@
+{
+  "common": {
+    "header": {
+      "home": "Главная",
+      "about": "О нас",
+      "contact": "Контакты",
+      "cart": "Корзина"
+    },
+    "footer": {
+      "rights": "Все права защищены",
+      "privacy": "Политика конфиденциальности",
+      "terms": "Условия использования"
+    },
+    "buttons": {
+      "add_to_cart": "Добавить в корзину",
+      "view_details": "Подробнее",
+      "checkout": "Оформить заказ",
+      "continue_shopping": "Продолжить покупки"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Прекрасные цветы для каждого случая",
+      "subtitle": "Свежие, качественные цветы доставляются с заботой и любовью"
+    },
+    "featured": {
+      "title": "Рекомендуемые товары",
+      "view_all": "Посмотреть все"
+    }
+  },
+  "product": {
+    "details": "Детали",
+    "description": "Описание",
+    "related": "Похожие товары",
+    "reviews": "Отзывы"
+  },
+  "catalog": {
+    "ourCollection": "Наша коллекция",
+    "browseSelection": "Просмотрите нашу прекрасную коллекцию цветов и букетов",
+    "searchPlaceholder": "Искать цветы...",
+    "categories": "Категории",
+    "allCategories": "Все категории",
+    "tags": "Теги",
+    "noResults": "Товары не найдены",
+    "addToCart": "Добавить в корзину",
+    "customize": "Настроить"
+  },
+  "entities": {
+    "bouquets": {},
+    "categories": {},
+    "flowers": {}
+  }
+}

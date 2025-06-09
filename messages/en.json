@@ -1,0 +1,53 @@
+{
+  "common": {
+    "header": {
+      "home": "Home",
+      "about": "About",
+      "contact": "Contact",
+      "cart": "Cart"
+    },
+    "footer": {
+      "rights": "All rights reserved",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "buttons": {
+      "add_to_cart": "Add to Cart",
+      "view_details": "View Details",
+      "checkout": "Checkout",
+      "continue_shopping": "Continue Shopping"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Beautiful Flowers For Every Occasion",
+      "subtitle": "Fresh, high-quality blooms delivered with care and love"
+    },
+    "featured": {
+      "title": "Featured Products",
+      "view_all": "View All"
+    }
+  },
+  "product": {
+    "details": "Details",
+    "description": "Description",
+    "related": "Related Products",
+    "reviews": "Reviews"
+  },
+  "catalog": {
+    "ourCollection": "Our Collection",
+    "browseSelection": "Browse our beautiful selection of flowers and bouquets",
+    "searchPlaceholder": "Search for flowers...",
+    "categories": "Categories",
+    "allCategories": "All Categories",
+    "tags": "Tags",
+    "noResults": "No products found",
+    "addToCart": "Add to Cart",
+    "customize": "Customize"
+  },
+  "entities": {
+    "bouquets": {},
+    "categories": {},
+    "flowers": {}
+  }
+}
