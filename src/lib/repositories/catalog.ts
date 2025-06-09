@@ -2,6 +2,7 @@ import { createClient } from '@/utils/supabase/server';
 import type { Bouquet, Category, Flower } from '@/lib/supabase';
 import { TranslationsService } from '@/lib/i18n/translations-service';
 import { Locale, defaultLocale } from '../../../config/i18n';
+import { toUUID } from '@/utils/uuid';
 
 export interface CatalogRepository {
   getBouquets(locale?: Locale): Promise<Bouquet[]>;
@@ -38,7 +39,7 @@ class SupabaseCatalogRepository implements CatalogRepository {
     const { data, error } = await supabase
       .from('bouquets')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
     
     if (error) throw error;
@@ -56,7 +57,7 @@ class SupabaseCatalogRepository implements CatalogRepository {
     const { data, error } = await supabase
       .from('bouquets')
       .select('*')
-      .eq('category_id', categoryId)
+      .eq('category_id', toUUID(categoryId))
       .eq('in_stock', true)
       .order('name');
     
@@ -111,7 +112,7 @@ class SupabaseCatalogRepository implements CatalogRepository {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
     
     if (error) throw error;
@@ -147,7 +148,7 @@ class SupabaseCatalogRepository implements CatalogRepository {
     const { data, error } = await supabase
       .from('flowers')
       .select('*')
-      .eq('id', id)
+      .eq('id', toUUID(id))
       .single();
     
     if (error) throw error;
