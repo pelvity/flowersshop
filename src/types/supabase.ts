@@ -15,7 +15,6 @@ export interface Database {
           created_at: string;
           updated_at: string;
           tags: string[];
-          image_url?: string | null;
         };
         Insert: {
           id?: string;
@@ -29,7 +28,6 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           tags?: string[];
-          image_url?: string | null;
         };
         Update: {
           id?: string;
@@ -43,7 +41,50 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           tags?: string[];
-          image_url?: string | null;
+        };
+      };
+      bouquet_media: {
+        Row: {
+          id: string;
+          bouquet_id: string;
+          media_type: string;
+          file_path: string;
+          file_url: string | null;
+          file_name: string;
+          file_size: number;
+          content_type: string;
+          display_order: number;
+          is_thumbnail: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          bouquet_id: string;
+          media_type: string;
+          file_path: string;
+          file_url?: string | null;
+          file_name: string;
+          file_size: number;
+          content_type: string;
+          display_order?: number;
+          is_thumbnail?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          bouquet_id?: string;
+          media_type?: string;
+          file_path?: string;
+          file_url?: string | null;
+          file_name?: string;
+          file_size?: number;
+          content_type?: string;
+          display_order?: number;
+          is_thumbnail?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       flowers: {

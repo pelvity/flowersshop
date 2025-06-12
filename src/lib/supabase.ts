@@ -3,12 +3,21 @@ import { createServerLoggingClient } from '@/utils/supabase-logger';
 import { Database } from '@/types/supabase';
 import { toUUID, generateUUID } from '@/utils/uuid';
 
-// Define types based on Database
-export type Bouquet = Database['public']['Tables']['bouquets']['Row'];
+// Define basic types based on Database
+type DatabaseBouquet = Database['public']['Tables']['bouquets']['Row'];
 export type Category = Database['public']['Tables']['categories']['Row'];
 export type Flower = Database['public']['Tables']['flowers']['Row'];
 export type Tag = Database['public']['Tables']['tags']['Row'];
 export type BouquetFlower = Database['public']['Tables']['bouquet_flowers']['Row'];
+export type BouquetMedia = Database['public']['Tables']['bouquet_media']['Row'];
+
+// Extended Bouquet type that includes media-related fields
+export type Bouquet = DatabaseBouquet & {
+  // These fields are added by the repository when fetching
+  media?: BouquetMedia[];
+  image?: string | null;  // URL of the thumbnail image
+  thumbnail?: BouquetMedia | null;  // Full thumbnail media object
+};
 
 // Type for flower in a custom bouquet with quantity and color
 export interface FlowerQuantity {
@@ -162,17 +171,82 @@ export const BouquetRepository = {
     
     try {
       const supabase = await createServerLoggingClient();
-      const { data, error } = await supabase
+      
+      // First, get all bouquets
+      const { data: bouquets, error } = await supabase
         .from('bouquets')
         .select('*')
         .order('name');
         
       if (error) throw error;
       
-      const endTime = performance.now();
-      console.log(`[SUPABASE LOG] Fetched ${data?.length || 0} bouquets in ${(endTime - startTime).toFixed(2)}ms`);
+      // If no bouquets returned, just return empty array
+      if (!bouquets || bouquets.length === 0) {
+        const endTime = performance.now();
+        console.log(`[SUPABASE LOG] Fetched 0 bouquets in ${(endTime - startTime).toFixed(2)}ms`);
+        return [];
+      }
       
-      return data || [];
+      // Get all bouquet IDs
+      const bouquetIds = bouquets.map(b => b.id);
+      
+      // Fetch media for all bouquets in a single query for efficiency
+      const { data: allMedia, error: mediaError } = await supabase
+        .from('bouquet_media')
+        .select('*')
+        .in('bouquet_id', bouquetIds)
+        .order('display_order');
+      
+      if (mediaError) {
+        console.warn('[SUPABASE WARNING] Error fetching bouquet media:', mediaError);
+        // Continue execution even if media fetch fails
+      }
+      
+      // Group media by bouquet_id for easier assignment
+      const mediaByBouquetId: Record<string, BouquetMedia[]> = {};
+      if (allMedia && allMedia.length > 0) {
+        allMedia.forEach(media => {
+          if (!mediaByBouquetId[media.bouquet_id]) {
+            mediaByBouquetId[media.bouquet_id] = [];
+          }
+          mediaByBouquetId[media.bouquet_id].push(media);
+        });
+      }
+      
+      // Enhance bouquets with media and thumbnail information
+      const enhancedBouquets = bouquets.map(bouquet => {
+        const bouquetMedia = mediaByBouquetId[bouquet.id] || [];
+        
+        // Find thumbnail - first priority is the one marked as thumbnail, then first in order
+        const thumbnail = bouquetMedia.find(m => m.is_thumbnail) || bouquetMedia[0] || null;
+        
+        // Calculate image URL from the thumbnail if available
+        let imageUrl = null;
+        if (thumbnail) {
+          if (thumbnail.file_url) {
+            imageUrl = thumbnail.file_url;
+          } else if (thumbnail.file_path) {
+            // Use the utility function to get file URL from path
+            const { getFileUrl } = require('@/utils/cloudflare-worker');
+            imageUrl = getFileUrl(thumbnail.file_path);
+          }
+        } else {
+          // Set a default placeholder if no media is available
+          imageUrl = '/placeholder-bouquet.jpg';
+        }
+        
+        return {
+          ...bouquet,
+          media: bouquetMedia,
+          thumbnail,
+          image: imageUrl
+        } as Bouquet;
+      });
+      
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Fetched ${enhancedBouquets.length} bouquets with media in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return enhancedBouquets;
     } catch (error) {
       console.error('[SUPABASE ERROR] Failed to fetch bouquets:', error);
       throw error;
@@ -350,129 +424,247 @@ export const BouquetRepository = {
 // Repository functions for Categories
 export const CategoryRepository = {
   async getAll(): Promise<Category[]> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
+    console.log('[SUPABASE LOG] Fetching all categories');
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data || [];
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Fetched ${data?.length || 0} categories in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return data || [];
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to fetch categories:', error);
+      throw error;
+    }
   },
   
   async getById(id: string): Promise<Category | null> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('id', toUUID(id))
-      .single();
+    console.log(`[SUPABASE LOG] Fetching category with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('id', toUUID(id))
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Category fetch completed in ${(endTime - startTime).toFixed(2)}ms. Found: ${data ? 'Yes' : 'No'}`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to fetch category with ID ${id}:`, error);
+      throw error;
+    }
   },
   
   async create(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> {
-    const supabase = await createClient();
-    const categoryWithId = {
-      ...category,
-      id: generateUUID()
-    };
-    const { data, error } = await supabase
-      .from('categories')
-      .insert([categoryWithId])
-      .select()
-      .single();
+    console.log(`[SUPABASE LOG] Creating new category: ${category.name}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const categoryWithId = {
+        ...category,
+        id: generateUUID()
+      };
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([categoryWithId])
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Category created in ${(endTime - startTime).toFixed(2)}ms. New ID: ${data.id}`);
+      
+      return data;
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to create category:', error);
+      throw error;
+    }
   },
   
   async update(id: string, category: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>): Promise<Category> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('categories')
-      .update(category)
-      .eq('id', toUUID(id))
-      .select()
-      .single();
+    console.log(`[SUPABASE LOG] Updating category with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('categories')
+        .update(category)
+        .eq('id', toUUID(id))
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Category updated in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to update category with ID ${id}:`, error);
+      throw error;
+    }
   },
   
   async delete(id: string): Promise<void> {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', toUUID(id));
+    console.log(`[SUPABASE LOG] Deleting category with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', toUUID(id));
+        
+      if (error) throw error;
       
-    if (error) throw error;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Category deleted in ${(endTime - startTime).toFixed(2)}ms`);
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to delete category with ID ${id}:`, error);
+      throw error;
+    }
   }
 };
 
 // Repository functions for Tags
 export const TagRepository = {
   async getAll(): Promise<Tag[]> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('tags')
-      .select('*')
-      .order('name');
+    console.log('[SUPABASE LOG] Fetching all tags');
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .order('name');
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data || [];
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Fetched ${data?.length || 0} tags in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return data || [];
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to fetch tags:', error);
+      throw error;
+    }
   },
   
   async getById(id: string): Promise<Tag | null> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('tags')
-      .select('*')
-      .eq('id', toUUID(id))
-      .single();
+    console.log(`[SUPABASE LOG] Fetching tag with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('id', toUUID(id))
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Tag fetch completed in ${(endTime - startTime).toFixed(2)}ms. Found: ${data ? 'Yes' : 'No'}`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to fetch tag with ID ${id}:`, error);
+      throw error;
+    }
   },
   
   async create(tag: Omit<Tag, 'id' | 'created_at' | 'updated_at'>): Promise<Tag> {
-    const supabase = await createClient();
-    const tagWithId = {
-      ...tag,
-      id: generateUUID()
-    };
-    const { data, error } = await supabase
-      .from('tags')
-      .insert([tagWithId])
-      .select()
-      .single();
+    console.log(`[SUPABASE LOG] Creating new tag: ${tag.name}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const tagWithId = {
+        ...tag,
+        id: generateUUID()
+      };
+      const { data, error } = await supabase
+        .from('tags')
+        .insert([tagWithId])
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Tag created in ${(endTime - startTime).toFixed(2)}ms. New ID: ${data.id}`);
+      
+      return data;
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to create tag:', error);
+      throw error;
+    }
   },
   
   async update(id: string, tag: Partial<Omit<Tag, 'id' | 'created_at' | 'updated_at'>>): Promise<Tag> {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('tags')
-      .update(tag)
-      .eq('id', toUUID(id))
-      .select()
-      .single();
+    console.log(`[SUPABASE LOG] Updating tag with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { data, error } = await supabase
+        .from('tags')
+        .update(tag)
+        .eq('id', toUUID(id))
+        .select()
+        .single();
+        
+      if (error) throw error;
       
-    if (error) throw error;
-    return data;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Tag updated in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return data;
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to update tag with ID ${id}:`, error);
+      throw error;
+    }
   },
   
   async delete(id: string): Promise<void> {
-    const supabase = await createClient();
-    const { error } = await supabase
-      .from('tags')
-      .delete()
-      .eq('id', toUUID(id));
+    console.log(`[SUPABASE LOG] Deleting tag with ID: ${id}`);
+    const startTime = performance.now();
+    
+    try {
+      const supabase = await createServerLoggingClient();
+      const { error } = await supabase
+        .from('tags')
+        .delete()
+        .eq('id', toUUID(id));
+        
+      if (error) throw error;
       
-    if (error) throw error;
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Tag deleted in ${(endTime - startTime).toFixed(2)}ms`);
+    } catch (error) {
+      console.error(`[SUPABASE ERROR] Failed to delete tag with ID ${id}:`, error);
+      throw error;
+    }
   }
 }; 
