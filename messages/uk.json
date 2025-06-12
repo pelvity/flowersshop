@@ -43,6 +43,7 @@
     "tags": "Теги",
     "noResults": "Товари не знайдено",
     "addToCart": "Додати в кошик",
+    "outOfStock": "Немає в наявності",
     "customize": "Налаштувати"
   },
   "admin": {
@@ -115,6 +116,13 @@
       "createSuccess": "Квітку успішно створено",
       "updateSuccess": "Квітку успішно оновлено",
       "deleteSuccess": "Квітку успішно видалено"
+    },
+    "auth": {
+      "login": "Sign in to your account",
+      "email": "Email address",
+      "password": "Password",
+      "signIn": "Sign In",
+      "loginError": "Invalid login credentials. Please try again."
     }
   },
   "entities": {

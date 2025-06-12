@@ -18,15 +18,23 @@ export async function createServerLoggingClient(): Promise<SupabaseClient> {
 
 // Create a proxy that adds logging to any Supabase client
 function createLoggingProxy(supabase: SupabaseClient): SupabaseClient {
+  // Special handling for storage - don't proxy storage operations
+  const originalStorage = supabase.storage;
+  
   // Return a proxy that intercepts and logs all method calls
   return new Proxy(supabase, {
     get(target, prop, receiver) {
+      // Special case for storage to avoid Illegal invocation errors
+      if (prop === 'storage') {
+        return originalStorage;
+      }
+      
       const value = Reflect.get(target, prop, receiver);
       
       // If the property is a function
       if (typeof value === 'function') {
         // Wrap the function to add logging
-        return function(...args: any[]) {
+        return function(this: any, ...args: any[]) {
           const methodName = String(prop);
           const timestamp = new Date().toISOString();
           
@@ -39,7 +47,7 @@ function createLoggingProxy(supabase: SupabaseClient): SupabaseClient {
           });
           
           // Call the original method
-          const result = value.apply(target, args);
+          const result = value.apply(this === globalThis ? target : this, args);
           
           // If the result is a promise, log when it resolves or rejects
           if (result && typeof result.then === 'function') {
@@ -69,7 +77,7 @@ function createLoggingProxy(supabase: SupabaseClient): SupabaseClient {
             const objValue = Reflect.get(objTarget, objProp, objReceiver);
             
             if (typeof objValue === 'function') {
-              return function(...args: any[]) {
+              return function(this: any, ...args: any[]) {
                 const subMethodName = `${String(prop)}.${String(objProp)}`;
                 const timestamp = new Date().toISOString();
                 
@@ -80,7 +88,8 @@ function createLoggingProxy(supabase: SupabaseClient): SupabaseClient {
                   ),
                 });
                 
-                const result = objValue.apply(objTarget, args);
+                // Preserve the 'this' context by using the proxy receiver
+                const result = objValue.apply(this === globalThis ? objTarget : this, args);
                 
                 if (result && typeof result.then === 'function') {
                   return result.then((data: any) => {

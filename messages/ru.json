@@ -16,7 +16,24 @@
       "view_details": "Подробнее",
       "checkout": "Оформить заказ",
       "continue_shopping": "Продолжить покупки"
-    }
+    },
+    "actions": "Действия",
+    "remove": "Удалить",
+    "search": "Поиск",
+    "noResults": "Ничего не найдено",
+    "loading": "Загрузка...",
+    "saving": "Сохранение...",
+    "uploading": "Загрузка...",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "name": "Название",
+    "description": "Описание",
+    "price": "Цена",
+    "discountPrice": "Цена со скидкой",
+    "category": "Категория",
+    "selectCategory": "Выберите категорию",
+    "inStock": "В наличии",
+    "featured": "Рекомендуемые"
   },
   "home": {
     "hero": {
@@ -43,6 +60,7 @@
     "tags": "Теги",
     "noResults": "Товары не найдены",
     "addToCart": "Добавить в корзину",
+    "outOfStock": "Нет в наличии",
     "customize": "Настроить"
   },
   "admin": {
@@ -56,7 +74,17 @@
       "search": "Поиск",
       "filter": "Фильтр",
       "actions": "Действия",
-      "noResults": "Ничего не найдено"
+      "noResults": "Ничего не найдено",
+      "saving": "Сохранение...",
+      "remove": "Удалить",
+      "name": "Название",
+      "description": "Описание",
+      "price": "Цена",
+      "discountPrice": "Цена со скидкой",
+      "category": "Категория",
+      "selectCategory": "Выберите категорию",
+      "inStock": "В наличии",
+      "featured": "Рекомендуемые"
     },
     "navigation": {
       "dashboard": "Панель управления",
@@ -86,15 +114,24 @@
       "confirmDelete": "Вы уверены, что хотите удалить этот букет?",
       "description": "Описание",
       "image": "Изображение",
+      "media": "Изображения и видео",
       "createSuccess": "Букет успешно создан",
       "updateSuccess": "Букет успешно обновлен",
       "deleteSuccess": "Букет успешно удален",
       "basicInfo": "Основная информация",
+      "details": "Сведения о букете",
+      "flowers": "Цветы в букете",
+      "noFlowers": "В этом букете нет цветов",
+      "searchFlowers": "Искать цветы для добавления",
       "imageRequirements": "Рекомендуемый размер: 800x600px. Максимальный размер файла: 2MB.",
+      "mediaRequirements": "Изображения и короткие видео (до 30с). Форматы: JPG, PNG, GIF, MP4. Максимальный размер: 8MB.",
       "flowerSelection": "Выбор цветов",
       "selectedFlowers": "Выбранные цветы",
       "addFlower": "Добавить цветок",
-      "noFlowersSelected": "Цветы еще не выбраны. Добавьте цветы, чтобы создать букет."
+      "uploadMedia": "Загрузить медиа",
+      "noFlowersSelected": "Цветы еще не выбраны. Добавьте цветы, чтобы создать букет.",
+      "noMediaUploaded": "Медиа еще не загружено. Загрузите изображения или видео для демонстрации букета.",
+      "setAsThumbnail": "Установить как миниатюру"
     },
     "flowers": {
       "name": "Название",
@@ -115,6 +152,13 @@
       "createSuccess": "Цветок успешно создан",
       "updateSuccess": "Цветок успешно обновлен",
       "deleteSuccess": "Цветок успешно удален"
+    },
+    "auth": {
+      "login": "Sign in to your account",
+      "email": "Email address",
+      "password": "Password",
+      "signIn": "Sign In",
+      "loginError": "Invalid login credentials. Please try again."
     }
   },
   "entities": {
