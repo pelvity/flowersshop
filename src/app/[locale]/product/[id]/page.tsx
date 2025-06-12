@@ -3,7 +3,7 @@
 import { Section, Container, Card } from "@/components/ui";
 import { useLanguage } from "@/context/language-context";
 import { useCart } from "@/context/cart-context";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,6 +15,8 @@ export default function ProductPage() {
   const { t } = useLanguage();
   const { addProduct } = useCart();
   const params = useParams();
+  const router = useRouter();
+  const locale = t('locale');
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +62,7 @@ export default function ProductPage() {
           <div className="text-center py-16">
             <h1 className="text-3xl font-bold text-pink-700 mb-4">{t('productNotFound')}</h1>
             <p className="text-gray-600 mb-8">{t('productNotFoundDesc')}</p>
-            <Link href="/catalog" className="text-pink-600 hover:text-pink-700 font-medium">
+            <Link href={`/${locale}/catalog`} className="text-pink-600 hover:text-pink-700 font-medium">
               {t('backToCatalog')}
             </Link>
           </div>
@@ -76,7 +78,7 @@ export default function ProductPage() {
   return (
     <Section className="bg-gradient-to-b from-pink-50 to-white py-12">
       <Container>
-        <Link href="/catalog" className="flex items-center text-pink-600 hover:text-pink-700 mb-8">
+        <Link href={`/${locale}/catalog`} className="flex items-center text-pink-600 hover:text-pink-700 mb-8">
           <ChevronLeft size={20} />
           <span>{t('backToCatalog')}</span>
         </Link>
@@ -100,7 +102,7 @@ export default function ProductPage() {
             <div className="p-6 flex flex-col">
               <div className="mb-2">
                 {category && (
-                  <Link href={`/catalog?category=${category.id}`} className="text-sm text-pink-600 hover:underline">
+                  <Link href={`/${locale}/catalog?category=${category.id}`} className="text-sm text-pink-600 hover:underline">
                     {category.name}
                   </Link>
                 )}
@@ -152,7 +154,7 @@ export default function ProductPage() {
               <div className="mt-auto flex space-x-4">
                 {product.isCustomizable && (
                   <Link 
-                    href={`/custom-bouquet?productId=${product.id}`}
+                    href={`/${locale}/custom-bouquet?productId=${product.id}`}
                     className="flex-1 bg-white border border-pink-400 text-pink-600 hover:bg-pink-50 px-4 py-3 rounded-md font-medium shadow-sm transition-colors text-center"
                   >
                     {t('customize')}

@@ -10,3 +10,4 @@ make .sql file if some changes in db needed
 ask me if u need or want to make changes (optimization etc) of code that is not directly connected with my task but it would be best approach
 don't give me command to start server or program after your changes
 os: windows
+use mcp desktop-commander if u need to move/copy/delete files/folders (don't use for read file)

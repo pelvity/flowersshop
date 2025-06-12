@@ -19,6 +19,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const translations = {
   uk: {
     // Common
+    locale: 'uk',
     home: 'Головна',
     catalog: 'Каталог',
     categories: 'Категорії',
@@ -84,7 +85,7 @@ const translations = {
     testimonialsDesc: 'Дізнайтеся, що кажуть наші клієнти про наші послуги',
     getUpdates: 'Отримуйте оновлення',
     getUpdatesDesc: 'Підпишіться на нашу розсилку, щоб отримувати останні новини та спеціальні пропозиції',
-    yourEmail: 'Ваш email',
+    subscribeEmail: 'Ваш email',
     subscribe: 'Підписатися',
     
     // Catalog
@@ -158,6 +159,7 @@ const translations = {
   },
   en: {
     // Common
+    locale: 'en',
     home: 'Home',
     catalog: 'Catalog',
     categories: 'Categories',
@@ -223,7 +225,7 @@ const translations = {
     testimonialsDesc: 'Find out what our customers are saying about our services',
     getUpdates: 'Get Updates',
     getUpdatesDesc: 'Subscribe to our newsletter to receive latest news and special offers',
-    yourEmail: 'Your email',
+    subscribeEmail: 'Your email',
     subscribe: 'Subscribe',
     
     // Catalog
@@ -362,7 +364,7 @@ const translations = {
     testimonialsDesc: 'Sprawdź, co nasi klienci mówią o naszych usługach',
     getUpdates: 'Otrzymuj aktualizacje',
     getUpdatesDesc: 'Zapisz się do naszego newslettera, aby otrzymywać najnowsze wiadomości i oferty specjalne',
-    yourEmail: 'Twój email',
+    subscribeEmail: 'Twój email',
     subscribe: 'Subskrybuj',
     
     // Catalog

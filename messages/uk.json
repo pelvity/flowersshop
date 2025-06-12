@@ -118,11 +118,11 @@
       "deleteSuccess": "Квітку успішно видалено"
     },
     "auth": {
-      "login": "Sign in to your account",
-      "email": "Email address",
-      "password": "Password",
-      "signIn": "Sign In",
-      "loginError": "Invalid login credentials. Please try again."
+      "login": "Увійдіть у свій обліковий запис",
+      "email": "Адреса електронної пошти",
+      "password": "Пароль",
+      "signIn": "Увійти",
+      "loginError": "Неправильні дані для входу. Будь ласка, спробуйте ще раз."
     }
   },
   "entities": {

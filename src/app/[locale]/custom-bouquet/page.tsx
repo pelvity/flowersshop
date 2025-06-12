@@ -10,7 +10,7 @@ export default async function CustomBouquetPage() {
   // Add colors to flowers for compatibility with the client component
   const flowersWithColors = flowers.map(flower => ({
     ...flower,
-    colors: flower.colors || ['red', 'pink', 'white', 'yellow', 'mixed'] // Default colors if not specified
+    colors: (flower as any).colors || ['red', 'pink', 'white', 'yellow', 'mixed'] // Default colors if not specified
   }));
   
   return (

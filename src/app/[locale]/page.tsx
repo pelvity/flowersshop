@@ -1,14 +1,13 @@
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import HomeClient from "@/components/client/home-client";
 
-export default function Home({ 
-  params 
-}: { 
-  params: { locale: string } 
-}) {
-  // Force Next.js to understand this is a dynamic route
-  headers();
-  
-  // Redirect to the catalog page in the current locale
-  redirect(`/${params.locale}/catalog`);
+export default function Home() {
+  return (
+    <>
+      <Header />
+      <HomeClient />
+      <Footer />
+    </>
+  );
 } 
