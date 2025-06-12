@@ -30,6 +30,9 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
       category = await catalogRepository.getCategoryById(bouquet.category_id);
     }
 
+    // Get the thumbnail image URL
+    const thumbnailUrl = bouquet.image || '/placeholder-bouquet.jpg';
+
     return (
       <>
         <Header />
@@ -40,7 +43,7 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="relative h-96 md:h-full">
                     <Image
-                      src={bouquet.image || '/placeholder-bouquet.jpg'}
+                      src={thumbnailUrl}
                       alt={bouquet.name}
                       fill
                       className="object-cover"
@@ -109,7 +112,7 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                         available={bouquet.in_stock}
                         price={bouquet.discount_price || bouquet.price}
                         name={bouquet.name}
-                        image={bouquet.image || '/placeholder-bouquet.jpg'}
+                        image={thumbnailUrl}
                       />
                       <Link
                         href="/catalog"

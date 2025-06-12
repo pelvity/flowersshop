@@ -12,7 +12,7 @@ const r2Client = new S3Client({
   },
 });
 
-const bucketName = process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'flowershop-media';
+const bucketName = process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'flowershop-r2';
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
 
     await r2Client.send(command);
 
-    // Return the file URL and path
-    const fileUrl = `${process.env.NEXT_PUBLIC_R2_ENDPOINT}/${bucketName}/${path}`;
+    // Use the consistent Cloudflare R2 URL format
+    const fileUrl = `https://942bcfdd09a12d8ce5ad15cc5b8b1c10.r2.cloudflarestorage.com/${bucketName}/${path}`;
 
     return NextResponse.json({
       success: true,

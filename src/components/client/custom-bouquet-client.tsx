@@ -7,8 +7,11 @@ import { useLanguage } from "@/context/language-context";
 import { Plus, Minus, X, ShoppingCart } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
-import { Flower, FlowerQuantity, calculateCustomBouquetPrice } from "@/lib/supabase";
+import { Flower, FlowerQuantity } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Database } from "@/types/supabase";
+import { toUUID } from "@/utils/uuid";
 
 // Update props to include initialFlowers
 interface CustomBouquetClientProps {
@@ -19,19 +22,84 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const productId = searchParams.get('productId');
+  const bouquetId = searchParams.get('bouquetId');
+  
+  // Create Supabase client
+  const supabase = createClientComponentClient<Database>();
+  const [bouquetDetails, setBouquetDetails] = useState<any>(null);
   
   // State for custom bouquet
   const [selectedFlowers, setSelectedFlowers] = useState<FlowerQuantity[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [step, setStep] = useState<'template' | 'customize' | 'review'>(
-    productId ? 'customize' : 'template'
+    bouquetId ? 'customize' : 'template'
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  // Fetch bouquet details if bouquetId is provided
+  useEffect(() => {
+    async function fetchBouquetDetails() {
+      if (!bouquetId) return;
+      
+      setLoading(true);
+      try {
+        // First get the bouquet
+        const { data: bouquet, error: bouquetError } = await supabase
+          .from('bouquets')
+          .select('*')
+          .eq('id', toUUID(bouquetId))
+          .single();
+        
+        if (bouquetError) throw bouquetError;
+        
+        // Then get the bouquet flowers
+        const { data: bouquetFlowers, error: flowersError } = await supabase
+          .from('bouquet_flowers')
+          .select(`
+            id,
+            bouquet_id,
+            flower_id,
+            quantity
+          `)
+          .eq('bouquet_id', toUUID(bouquetId));
+          
+        if (flowersError) throw flowersError;
+        
+        // Convert to FlowerQuantity[] format
+        if (bouquetFlowers && bouquetFlowers.length > 0) {
+          const flowersInBouquet: FlowerQuantity[] = bouquetFlowers.map(bf => ({
+            flowerId: bf.flower_id,
+            quantity: bf.quantity,
+            // Default color, could be improved in the future
+            color: 'mixed'
+          }));
+          
+          setSelectedFlowers(flowersInBouquet);
+          setBouquetDetails(bouquet);
+        }
+      } catch (error) {
+        console.error('Error fetching bouquet details:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchBouquetDetails();
+  }, [bouquetId, supabase]);
   
   // Calculate total price whenever selected flowers change
   useEffect(() => {
-    setTotalPrice(calculateCustomBouquetPrice(selectedFlowers, initialFlowers));
+    // Calculate total price from selected flowers
+    const price = selectedFlowers.reduce((total, flowerQty) => {
+      const flower = initialFlowers.find(f => f.id === flowerQty.flowerId);
+      if (flower) {
+        return total + (flower.price * flowerQty.quantity);
+      }
+      return total;
+    }, 0);
+    
+    setTotalPrice(price);
   }, [selectedFlowers, initialFlowers]);
   
   // Filter flowers based on search query
@@ -48,7 +116,9 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   const addFlower = (flower: Flower, color: string) => {
     setSelectedFlowers(prev => {
       // Check if this flower with the same color already exists
-      const existingIndex = prev.findIndex(item => item.flowerId === flower.id && item.color === color);
+      const existingIndex = prev.findIndex(item => 
+        item.flowerId === flower.id && item.color === color
+      );
       
       if (existingIndex >= 0) {
         // Update quantity of existing flower
@@ -104,25 +174,14 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   
   // Add the custom bouquet to cart
   const addToCart = () => {
-    // Convert to the format expected by the cart
-    const customBouquet = {
-      id: uuidv4(),
-      customBouquet: {
-        flowers: selectedFlowers.map(sf => ({
-          flowerId: parseInt(sf.flowerId as string), // Convert to number for cart
-          quantity: sf.quantity,
-          color: sf.color
-        })),
-        name: 'Custom Bouquet'
-      },
-      quantity: 1,
-      price: totalPrice
-    };
+    const { addCustomBouquet } = useCart();
     
-    // Add to cart and navigate to cart page
-    const { addProduct } = useCart();
-    const randomId = Math.floor(Math.random() * 10000); // Temporary ID for cart
-    addProduct(randomId, 1);
+    // Add to cart with bouquetId as basedOn if we're customizing an existing bouquet
+    addCustomBouquet(
+      selectedFlowers,
+      bouquetId || undefined,
+      bouquetDetails?.name ? `Custom ${bouquetDetails.name}` : 'Custom Bouquet'
+    );
     
     // Go to cart page
     router.push('/cart');

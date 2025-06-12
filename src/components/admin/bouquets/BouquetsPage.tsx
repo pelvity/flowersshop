@@ -1,15 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { toUUID } from '@/utils/uuid';
+import { getFileUrl } from '@/utils/cloudflare-worker';
 
 // Create a logger for this component
 const logger = new ApiLogger('BouquetsPage');
+
+type BouquetMedia = {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_url?: string;
+  is_thumbnail: boolean;
+};
 
 // Define types for Supabase responses
 type Bouquet = {
@@ -24,12 +34,20 @@ type Bouquet = {
   created_at: string;
   updated_at: string;
   image_url?: string | null;
+  media: BouquetMedia[];
 };
 
 type Category = {
   id: string;
   name: string;
   description: string | null;
+};
+
+const getValidImageUrl = (mediaItem: BouquetMedia | null) => {
+  if (!mediaItem) return "/placeholder-bouquet.jpg";
+  if (mediaItem.file_url) return mediaItem.file_url;
+  if (mediaItem.file_path) return getFileUrl(mediaItem.file_path);
+  return "/placeholder-bouquet.jpg";
 };
 
 export default function ClientBouquetsAdminPage({ locale }: { locale: string }) {
@@ -39,6 +57,7 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   // Fetch bouquets and categories on component mount
   useEffect(() => {
@@ -52,7 +71,7 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
         
         // Fetch bouquets and categories in parallel
         const [bouquetsResult, categoriesResult] = await Promise.all([
-          supabase.from('bouquets').select('*').order('name'),
+          supabase.from('bouquets').select('*, media:bouquet_media(*)').order('name'),
           supabase.from('categories').select('*').order('name')
         ]);
         
@@ -77,6 +96,31 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
     
     fetchData();
   }, []);
+  
+  // Handle bouquet deletion
+  const handleDelete = async (bouquetId: string, bouquetName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${bouquetName}"? This action cannot be undone.`)) {
+      setDeletingId(bouquetId);
+      const startTime = logger.request('DELETE', `bouquets/${bouquetId}`);
+      
+      try {
+        const supabase = createLoggingClient();
+        const { error } = await supabase.from('bouquets').delete().match({ id: bouquetId });
+        
+        if (error) throw error;
+        
+        setBouquets(prev => prev.filter(b => b.id !== bouquetId));
+        logger.response('DELETE', `bouquets/${bouquetId}`, 204, startTime);
+
+      } catch (err) {
+        logger.error('DELETE', `bouquets/${bouquetId}`, err);
+        console.error('Error deleting bouquet:', err);
+        setError('Failed to delete bouquet. Please try again.');
+      } finally {
+        setDeletingId(null);
+      }
+    }
+  };
   
   // Filter bouquets based on search query
   const filteredBouquets = bouquets.filter(bouquet => 
@@ -162,8 +206,8 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
           </Link>
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="bg-white shadow border border-gray-200 sm:rounded-lg overflow-hidden">
+          <table className="min-w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -183,9 +227,9 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredBouquets.map((bouquet) => (
-                <tr key={bouquet.id}>
+            {filteredBouquets.map((bouquet) => (
+              <tbody key={bouquet.id} className="border-t border-gray-200 transition-colors hover:bg-pink-50/50">
+                <tr>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{bouquet.name}</div>
                     {bouquet.featured && (
@@ -215,21 +259,43 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex justify-end items-center space-x-2">
                       <Link 
                         href={`/${locale}/admin/bouquets/${bouquet.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="text-indigo-600 hover:text-indigo-900 p-1"
                       >
                         <Edit size={18} />
                       </Link>
-                      <button className="text-red-600 hover:text-red-900">
-                        <Trash2 size={18} />
+                      <button 
+                        onClick={() => handleDelete(bouquet.id, bouquet.name)}
+                        disabled={deletingId === bouquet.id}
+                        className="text-red-600 hover:text-red-900 p-1 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {deletingId === bouquet.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+                {bouquet.media && bouquet.media.length > 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-3 bg-white/50">
+                      <div className="flex items-center space-x-3">
+                        {bouquet.media.map(mediaItem => (
+                          <div key={mediaItem.id} className="relative h-20 w-20 rounded-md overflow-hidden shadow">
+                            <Image
+                              src={getValidImageUrl(mediaItem)}
+                              alt={mediaItem.file_name}
+                              layout="fill"
+                              objectFit="cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            ))}
           </table>
         </div>
       )}
