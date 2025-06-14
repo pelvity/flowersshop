@@ -1,40 +1,57 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { locales, defaultLocale } from './config/i18n';
+import createMiddleware from 'next-intl/middleware';
+import { locales, defaultLocale } from '@config/i18n';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  // Get pathname from request
+// Create a wrapper to add logging
+const nextIntlMiddleware = createMiddleware({
+  // A list of all locales that are supported
+  locales,
+
+  // Used when no locale matches
+  defaultLocale,
+  
+  // Always add locale prefix, even for default locale
+  // This ensures consistent behavior and prevents issues with undefined locales
+  localePrefix: 'always',
+  
+  // Enable automatic locale detection
+  localeDetection: true
+});
+
+// Add logging wrapper
+export default function middleware(request: NextRequest) {
+  console.log(`[MIDDLEWARE] Request URL: ${request.url}`);
+  console.log(`[MIDDLEWARE] Pathname: ${request.nextUrl.pathname}`);
+  
   const pathname = request.nextUrl.pathname;
   
-  // Skip public files and API routes
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('/favicon.ico') ||
-    pathname.startsWith('/static')
-  ) {
-    return NextResponse.next();
-  }
-
-  // Check if the pathname already has a valid locale
+  // Check if this is a direct access to a route without locale prefix
   const pathnameHasLocale = locales.some(
-    locale => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)
+    locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
-
-  // If no locale in pathname, redirect to default locale
-  if (!pathnameHasLocale) {
-    // e.g. incoming request /about → redirect to /en/about
-    return NextResponse.redirect(
-      new URL(
-        `/${defaultLocale}${pathname === '/' ? '' : pathname}`,
-        request.url
-      )
-    );
+  
+  if (!pathnameHasLocale && pathname !== '/') {
+    // This is a direct access to a route without locale, like /products
+    console.log(`[MIDDLEWARE] Direct access to route without locale: ${pathname}`);
+    
+    // Redirect to the localized version using the default locale
+    const url = new URL(`/${defaultLocale}${pathname}`, request.url);
+    console.log(`[MIDDLEWARE] Redirecting to: ${url.toString()}`);
+    return NextResponse.redirect(url);
   }
-
-  return NextResponse.next();
+  
+  const response = nextIntlMiddleware(request);
+  
+  // Log any redirects
+  if (response.headers.get('Location')) {
+    console.log(`[MIDDLEWARE] Redirecting to: ${response.headers.get('Location')}`);
+  }
+  
+  return response;
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Skip all paths that should not be internationalized. This example skips the
+  // folders "api", "_next" and all files with an extension (e.g. favicon.ico)
+  matcher: ['/((?!api|_next|.*\\..*).*)', '/']
 }; 

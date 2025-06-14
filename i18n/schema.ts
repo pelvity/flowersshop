@@ -1,0 +1,208 @@
+export type Translation = {
+  common: {
+    header: {
+      home: string;
+      about: string;
+      contact: string;
+      cart: string;
+    };
+    footer: {
+      rights: string;
+      privacy: string;
+      terms: string;
+      about: string;
+      aboutText: string;
+      quickLinks: string;
+      contact: string;
+      address: string;
+      followUs: string;
+      rightsReserved: string;
+    };
+    buttons: {
+      add_to_cart: string;
+      view_details: string;
+      checkout: string;
+      continue_shopping: string;
+    };
+    workingHours: string;
+    weekdays: string;
+    weekends: string;
+    name: string;
+    contactEmail: string;
+    phone: string;
+    message: string;
+    yourName: string;
+    yourEmail: string;
+    yourPhone: string;
+    howCanWeHelp: string;
+    nameRequired: string;
+    emailRequired: string;
+    emailInvalid: string;
+    messageRequired: string;
+    sending: string;
+    sendMessage: string;
+    emailSent: string;
+    emailError: string;
+    each: string;
+    customBouquet: string;
+  };
+  cart: {
+    cart: string;
+    cartEmpty: string;
+    continueShopping: string;
+    subtotal: string;
+    checkout: string;
+  };
+  home: {
+    hero: {
+      title: string;
+      subtitle: string;
+    };
+    featured: {
+      title: string;
+      view_all: string;
+    };
+    featuredArrangements: string;
+    discoverPopular: string;
+  };
+  contact: {
+    contactTitle: string;
+    contactDescription: string;
+    contactInformation: string;
+    googleMap: string;
+    mapApiNote: string;
+  };
+  product: {
+    details: string;
+    description: string;
+    related: string;
+    reviews: string;
+  };
+  catalog: {
+    ourCollection: string;
+    browseSelection: string;
+    searchPlaceholder: string;
+    categories: string;
+    allCategories: string;
+    tags: string;
+    noResults: string;
+    addToCart: string;
+    outOfStock: string;
+    customize: string;
+  };
+  customBouquet: {
+    title: string;
+    description: string;
+    selectFlowers: string;
+    selectedFlowers: string;
+    quantity: string;
+    color: string;
+    addFlower: string;
+    removeFlower: string;
+    totalPrice: string;
+    addToCart: string;
+    flowerSelection: string;
+    yourBouquet: string;
+    emptySelection: string;
+    createYourOwn: string;
+    customizeDescription: string;
+    startFromScratch: string;
+    backToTemplates: string;
+    continueToReview: string;
+    searchPlaceholder: string;
+    each: string;
+    backToCustomize: string;
+    reviewYourBouquet: string;
+    yourBouquetSummary: string;
+    loadingBouquet: string;
+  };
+  admin: {
+    common: {
+      loading: string;
+      save: string;
+      cancel: string;
+      delete: string;
+      edit: string;
+      create: string;
+      search: string;
+      filter: string;
+      actions: string;
+      noResults: string;
+    };
+    navigation: {
+      dashboard: string;
+      bouquets: string;
+      flowers: string;
+      categories: string;
+      tags: string;
+      orders: string;
+      customers: string;
+      settings: string;
+      logout: string;
+      flowershop: string;
+      translations: string;
+    };
+    bouquets: {
+      name: string;
+      price: string;
+      discountPrice: string;
+      category: string;
+      status: string;
+      inStock: string;
+      outOfStock: string;
+      featured: string;
+      create: string;
+      edit: string;
+      delete: string;
+      confirmDelete: string;
+      description: string;
+      image: string;
+      createSuccess: string;
+      updateSuccess: string;
+      deleteSuccess: string;
+      basicInfo: string;
+      imageRequirements: string;
+      flowerSelection: string;
+      selectedFlowers: string;
+      addFlower: string;
+      noFlowersSelected: string;
+    };
+    flowers: {
+      name: string;
+      price: string;
+      category: string;
+      quantity: string;
+      status: string;
+      inStock: string;
+      outOfStock: string;
+      create: string;
+      edit: string;
+      delete: string;
+      confirmDelete: string;
+      description: string;
+      image: string;
+      basicInfo: string;
+      imageRequirements: string;
+      createSuccess: string;
+      updateSuccess: string;
+      deleteSuccess: string;
+    };
+    auth: {
+      login: string;
+      email: string;
+      password: string;
+      signIn: string;
+      loginError: string;
+    };
+  };
+  entities: {
+    bouquets: Record<string, unknown>;
+    categories: Record<string, unknown>;
+    flowers: Record<string, unknown>;
+  };
+  LanguageSwitcher: {
+    label: string;
+    ariaLabel: string;
+    title: string;
+  };
+}; 

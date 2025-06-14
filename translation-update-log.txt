@@ -1,0 +1,3 @@
+Translation Update Log - 2025-06-12 18:40:21
+=======================================================
+Searching for files that use useLanguage...

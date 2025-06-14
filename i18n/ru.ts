@@ -1,0 +1,210 @@
+import type { Translation } from './schema';
+
+export const ru: Translation = {
+  common: {
+    header: {
+      home: "Главная",
+      about: "О нас",
+      contact: "Контакты",
+      cart: "Корзина"
+    },
+    footer: {
+      rights: "Все права защищены",
+      privacy: "Политика конфиденциальности",
+      terms: "Условия использования",
+      about: "О нас",
+      aboutText: "Мы предлагаем свежие цветы с доставкой, чтобы сделать ваши особенные моменты еще ярче.",
+      quickLinks: "Быстрые ссылки",
+      contact: "Связаться с нами",
+      address: "ул. Цветочная 123, Киев, Украина",
+      followUs: "Следите за нами",
+      rightsReserved: "© 2023 Floreshop. Все права защищены."
+    },
+    buttons: {
+      add_to_cart: "Добавить в корзину",
+      view_details: "Подробнее",
+      checkout: "Оформить заказ",
+      continue_shopping: "Продолжить покупки"
+    },
+    workingHours: "Рабочие часы",
+    weekdays: "Пн-Пт: 9:00 - 20:00",
+    weekends: "Сб-Вс: 10:00 - 18:00",
+    name: "Имя",
+    contactEmail: "Электронная почта",
+    phone: "Телефон",
+    message: "Сообщение",
+    yourName: "Ваше имя",
+    yourEmail: "Ваша электронная почта",
+    yourPhone: "Ваш телефон",
+    howCanWeHelp: "Как мы можем вам помочь?",
+    nameRequired: "Имя обязательно",
+    emailRequired: "Электронная почта обязательна",
+    emailInvalid: "Пожалуйста, введите корректный адрес электронной почты",
+    messageRequired: "Сообщение обязательно",
+    sending: "Отправка...",
+    sendMessage: "Отправить сообщение",
+    emailSent: "Сообщение успешно отправлено!",
+    emailError: "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
+    each: "за шт.",
+    customBouquet: "Свой букет"
+  },
+  cart: {
+    cart: "Корзина",
+    cartEmpty: "Ваша корзина пуста",
+    continueShopping: "Продолжить покупки",
+    subtotal: "Подытог",
+    checkout: "Оформить заказ"
+  },
+  home: {
+    hero: {
+      title: "Прекрасные цветы для каждого случая",
+      subtitle: "Свежие, качественные цветы доставляются с заботой и любовью"
+    },
+    featured: {
+      title: "Рекомендуемые товары",
+      view_all: "Посмотреть все"
+    },
+    featuredArrangements: "Рекомендуемые композиции",
+    discoverPopular: "Откройте для себя наши самые популярные букеты и композиции."
+  },
+  contact: {
+    contactTitle: "Свяжитесь с нами",
+    contactDescription: "Есть вопросы или предложения? Напишите нам, и мы свяжемся с вами как можно скорее.",
+    contactInformation: "Контактная информация",
+    googleMap: "Здесь будет отображаться карта Google",
+    mapApiNote: "Для отображения карты требуется ключ Google Maps API"
+  },
+  product: {
+    details: "Детали",
+    description: "Описание",
+    related: "Похожие товары",
+    reviews: "Отзывы"
+  },
+  catalog: {
+    ourCollection: "Наша коллекция",
+    browseSelection: "Просмотрите нашу прекрасную коллекцию цветов и букетов",
+    searchPlaceholder: "Искать цветы...",
+    categories: "Категории",
+    allCategories: "Все категории",
+    tags: "Теги",
+    noResults: "Товары не найдены",
+    addToCart: "Добавить в корзину",
+    outOfStock: "Нет в наличии",
+    customize: "Настроить"
+  },
+  customBouquet: {
+    title: "Свой букет",
+    description: "Выберите цветы, цвета и количество, чтобы создать уникальный букет",
+    selectFlowers: "Выбор цветов",
+    selectedFlowers: "Выбранные цветы",
+    quantity: "Количество",
+    color: "Цвет",
+    addFlower: "Добавить цветок",
+    removeFlower: "Удалить",
+    totalPrice: "Общая стоимость",
+    addToCart: "Добавить в корзину",
+    flowerSelection: "Выбор цветов",
+    yourBouquet: "Ваш букет",
+    emptySelection: "Вы еще не выбрали ни одного цветка. Выберите цветы, чтобы создать свой букет.",
+    createYourOwn: "Создайте свой собственный уникальный букет",
+    customizeDescription: "Выберите свои любимые цветы, цвета и количество, чтобы создать идеальный букет для любого случая.",
+    startFromScratch: "Начать с нуля",
+    backToTemplates: "Назад к шаблонам",
+    continueToReview: "Перейти к обзору",
+    searchPlaceholder: "Поиск цветов...",
+    each: "за шт.",
+    backToCustomize: "Назад к настройке",
+    reviewYourBouquet: "Обзор вашего букета",
+    yourBouquetSummary: "Итог вашего букета",
+    loadingBouquet: "Загрузка вашего букета..."
+  },
+  admin: {
+    common: {
+      loading: "Загрузка...",
+      save: "Сохранить",
+      cancel: "Отмена",
+      delete: "Удалить",
+      edit: "Редактировать",
+      create: "Создать новый",
+      search: "Поиск",
+      filter: "Фильтр",
+      actions: "Действия",
+      noResults: "Ничего не найдено"
+    },
+    navigation: {
+      dashboard: "Панель управления",
+      bouquets: "Букеты",
+      flowers: "Цветы",
+      categories: "Категории",
+      tags: "Теги",
+      orders: "Заказы",
+      customers: "Клиенты",
+      settings: "Настройки",
+      logout: "Выйти",
+      flowershop: "Админ Цветочного Магазина",
+      translations: "Переводы"
+    },
+    bouquets: {
+      name: "Название",
+      price: "Цена",
+      discountPrice: "Цена со скидкой",
+      category: "Категория",
+      status: "Статус",
+      inStock: "В наличии",
+      outOfStock: "Нет в наличии",
+      featured: "Рекомендуемые",
+      create: "Создать букет",
+      edit: "Редактировать букет",
+      delete: "Удалить букет",
+      confirmDelete: "Вы уверены, что хотите удалить этот букет?",
+      description: "Описание",
+      image: "Изображение",
+      createSuccess: "Букет успешно создан",
+      updateSuccess: "Букет успешно обновлен",
+      deleteSuccess: "Букет успешно удален",
+      basicInfo: "Основная информация",
+      imageRequirements: "Рекомендуемый размер: 800x600px. Максимальный размер файла: 2MB.",
+      flowerSelection: "Выбор цветов",
+      selectedFlowers: "Выбранные цветы",
+      addFlower: "Добавить цветок",
+      noFlowersSelected: "Цветы еще не выбраны. Добавьте цветы, чтобы создать букет."
+    },
+    flowers: {
+      name: "Название",
+      price: "Цена",
+      category: "Категория",
+      quantity: "Количество",
+      status: "Статус",
+      inStock: "В наличии",
+      outOfStock: "Нет в наличии",
+      create: "Создать цветок",
+      edit: "Редактировать цветок",
+      delete: "Удалить цветок",
+      confirmDelete: "Вы уверены, что хотите удалить этот цветок?",
+      description: "Описание",
+      image: "Изображение",
+      basicInfo: "Основная информация",
+      imageRequirements: "Рекомендуемый размер: 800x600px. Максимальный размер файла: 2MB.",
+      createSuccess: "Цветок успешно создан",
+      updateSuccess: "Цветок успешно обновлен",
+      deleteSuccess: "Цветок успешно удален"
+    },
+    auth: {
+      login: "Войдите в свою учетную запись",
+      email: "Адрес электронной почты",
+      password: "Пароль",
+      signIn: "Войти",
+      loginError: "Неверные учетные данные. Пожалуйста, попробуйте еще раз."
+    }
+  },
+  entities: {
+    bouquets: {},
+    categories: {},
+    flowers: {}
+  },
+  LanguageSwitcher: {
+    label: "Язык",
+    ariaLabel: "Переключиться на {locale, select, en {английский} uk {украинский} ru {русский} other {неизвестный}}",
+    title: "Переключиться на {locale, select, en {английский} uk {украинский} ru {русский} other {неизвестный}}"
+  }
+}; 
