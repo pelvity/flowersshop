@@ -3,23 +3,13 @@
 import { useState } from 'react';
 import { useCart } from '@/context/cart-context';
 import { ShoppingCart } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 
 interface AddToCartButtonProps {
   bouquetId: string;
   available: boolean;
-  price: number;
-  name: string;
-  image: string;
 }
 
-export default function AddToCartButton({ 
-  bouquetId, 
-  available, 
-  price,
-  name,
-  image
-}: AddToCartButtonProps) {
+export default function AddToCartButton({ bouquetId, available }: AddToCartButtonProps) {
   const { addProduct } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -29,14 +19,8 @@ export default function AddToCartButton({
     
     setIsAdding(true);
     
-    // Convert bouquetId to a number for the existing cart context
-    // This is temporary until we refactor the cart context to use string IDs
-    const numericId = parseInt(bouquetId) || Math.floor(Math.random() * 10000);
+    addProduct(bouquetId, quantity);
     
-    // Add item to cart using the existing method
-    addProduct(numericId, quantity);
-    
-    // Show feedback that item was added
     setTimeout(() => {
       setIsAdding(false);
     }, 1000);

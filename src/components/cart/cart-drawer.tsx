@@ -1,12 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useLanguage } from '@/context/language-context';
-import getRepositories from '@/lib/repositories';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/supabase';
+import { Bouquet as BaseBouquet } from '@/lib/supabase';
+
+interface Bouquet extends BaseBouquet {
+  image_url?: string | null;
+}
 
 export default function CartDrawer() {
   const { 
@@ -18,8 +24,63 @@ export default function CartDrawer() {
     removeItem, 
     updateItemQuantity 
   } = useCart();
-  const { t } = useLanguage();
-  const repositories = React.useMemo(() => getRepositories(), []);
+  const t = useTranslations();
+  const cartT = useTranslations('cart');
+  const supabase = createClientComponentClient<Database>();
+  const [products, setProducts] = useState<Bouquet[]>([]);
+  const placeholderImage = '/placeholder.svg';
+
+  useEffect(() => {
+    async function fetchProducts() {
+      if (items.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      const productIds = items
+        .map(item => item.bouquetId)
+        .filter((id): id is string => id !== null && id !== undefined);
+
+      if (productIds.length > 0) {
+        const { data, error } = await supabase
+          .from('bouquets')
+          .select('*')
+          .in('id', productIds);
+
+        if (error) {
+          console.error('Error fetching products for cart:', error);
+          setProducts([]);
+        } else {
+          // Enhance products with image URLs
+          const productsWithUrls = data?.map(product => {
+            let imageUrl = placeholderImage;
+            
+            if (product.image) {
+              try {
+                const { data: urlData } = supabase.storage.from('bouquets').getPublicUrl(product.image);
+                if (urlData?.publicUrl) {
+                  imageUrl = urlData.publicUrl;
+                }
+              } catch (e) {
+                console.error('Error generating image URL:', e);
+              }
+            }
+            
+            return {
+              ...product,
+              image_url: imageUrl
+            };
+          }) || [];
+          
+          setProducts(productsWithUrls);
+        }
+      } else {
+        setProducts([]);
+      }
+    }
+
+    fetchProducts();
+  }, [items, supabase]);
   
   return (
     <>
@@ -33,7 +94,7 @@ export default function CartDrawer() {
         <div className="flex items-center justify-between p-4 border-b border-pink-100">
           <h2 className="text-xl font-medium text-pink-700 flex items-center">
             <ShoppingCart className="mr-2" size={20} />
-            {t('cart')} ({totalItems})
+            {cartT('cart')} ({totalItems})
           </h2>
           <button 
             onClick={closeCart}
@@ -49,29 +110,29 @@ export default function CartDrawer() {
           {items.length === 0 ? (
             <div className="text-center py-10">
               <ShoppingCart className="mx-auto text-gray-300 mb-4" size={48} />
-              <p className="text-gray-500">{t('cartEmpty')}</p>
+              <p className="text-gray-500">{cartT('cartEmpty')}</p>
               <button 
                 onClick={closeCart}
                 className="mt-4 text-pink-600 hover:text-pink-700 font-medium"
               >
-                {t('continueShopping')}
+                {cartT('continueShopping')}
               </button>
             </div>
           ) : (
             <ul className="divide-y divide-pink-100">
               {items.map(item => {
                 // Regular product
-                if (item.productId) {
-                  const product = repositories.products.getById(item.productId);
-                  if (!product) return null;
+                if (item.bouquetId) {
+                  const product = products.find(p => p.id === item.bouquetId);
+                  if (!product) return null; // Or show a loading state
                   
                   return (
                     <li key={item.id} className="py-4">
                       <div className="flex items-start">
-                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 relative">
                           <Image
-                            src={product.image}
-                            alt={product.name}
+                            src={product.image_url || placeholderImage}
+                            alt={product.name || "Product"}
                             width={80}
                             height={80}
                             className="h-full w-full object-cover object-center"
@@ -81,9 +142,9 @@ export default function CartDrawer() {
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between">
                             <h3 className="text-base font-medium text-pink-700">{product.name}</h3>
-                            <p className="text-base font-medium text-amber-600">₴{item.price * item.quantity}</p>
+                            <p className="text-base font-medium text-amber-600">₴{product.price * item.quantity}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">{product.price} {t('each')}</p>
+                          <p className="mt-1 text-sm text-gray-500">₴{product.price} {t('common.each')}</p>
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
@@ -120,16 +181,16 @@ export default function CartDrawer() {
                 
                 // Custom bouquet
                 if (item.customBouquet) {
-                  const { name, flowers, basedOn } = item.customBouquet;
-                  const baseProduct = basedOn ? repositories.products.getById(basedOn) : null;
+                  const { name, basedOn } = item.customBouquet;
+                  const baseProduct = basedOn ? products.find(p => p.id === basedOn) : null;
                   
                   return (
                     <li key={item.id} className="py-4">
                       <div className="flex items-start">
-                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 bg-pink-50 flex items-center justify-center">
+                        <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 bg-pink-50 relative">
                           <Image
-                            src={baseProduct?.image || "/placeholder.svg"}
-                            alt={name}
+                            src={baseProduct?.image_url || placeholderImage}
+                            alt={name || "Custom Bouquet"}
                             width={80}
                             height={80}
                             className="h-full w-full object-cover object-center"
@@ -141,7 +202,7 @@ export default function CartDrawer() {
                             <h3 className="text-base font-medium text-pink-700">{name}</h3>
                             <p className="text-base font-medium text-amber-600">₴{item.price * item.quantity}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">{t('customBouquet')}</p>
+                          <p className="mt-1 text-sm text-gray-500">{t('common.customBouquet')}</p>
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
@@ -186,7 +247,7 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t border-pink-100 p-4">
             <div className="flex justify-between text-base font-medium text-gray-900 mb-4">
-              <p>{t('subtotal')}</p>
+              <p>{cartT('subtotal')}</p>
               <p className="text-amber-600">₴{totalPrice}</p>
             </div>
             <div className="flex flex-col space-y-2">
@@ -195,13 +256,13 @@ export default function CartDrawer() {
                 className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors text-center"
                 onClick={closeCart}
               >
-                {t('checkout')}
+                {cartT('checkout')}
               </Link>
               <button 
                 onClick={closeCart}
                 className="w-full bg-white border border-pink-200 text-pink-600 hover:bg-pink-50 px-6 py-3 rounded-md font-medium transition-colors"
               >
-                {t('continueShopping')}
+                {cartT('continueShopping')}
               </button>
             </div>
           </div>

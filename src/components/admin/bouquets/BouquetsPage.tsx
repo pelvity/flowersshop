@@ -50,6 +50,16 @@ const getValidImageUrl = (mediaItem: BouquetMedia | null) => {
   return "/placeholder-bouquet.jpg";
 };
 
+const getBouquetThumbnail = (bouquet: any) => {
+  if (bouquet.media && bouquet.media.length > 0) {
+    const mediaItem = bouquet.media.find((m: any) => m.is_thumbnail);
+    if (mediaItem) return mediaItem.url;
+    return bouquet.media[0].url;
+  }
+  if (bouquet.image) return bouquet.image;
+  return '';
+};
+
 export default function ClientBouquetsAdminPage({ locale }: { locale: string }) {
   const t = useTranslations('admin');
   const [bouquets, setBouquets] = useState<Bouquet[]>([]);

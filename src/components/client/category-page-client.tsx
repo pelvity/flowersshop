@@ -1,12 +1,12 @@
 'use client';
 
 import { Container, Section, Card } from "../ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import { categories, getProductsByCategory } from "@/lib/db";
 import Link from "next/link";
 
 export default function CategoryPageClient() {
-  const { t } = useLanguage();
+  const t = useTranslations();
   
   return (
     <Section className="bg-gradient-to-b from-pink-50 to-white py-12">

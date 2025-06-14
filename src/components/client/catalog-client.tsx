@@ -1,17 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { Container, Section, Card } from "../ui";
-import Image from "next/image";
+import { useState, useEffect } from "react";
+import { Container, Section } from "../ui";
 import { useCart } from "@/context/cart-context";
-import { Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Search } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { useTranslations } from 'next-intl';
-import { Bouquet, Category, Tag, BouquetMedia } from "@/lib/supabase";
+import { Bouquet, Category, Tag } from "@/lib/supabase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
-import { getFileUrl } from "@/utils/cloudflare-worker";
+import BouquetCard from "../bouquets/bouquet-card";
 
 // Custom CSS for the scrollbar
 const scrollbarStyles = `
@@ -25,204 +23,11 @@ const scrollbarStyles = `
   }
 `;
 
-// Get a valid URL for the image
-const getValidImageUrl = (mediaItem: BouquetMedia) => {
-  if (!mediaItem) return "/placeholder-bouquet.jpg";
-  if (mediaItem.file_url) return mediaItem.file_url;
-  if (mediaItem.file_path) return getFileUrl(mediaItem.file_path);
-  return "/placeholder-bouquet.jpg";
-};
-
 // New props interface to receive initial data from server component
 interface CatalogClientProps {
   initialBouquets: Bouquet[];
   initialCategories: Category[];
   initialTags: Tag[];
-}
-
-// BouquetMediaGallery component for displaying bouquet images in a carousel
-interface BouquetMediaGalleryProps {
-  media: BouquetMedia[];
-  alt: string;
-  onImageClick: () => void;
-}
-
-function BouquetMediaGallery({ media, alt, onImageClick }: BouquetMediaGalleryProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
-  // If no media present, show placeholder
-  if (!media || media.length === 0) {
-    return (
-      <div className="relative w-full h-48 overflow-hidden group cursor-pointer bg-gray-50" onClick={onImageClick}>
-        <div className="w-full h-full transition-transform duration-300 group-hover:scale-105">
-          <Image 
-            src="/placeholder-bouquet.jpg"
-            alt={alt || "Bouquet image"} 
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </div>
-      </div>
-    );
-  }
-  
-  // For single image
-  if (media.length === 1) {
-    return (
-      <div className="relative w-full h-48 overflow-hidden group cursor-pointer" onClick={onImageClick}>
-        <div className="w-full h-full transition-transform duration-300 group-hover:scale-105">
-          <Image 
-            src={getValidImageUrl(media[0])}
-            alt={alt || media[0].file_name || "Bouquet image"}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={true}
-          />
-        </div>
-      </div>
-    );
-  }
-  
-  // For multiple images
-  return (
-    <div className="relative w-full h-48 overflow-hidden group">
-      {/* Main image */}
-      <div 
-        className="w-full h-full cursor-pointer transition-transform duration-300 group-hover:scale-105" 
-        onClick={onImageClick}
-      >
-        <Image 
-          src={getValidImageUrl(media[currentIndex])}
-          alt={alt || media[currentIndex].file_name || "Bouquet image"}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={true}
-        />
-      </div>
-      
-      {/* Navigation arrows - show on hover */}
-      <button 
-        className="absolute left-1 top-1/2 -translate-y-1/2 bg-white/70 rounded-full p-1.5 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md"
-        onClick={(e) => {
-          e.stopPropagation();
-          setCurrentIndex(prev => (prev === 0 ? media.length - 1 : prev - 1));
-        }}
-      >
-        <ChevronLeft size={18} className="text-pink-600" />
-      </button>
-      <button 
-        className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/70 rounded-full p-1.5 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-md"
-        onClick={(e) => {
-          e.stopPropagation();
-          setCurrentIndex(prev => (prev === media.length - 1 ? 0 : prev + 1));
-        }}
-      >
-        <ChevronRight size={18} className="text-pink-600" />
-      </button>
-      
-      {/* Thumbnail scrolling container - show on hover */}
-      <div 
-        ref={scrollContainerRef}
-        className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 overflow-x-auto py-1.5 px-3 bg-white/70 rounded-full max-w-[80%] no-scrollbar opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      >
-        {media.map((item, idx) => (
-          <div 
-            key={item.id} 
-            className={`w-7 h-7 rounded-full flex-shrink-0 border-2 cursor-pointer transition-all duration-200 ${
-              idx === currentIndex ? 'border-pink-500 scale-110' : 'border-white/50 hover:border-pink-200'
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentIndex(idx);
-            }}
-          >
-            <Image 
-              src={getValidImageUrl(item)}
-              alt={`Thumbnail ${idx + 1}`}
-              width={28}
-              height={28}
-              className="rounded-full object-cover w-full h-full"
-            />
-          </div>
-        ))}
-      </div>
-      
-      {/* Image counter */}
-      <div className="absolute bottom-2 right-2 bg-black/60 rounded-full px-2 py-0.5 text-white text-xs shadow-sm">
-        {currentIndex + 1}/{media.length}
-      </div>
-    </div>
-  );
-}
-
-// Lightbox component for displaying enlarged images
-function Lightbox({ bouquet, onClose, initialIndex = 0 }: { bouquet: Bouquet; onClose: () => void; initialIndex?: number }) {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const media = bouquet.media || [];
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowRight') nextImage();
-      if (e.key === 'ArrowLeft') prevImage();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  const nextImage = () => {
-    setCurrentIndex(prev => (prev === media.length - 1 ? 0 : prev + 1));
-  };
-
-  const prevImage = () => {
-    setCurrentIndex(prev => (prev === 0 ? media.length - 1 : prev - 1));
-  };
-  
-  const currentMedia = media[currentIndex];
-  if (!currentMedia) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <button className="absolute top-4 right-4 text-white hover:text-pink-300 transition-colors z-50" onClick={onClose}>
-        <X size={32} />
-      </button>
-
-      {media.length > 1 && (
-        <>
-          <button 
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 rounded-full p-2 hover:bg-white text-pink-600 shadow-lg z-50"
-            onClick={(e) => { e.stopPropagation(); prevImage(); }}
-          >
-            <ChevronLeft size={28} />
-          </button>
-          <button 
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 rounded-full p-2 hover:bg-white text-pink-600 shadow-lg z-50"
-            onClick={(e) => { e.stopPropagation(); nextImage(); }}
-          >
-            <ChevronRight size={28} />
-          </button>
-        </>
-      )}
-      
-      <div className="relative w-full h-full max-w-4xl max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <Image
-          src={getValidImageUrl(currentMedia)}
-          alt={bouquet.name}
-          layout="fill"
-          objectFit="contain"
-          className="rounded-lg"
-        />
-      </div>
-
-       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 rounded-full px-3 py-1 text-white text-sm">
-        {currentIndex + 1} / {media.length}
-      </div>
-    </div>
-  );
 }
 
 export default function CatalogClient({ initialBouquets, initialCategories, initialTags }: CatalogClientProps) {
@@ -231,8 +36,6 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
-  
-  const [lightboxBouquet, setLightboxBouquet] = useState<Bouquet | null>(null);
   
   // Create Supabase client for any additional data fetching
   const supabase = createClientComponentClient<Database>();
@@ -302,19 +105,6 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
   // Handle adding product to cart
   const handleAddToCart = (bouquetId: string) => {
     addProduct(bouquetId, 1);
-  };
-  
-  const openLightbox = (bouquet: Bouquet) => {
-    setLightboxBouquet(bouquet);
-  };
-
-  const closeLightbox = () => {
-    setLightboxBouquet(null);
-  };
-
-  // Handle product click to navigate to detail page
-  const navigateToBouquet = (bouquetId: string) => {
-    router.push(`/bouquet/${bouquetId}`);
   };
   
   return (
@@ -407,56 +197,13 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
                   );
                   
                   return (
-                    <Card key={bouquet.id} className="flex flex-col overflow-hidden transition-all hover:shadow-lg border border-pink-100 bg-white">
-                      <div className="relative">
-                        <BouquetMediaGallery 
-                          media={bouquet.media || []}
-                          alt={bouquet.name} 
-                          onImageClick={() => openLightbox(bouquet)}
-                        />
-                        {category && (
-                          <div className="absolute top-2 right-2 bg-white border border-pink-200 text-pink-600 text-xs px-3 py-1 rounded-full shadow-sm">
-                            {category?.name}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 p-6 flex flex-col">
-                        <div className="flex-1">
-                          <h3 
-                            className="text-xl font-medium text-pink-700 cursor-pointer hover:text-pink-500"
-                            onClick={() => navigateToBouquet(bouquet.id)}
-                          >
-                            {bouquet.name}
-                          </h3>
-                          <p className="mt-2 text-base text-gray-600">{bouquet.description}</p>
-                          <div className="mt-3 flex flex-wrap gap-1">
-                            {bouquetTags.map(tag => (
-                              <span key={tag.id} className="inline-block bg-pink-50 text-pink-600 text-xs px-2 py-1 rounded-full">
-                                {tag.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-4 flex items-center justify-between">
-                          <span className="text-xl font-medium text-amber-600">
-                            ₴{bouquet.discount_price || bouquet.price}
-                            {bouquet.discount_price && (
-                              <span className="text-sm line-through text-gray-400 ml-2">₴{bouquet.price}</span>
-                            )}
-                          </span>
-                          <div className="flex space-x-2">
-                            {/* We'll add customization option later if needed */}
-                            <button 
-                              onClick={() => handleAddToCart(bouquet.id)}
-                              className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-4 py-2 rounded-md text-sm shadow-sm transition-colors"
-                              disabled={!bouquet.in_stock}
-                            >
-                              {bouquet.in_stock ? t('addToCart') : t('outOfStock')}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </Card>
+                    <BouquetCard 
+                      key={bouquet.id}
+                      bouquet={bouquet}
+                      category={category}
+                      tags={bouquetTags}
+                      onAddToCart={handleAddToCart}
+                    />
                   );
                 })}
               </div>
@@ -464,7 +211,6 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
           </div>
         </div>
       </Container>
-      {lightboxBouquet && <Lightbox bouquet={lightboxBouquet} onClose={closeLightbox} />}
     </Section>
   );
 } 

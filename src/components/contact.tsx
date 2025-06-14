@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from "./ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { sendEmail } from "@/utils/send-email";
@@ -14,7 +14,9 @@ type FormData = {
 };
 
 export default function Contact() {
-  const { t } = useLanguage();
+  const t = useTranslations();
+  const commonT = useTranslations('common');
+  const contactT = useTranslations('contact');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{
     status: 'success' | 'error' | 'idle';
@@ -41,19 +43,19 @@ export default function Contact() {
       if (result.success) {
         setSubmitStatus({
           status: 'success',
-          message: t('emailSent')
+          message: commonT('emailSent')
         });
         reset(); // Reset form fields on success
       } else {
         setSubmitStatus({
           status: 'error',
-          message: result.error || t('emailError')
+          message: result.error || commonT('emailError')
         });
       }
     } catch (error) {
       setSubmitStatus({
         status: 'error',
-        message: t('emailError')
+        message: commonT('emailError')
       });
       console.error('Form submission error:', error);
     } finally {
@@ -72,10 +74,10 @@ export default function Contact() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            {t('contactTitle')}
+            {contactT('contactTitle')}
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-            {t('contactDescription')}
+            {contactT('contactDescription')}
           </p>
         </div>
 
@@ -97,7 +99,7 @@ export default function Contact() {
               
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  {t('name')} *
+                  {commonT('name')} *
                 </label>
                 <div className="mt-1">
                   <input
@@ -107,17 +109,17 @@ export default function Contact() {
                     className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
                       errors.name ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder={t('yourName')}
+                    placeholder={commonT('yourName')}
                   />
                   {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{t('nameRequired')}</p>
+                    <p className="mt-1 text-sm text-red-600">{commonT('nameRequired')}</p>
                   )}
                 </div>
               </div>
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  {t('contactEmail')} *
+                  {commonT('contactEmail')} *
                 </label>
                 <div className="mt-1">
                   <input
@@ -130,20 +132,20 @@ export default function Contact() {
                     className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder={t('yourEmail')}
+                    placeholder={commonT('yourEmail')}
                   />
                   {errors.email?.type === 'required' && (
-                    <p className="mt-1 text-sm text-red-600">{t('emailRequired')}</p>
+                    <p className="mt-1 text-sm text-red-600">{commonT('emailRequired')}</p>
                   )}
                   {errors.email?.type === 'pattern' && (
-                    <p className="mt-1 text-sm text-red-600">{t('emailInvalid')}</p>
+                    <p className="mt-1 text-sm text-red-600">{commonT('emailInvalid')}</p>
                   )}
                 </div>
               </div>
               
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  {t('phone')}
+                  {commonT('phone')}
                 </label>
                 <div className="mt-1">
                   <input
@@ -151,14 +153,14 @@ export default function Contact() {
                     type="tel"
                     id="phone"
                     className="block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500"
-                    placeholder={t('yourPhone')}
+                    placeholder={commonT('yourPhone')}
                   />
                 </div>
               </div>
               
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-                  {t('message')} *
+                  {commonT('message')} *
                 </label>
                 <div className="mt-1">
                   <textarea
@@ -168,10 +170,10 @@ export default function Contact() {
                     className={`block w-full rounded-md shadow-sm py-3 px-4 placeholder-gray-400 focus:ring-pink-500 focus:border-pink-500 ${
                       errors.message ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder={t('howCanWeHelp')}
+                    placeholder={commonT('howCanWeHelp')}
                   />
                   {errors.message && (
-                    <p className="mt-1 text-sm text-red-600">{t('messageRequired')}</p>
+                    <p className="mt-1 text-sm text-red-600">{commonT('messageRequired')}</p>
                   )}
                 </div>
               </div>
@@ -182,7 +184,7 @@ export default function Contact() {
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? t('sending') : t('sendMessage')}
+                  {isSubmitting ? commonT('sending') : commonT('sendMessage')}
                 </Button>
               </div>
             </form>
@@ -193,14 +195,14 @@ export default function Contact() {
             {/* Google Map Placeholder */}
             <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center mb-6">
               <div className="text-center p-4">
-                <p className="text-gray-500">{t('googleMap')}</p>
-                <p className="text-xs text-gray-400 mt-2">{t('mapApiNote')}</p>
+                <p className="text-gray-500">{contactT('googleMap')}</p>
+                <p className="text-xs text-gray-400 mt-2">{contactT('mapApiNote')}</p>
               </div>
             </div>
             
             {/* Contact Information */}
             <div className="bg-white p-6 border rounded-lg shadow-sm">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">{t('contactInformation')}</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">{contactT('contactInformation')}</h3>
               
               <div className="space-y-4">
                 <div className="flex">
@@ -230,9 +232,9 @@ export default function Contact() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="text-gray-700">
-                    <p className="font-semibold">{t('workingHours')}</p>
-                    <p>{t('weekdays')}</p>
-                    <p>{t('weekends')}</p>
+                    <p className="font-semibold">{commonT('workingHours')}</p>
+                    <p>{commonT('weekdays')}</p>
+                    <p>{commonT('weekends')}</p>
                   </div>
                 </div>
               </div>

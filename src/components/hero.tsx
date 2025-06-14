@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import { Button } from "./ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import Link from "next/link";
 
 export default function Hero() {
-  const { t } = useLanguage();
+  const t = useTranslations();
   
   // Function to scroll to the contact section
   const scrollToContact = () => {
@@ -33,17 +33,16 @@ export default function Hero() {
           <div className="pt-10 sm:pt-16 lg:pt-8 xl:pt-16">
             <div className="sm:text-center lg:text-left">
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block xl:inline">{t('heroTitle1')}</span>{" "}
-                <span className="block text-pink-600 xl:inline">{t('heroTitle2')}</span>
+                <span className="block xl:inline">{t('home.hero.title')}</span>
               </h1>
               <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                {t('heroDescription')}
+                {t('home.hero.subtitle')}
               </p>
               <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                 <div className="rounded-md shadow">
                   <Link href="/catalog">
                     <Button size="lg">
-                      {t('viewCatalog')}
+                      {t('catalog.ourCollection')}
                     </Button>
                   </Link>
                 </div>
@@ -53,7 +52,7 @@ export default function Hero() {
                     size="lg"
                     onClick={scrollToContact}
                   >
-                    {t('contactUs')}
+                    {t('common.header.contact')}
                   </Button>
                 </div>
               </div>

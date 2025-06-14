@@ -1,11 +1,11 @@
 'use client';
 
 import { Container, Section } from "../ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import Contact from "../contact";
 
 export default function ContactClient() {
-  const { t } = useLanguage();
+  const t = useTranslations();
   
   return (
     <>

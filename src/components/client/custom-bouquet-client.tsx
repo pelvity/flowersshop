@@ -3,15 +3,21 @@
 import { useState, useEffect, useMemo } from "react";
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import { Plus, Minus, X, ShoppingCart } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
-import { Flower, FlowerQuantity } from "@/lib/supabase";
+import { Flower as FlowerType, FlowerQuantity } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import { toUUID } from "@/utils/uuid";
+
+// The Flower type from lib/supabase doesn't have colors or image, so we extend it.
+interface Flower extends FlowerType {
+  colors?: string[];
+  image?: string | null;
+}
 
 // Update props to include initialFlowers
 interface CustomBouquetClientProps {
@@ -19,7 +25,7 @@ interface CustomBouquetClientProps {
 }
 
 export default function CustomBouquetClient({ initialFlowers }: CustomBouquetClientProps) {
-  const { t } = useLanguage();
+  const t = useTranslations('customBouquet');
   const router = useRouter();
   const searchParams = useSearchParams();
   const bouquetId = searchParams.get('bouquetId');
@@ -180,7 +186,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
     addCustomBouquet(
       selectedFlowers,
       bouquetId || undefined,
-      bouquetDetails?.name ? `Custom ${bouquetDetails.name}` : 'Custom Bouquet'
+      bouquetDetails?.name ? `Custom ${bouquetDetails.name}` : t('title')
     );
     
     // Go to cart page
@@ -191,9 +197,9 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   const renderTemplates = () => (
     <div className="py-8">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-pink-700 mb-4">{t('createCustomBouquet')}</h1>
+        <h1 className="text-4xl font-extrabold text-pink-700 mb-4">{t('createYourOwn')}</h1>
         <p className="text-xl text-pink-400 max-w-3xl mx-auto">
-          {t('customBouquetDescription')}
+          {t('customizeDescription')}
         </p>
       </div>
       
@@ -220,7 +226,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
         </button>
         
         <h1 className="text-3xl font-bold text-pink-700">
-          {t('createCustomBouquet')}
+          {t('title')}
         </h1>
         
         <button 
@@ -240,7 +246,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
             <div className="relative">
               <input
                 type="text"
-                placeholder={t('searchFlowers') || "Search flowers..."}
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full border border-pink-200 rounded-full py-1 px-3 pl-8 focus:outline-none focus:ring-2 focus:ring-pink-400 shadow-sm text-pink-600 text-sm"
@@ -254,169 +260,97 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
             </div>
           </div>
           
-          {filteredFlowers.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-pink-100 shadow-sm">
-              <p className="text-pink-400">{t('noFlowersFound') || "No flowers found matching your search"}</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {filteredFlowers.map(flower => (
-                <Card 
-                  key={flower.id} 
-                  className="border border-pink-100 bg-white hover:shadow-md transition-all cursor-pointer"
-                >
-                  <div 
-                    className="p-4" 
-                    onClick={() => addFlowerWithDefaultColor(flower)}
-                  >
-                    <div className="relative mb-3">
-                      <div 
-                        className="w-full h-32 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
-                        style={{ 
-                          backgroundImage: `url(/flowers/${flower.id}.jpg)`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center'
-                        }}
-                      >
-                        {flower.name.charAt(0)}
-                      </div>
-                      <div className="absolute top-0 right-0 bg-pink-100 rounded-bl-md p-1">
-                        <Plus size={16} className="text-pink-600" />
-                      </div>
-                    </div>
-                    <h3 className="text-lg font-medium text-pink-700">{flower.name}</h3>
-                    <p className="text-sm text-gray-500 mb-2">{flower.description}</p>
-                    <p className="text-amber-600 font-medium">₴{flower.price} {t('perStem')}</p>
-                    
-                    <div className="mt-3">
-                      <p className="text-sm text-pink-600 mb-2">{t('selectColor')}:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {flower.colors && flower.colors.map(color => (
-                          <button
-                            key={color}
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent card click
-                              addFlower(flower, color);
-                            }}
-                            className="px-3 py-1 text-xs rounded-full bg-pink-50 text-pink-700 hover:bg-pink-100 transition-colors flex items-center"
-                          >
-                            <div 
-                              className="w-3 h-3 mr-1 rounded-full" 
-                              style={{ backgroundColor: getColorHex(color) }}
-                            ></div>
-                            {color}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-          <div className="mt-4 text-center text-gray-500 text-sm">
-            <p>{t('clickFlowerToAdd') || 'Click on any flower to add it to your bouquet. Choose specific colors below each flower.'}</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredFlowers.map(flower => (
+              <Card 
+                key={flower.id} 
+                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow border border-pink-100"
+                onClick={() => addFlowerWithDefaultColor(flower)}
+              >
+                <div className="relative h-24">
+                  <Image 
+                    src={flower.image || '/placeholder.svg'} 
+                    alt={flower.name} 
+                    fill 
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  />
+                </div>
+                <div className="p-3">
+                  <p className="font-medium text-pink-700 truncate">{flower.name}</p>
+                  <p className="text-sm text-gray-500">${flower.price} {t('each')}</p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
-        
-        {/* Selected flowers summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-pink-100 p-6 shadow-sm sticky top-24">
-            <h2 className="text-xl font-medium text-pink-700 mb-4">{t('yourBouquet')}</h2>
-            
-            {selectedFlowers.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">{t('noBouquetFlowers')}</p>
-            ) : (
-              <div className="space-y-4">
-                {selectedFlowers.map((item, index) => {
-                  const flower = initialFlowers.find(f => f.id === item.flowerId);
-                  if (!flower) return null;
-                  
-                  return (
-                    <div key={index} className="flex items-center justify-between border-b border-pink-50 pb-3">
-                      <div className="flex items-center">
-                        <div 
-                          className="w-12 h-12 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
-                          style={{ 
-                            backgroundImage: `url(/flowers/${flower.id}.jpg)`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center'
-                          }}
-                        >
-                          {flower.name.charAt(0)}
+
+        {/* Selected flowers panel */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-medium text-pink-700">{t('selectedFlowers')}</h2>
+          
+          {selectedFlowers.length > 0 ? (
+            <div className="space-y-3">
+              {selectedFlowers.map((item, index) => {
+                const flower = initialFlowers.find(f => f.id === item.flowerId);
+                if (!flower) return null;
+
+                return (
+                  <Card key={index} className="p-3 flex items-center justify-between border border-pink-100">
+                    <div className="flex items-center">
+                      <Image 
+                        src={flower.image || '/placeholder.svg'} 
+                        alt={flower.name} 
+                        width={40} 
+                        height={40} 
+                        className="rounded-md object-cover"
+                      />
+                      <div className="ml-3">
+                        <p className="font-medium text-pink-700">{flower.name}</p>
+                        <div className="flex items-center mt-1">
+                          <button onClick={() => removeFlower(index)} className="p-1 text-gray-500 hover:text-red-500"><Minus size={14} /></button>
+                          <span className="mx-2 text-pink-600">{item.quantity}</span>
+                          <button onClick={() => addFlowerWithDefaultColor(flower)} className="p-1 text-gray-500 hover:text-green-500"><Plus size={14} /></button>
                         </div>
-                        <div className="ml-3">
-                          <p className="text-pink-700 font-medium">{flower.name}</p>
-                          <div className="flex items-center">
-                            <p className="text-xs text-pink-500 mr-2">{t('color')}:</p>
-                            <div className="flex items-center border border-pink-100 rounded overflow-hidden">
-                              <div 
-                                className="w-4 h-4 mr-1 ml-1"
-                                style={{ backgroundColor: getColorHex(item.color), borderRadius: '50%' }}
-                              ></div>
-                              <select
-                                value={item.color}
-                                onChange={(e) => changeFlowerColor(index, e.target.value)}
-                                className="text-xs text-pink-600 bg-pink-50 py-1 pl-0 pr-2 border-0 focus:ring-0 focus:outline-none"
-                              >
-                                {flower.colors && flower.colors.map(color => (
-                                  <option key={color} value={color}>{color}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <button 
-                          onClick={() => removeFlower(index)}
-                          className="text-pink-400 hover:text-pink-600 p-1"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="mx-2 text-gray-700 min-w-[20px] text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => addFlower(flower, item.color || (flower.colors && flower.colors.length > 0 ? flower.colors[0] : 'mixed'))}
-                          className="text-pink-400 hover:text-pink-600 p-1"
-                        >
-                          <Plus size={14} />
-                        </button>
-                        <button 
-                          onClick={() => setSelectedFlowers(prev => prev.filter((_, i) => i !== index))}
-                          className="ml-2 text-gray-400 hover:text-gray-600 p-1"
-                        >
-                          <X size={14} />
-                        </button>
                       </div>
                     </div>
-                  );
-                })}
-                
-                <div className="pt-4">
-                  <div className="flex justify-between items-center text-lg font-medium">
-                    <span className="text-gray-700">{t('totalPrice')}:</span>
-                    <span className="text-amber-600">₴{totalPrice}</span>
-                  </div>
-                  
-                  {selectedFlowers.length > 0 && (
-                    <button
-                      onClick={() => setSelectedFlowers([])}
-                      className="w-full mt-4 border border-pink-200 text-pink-600 hover:bg-pink-50 px-4 py-2 rounded-md text-sm transition-colors"
-                    >
-                      {t('clearBouquet')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+                    
+                    <div className="flex flex-col items-end">
+                      <p className="font-medium text-amber-600">
+                        ${(flower.price * item.quantity).toFixed(2)}
+                      </p>
+                      <select
+                        value={item.color}
+                        onChange={(e) => changeFlowerColor(index, e.target.value)}
+                        className="mt-1 text-xs border border-pink-200 rounded py-0.5 px-1 focus:outline-none focus:ring-1 focus:ring-pink-400"
+                      >
+                        {(flower.colors || ['mixed']).map((color: string) => (
+                          <option key={color} value={color}>{color}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 px-4 border-2 border-dashed border-pink-100 rounded-lg">
+              <p className="text-pink-400">{t('emptySelection')}</p>
+            </div>
+          )}
+
+          <div className="border-t border-pink-100 pt-4 mt-4">
+            <div className="flex justify-between items-center font-bold text-pink-700 text-lg">
+              <span>{t('totalPrice')}:</span>
+              <span>${totalPrice.toFixed(2)}</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
   
-  // Review order view
+  // Review view
   const renderReview = () => (
     <div className="py-8">
       <div className="mb-8 flex justify-between items-center">
@@ -426,103 +360,102 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
         >
           ← {t('backToCustomize')}
         </button>
-        
-        <h1 className="text-3xl font-bold text-pink-700">{t('bouquetSummary')}</h1>
-        
-        <div></div> {/* Empty div for flex spacing */}
+        <h1 className="text-3xl font-bold text-pink-700">{t('reviewYourBouquet')}</h1>
+        <div/>
       </div>
-      
-      <div className="bg-white rounded-lg border border-pink-100 p-8 shadow-sm mb-8">
-        <h2 className="text-2xl font-medium text-pink-700 mb-6 text-center">{t('bouquetSummary')}</h2>
-        
-        <div className="max-w-2xl mx-auto">
-          <div className="space-y-4 mb-8">
+
+      <div className="max-w-3xl mx-auto">
+        <Card className="p-6 border border-pink-100">
+          <h2 className="text-2xl font-semibold text-pink-700 mb-4">{t('yourBouquetSummary')}</h2>
+          
+          <div className="space-y-4 mb-6">
             {selectedFlowers.map((item, index) => {
               const flower = initialFlowers.find(f => f.id === item.flowerId);
               if (!flower) return null;
-              
+
               return (
-                <div key={index} className="flex items-center justify-between border-b border-pink-50 pb-3">
+                <div key={index} className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <div 
-                      className="w-12 h-12 bg-pink-50 rounded-md flex items-center justify-center text-pink-300"
-                      style={{ 
-                        backgroundImage: `url(/flowers/${flower.id}.jpg)`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                    >
-                      {flower.name.charAt(0)}
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-pink-700 font-medium">{flower.name}</p>
+                    <Image 
+                      src={flower.image || '/placeholder.svg'} 
+                      alt={flower.name} 
+                      width={48} 
+                      height={48} 
+                      className="rounded-md object-cover"
+                    />
+                    <div className="ml-4">
+                      <p className="font-medium text-pink-700">{flower.name}</p>
                       <p className="text-sm text-gray-500">
-                        <span className="flex items-center">
-                          <div 
-                            className="w-3 h-3 mr-1 rounded-full" 
-                            style={{ backgroundColor: getColorHex(item.color) }}
-                          ></div>
-                          <span className="text-pink-500">{item.color}</span>
-                        </span> • {item.quantity} {item.quantity === 1 ? t('stem') : t('stems')}
+                        {t('quantity')}: {item.quantity}, {t('color')}: {item.color}
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="text-amber-600 font-medium">
-                    ₴{flower.price * item.quantity}
-                  </div>
+                  <p className="font-medium text-amber-600">
+                    ${(flower.price * item.quantity).toFixed(2)}
+                  </p>
                 </div>
               );
             })}
           </div>
-          
-          <div className="border-t border-pink-100 pt-4">
-            <div className="flex justify-between items-center text-xl font-bold">
-              <span className="text-gray-700">{t('totalPrice')}:</span>
-              <span className="text-amber-600">₴{totalPrice}</span>
-            </div>
+
+          <div className="border-t border-pink-200 my-4"></div>
+
+          <div className="flex justify-between items-center font-bold text-pink-700 text-xl">
+            <span>{t('totalPrice')}:</span>
+            <span>${totalPrice.toFixed(2)}</span>
           </div>
           
           <div className="mt-8 text-center">
-            <button 
+            <button
               onClick={addToCart}
-              className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-8 py-3 rounded-md font-medium shadow-sm transition-colors flex items-center justify-center mx-auto"
+              className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors flex items-center justify-center"
             >
-              <ShoppingCart size={18} className="mr-2" />
+              <ShoppingCart size={20} className="mr-2" />
               {t('addToCart')}
             </button>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
   
-  // Add color to hex mapping function
-  const getColorHex = (colorName: string | undefined): string => {
-    if (!colorName) return '#FFFFFF';
-    
-    const colorMap: Record<string, string> = {
-      'red': '#FF5252',
-      'pink': '#FF80AB',
-      'white': '#FFFFFF',
-      'yellow': '#FFD54F',
-      'orange': '#FFAB40',
-      'purple': '#CE93D8',
-      'blue': '#82B1FF',
-      'green': '#66BB6A',
-      'coral': '#FF8A65',
-      'mixed': 'linear-gradient(to right, #FF5252, #FF80AB, #FFD54F, #CE93D8)'
-    };
-    
-    return colorMap[colorName.toLowerCase()] || '#FFFFFF';
+  const renderStep = () => {
+    switch (step) {
+      case 'customize':
+        return renderCustomize();
+      case 'review':
+        return renderReview();
+      case 'template':
+      default:
+        return renderTemplates();
+    }
   };
-  
+
+  const getColorHex = (colorName: string | undefined): string => {
+    if (!colorName) return '#cccccc'; // Default gray
+    switch (colorName.toLowerCase()) {
+      case 'red': return '#ef4444';
+      case 'pink': return '#ec4899';
+      case 'white': return '#ffffff';
+      case 'yellow': return '#f59e0b';
+      case 'purple': return '#8b5cf6';
+      case 'orange': return '#f97316';
+      case 'blue': return '#3b82f6';
+      default: return '#cccccc';
+    }
+  };
+
   return (
     <Section className="bg-gradient-to-b from-pink-50 to-white">
       <Container>
-        {step === 'template' && renderTemplates()}
-        {step === 'customize' && renderCustomize()}
-        {step === 'review' && renderReview()}
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+            <p className="mt-4 text-pink-500">{t('loadingBouquet')}</p>
+          </div>
+        ) : (
+          renderStep()
+        )}
       </Container>
     </Section>
   );

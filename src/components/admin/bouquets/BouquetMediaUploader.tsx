@@ -46,6 +46,7 @@ type MediaItemProps = {
   moveItem: (dragIndex: number, hoverIndex: number) => void;
   onDelete: (id: string) => void;
   onSetThumbnail: (id: string) => void;
+  handleImageError: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void;
 };
 
 type MediaItemType = {
@@ -53,7 +54,7 @@ type MediaItemType = {
   index: number;
 };
 
-const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnail }: MediaItemProps) => {
+const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnail, handleImageError }: MediaItemProps) => {
   const ref = useRef<HTMLDivElement>(null);
   
   const [{ isDragging }, drag] = useDrag({
@@ -99,11 +100,6 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
     mediaUrl = getFileUrl(item.file_path);
   }
 
-  // Final fallback - use a placeholder image
-  if (!mediaUrl) {
-    mediaUrl = '/placeholder-bouquet.jpg';
-  }
-
   // Default to image type if not specified
   const isImage = item.media_type !== 'video';
 
@@ -146,11 +142,7 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
               alt={item.file_name || 'Bouquet image'}
               className="w-full h-full object-cover relative z-10"
               onLoad={() => console.log('Image loaded successfully:', mediaUrl)}
-              onError={(e) => {
-                console.error('Image failed to load:', mediaUrl);
-                // Set a fallback image on error
-                (e.target as HTMLImageElement).src = '/placeholder-bouquet.jpg';
-              }}
+              onError={handleImageError}
             />
           </>
         ) : (
@@ -211,6 +203,10 @@ export default function BouquetMediaUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    (e.target as HTMLImageElement).style.display = 'none';
+  };
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -481,7 +477,7 @@ export default function BouquetMediaUploader({
       onMediaChange(updatedMedia);
     }
   };
-  
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -546,6 +542,7 @@ export default function BouquetMediaUploader({
               moveItem={moveMedia}
               onDelete={handleDeleteMedia}
               onSetThumbnail={handleSetThumbnail}
+              handleImageError={handleImageError}
             />
           ))}
           

@@ -1,10 +1,10 @@
 'use client';
 
 import { Container, Section } from "../ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 
 export default function AboutClient() {
-  const { t } = useLanguage();
+  const t = useTranslations();
   
   return (
     <Section className="bg-white">

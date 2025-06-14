@@ -2,13 +2,17 @@
 
 import { Card } from "./ui";
 import Image from 'next/image';
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bouquet } from "@/lib/supabase";
+import { useParams } from 'next/navigation';
+import { ImageIcon } from 'lucide-react';
 
 export default function FeaturedProducts() {
-  const { t } = useLanguage();
+  const t = useTranslations();
+  const params = useParams();
+  const locale = params.locale as string;
   const [products, setProducts] = useState<Bouquet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -40,10 +44,10 @@ export default function FeaturedProducts() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              {t('featuredArrangements')}
+              Featured Arrangements
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-              {t('discoverPopular')}
+              Discover our most popular bouquets
             </p>
           </div>
           <div className="mt-10 flex justify-center">
@@ -59,27 +63,33 @@ export default function FeaturedProducts() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            {t('featuredArrangements')}
+            Featured Arrangements
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-            {t('discoverPopular')}
+            Discover our most popular bouquets
           </p>
         </div>
 
         <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {products.length > 0 ? (
             products.map((product) => (
-              <Link href={`/product/${product.id}`} key={product.id}>
+              <Link href={`/${locale}/bouquet/${product.id}`} key={product.id}>
                 <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg h-full">
                   <div className="flex-shrink-0">
-                    <div 
-                      className="w-full h-48 bg-pink-50"
-                      style={{ 
-                        backgroundImage: `url(${product.image || '/placeholder.svg'})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                    />
+                    {product.image ? (
+                      <div 
+                        className="w-full h-48 bg-pink-50"
+                        style={{ 
+                          backgroundImage: `url(${product.image})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center'
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center bg-gray-200">
+                        <ImageIcon className="w-12 h-12 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 p-6 flex flex-col">
                     <div className="flex-1">
@@ -88,10 +98,10 @@ export default function FeaturedProducts() {
                     </div>
                     <div className="mt-4 flex items-center justify-between">
                       <span className="text-xl font-medium text-pink-600">
-                        ₴{product.discount_price || product.price}
+                        ${product.discount_price || product.price}
                       </span>
                       <span className="text-pink-600 hover:text-pink-800 font-medium">
-                        {t('viewDetails')}
+                        View Details
                       </span>
                     </div>
                   </div>
@@ -100,7 +110,7 @@ export default function FeaturedProducts() {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">{t('noFeaturedProducts')}</p>
+              <p className="text-gray-500">No featured products available</p>
             </div>
           )}
         </div>

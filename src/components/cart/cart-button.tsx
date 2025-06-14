@@ -3,11 +3,11 @@
 import React from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
-import { useLanguage } from '@/context/language-context';
+import { useTranslations } from 'next-intl';
 
 export default function CartButton() {
   const { totalItems, openCart } = useCart();
-  const { t } = useLanguage();
+  const t = useTranslations();
   
   return (
     <button 
