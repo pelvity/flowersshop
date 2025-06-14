@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Section, Container } from "@/components/ui";
-import { useLanguage } from "@/context/language-context";
+import { useTranslations } from 'next-intl';
 import { useCart } from "@/context/cart-context";
 import getRepositories from "@/lib/repositories";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { ChevronLeft, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function CheckoutPage() {
-  const { t } = useLanguage();
+  const t = useTranslations();
   const { items, totalPrice, clearCart } = useCart();
   const repositories = useMemo(() => getRepositories(), []);
   const router = useRouter();

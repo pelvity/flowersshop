@@ -1,7 +1,7 @@
 'use client';
 
 import { NextIntlClientProvider } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { locales, defaultLocale } from '../../config/i18n';
 
@@ -24,9 +24,9 @@ export default function I18nProvider({
     setMounted(true);
   }, []);
 
-  // If not mounted, render nothing to avoid hydration mismatch
+  // If not mounted, render children without provider to avoid hydration mismatch
   if (!mounted) {
-    return null;
+    return <>{children}</>;
   }
 
   // Use valid locale or default to 'en'

@@ -3,11 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "db:schema": "node scripts/db-schema-dump.js",
+    "db:schema:generate": "node scripts/generate-schema.js",
+    "db:schema:local": "node scripts/db-schema-local.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "debug": "cross-env NODE_OPTIONS=--inspect next dev",
+    "i18n:generate": "ts-node --project tsconfig.scripts.json scripts/generate-i18n-json.ts",
     "create-admin": "ts-node --transpile-only scripts/create-admin.ts",
     "check-credentials": "ts-node --transpile-only scripts/check-credentials.ts",
     "check-login": "ts-node --transpile-only scripts/check-login.ts"
@@ -37,7 +41,13 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.57.0",
     "tailwind-merge": "^3.3.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "@hookform/resolvers": "^3.3.4",
+    "seed": {
+      "create-admin": "ts-node --transpile-only scripts/create-admin.ts",
+      "check-credentials": "ts-node --transpile-only scripts/check-credentials.ts",
+      "check-login": "ts-node --transpile-only scripts/check-login.ts"
+    }
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -52,5 +62,7 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "typescript": "^5"
-  }
+  },
+  "author": "",
+  "license": "ISC"
 }

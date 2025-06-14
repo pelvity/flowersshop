@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "../globals.css";
-import I18nProvider from "@/providers/i18n-provider";
-import { getMessages } from '@/utils/get-messages';
-import { LanguageProvider } from "@/context/language-context";
+import "@/globals.css";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import { CartProvider } from "@/context/cart-context";
 import CartDrawer from "@/components/cart/cart-drawer";
-import { headers } from 'next/headers';
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +17,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   // Get locale safely by awaiting params
   const { locale } = await params;
+  console.log(`[METADATA] Generating metadata for locale: ${locale}`);
   
   return {
     title: "Flower Paradise - Fresh Flowers & Bouquets",
@@ -31,25 +32,30 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  // Force Next.js to treat this as a dynamic parameter
-  const headersList = headers();
-  
-  // Ensure params.locale is properly awaited
+  try {
   const { locale } = await params;
+    console.log(`[LAYOUT] Locale from params: ${locale}`);
   
-  // Get messages for the current locale
-  const messages = await getMessages(locale);
+    const messages = await getMessages({ locale });
+    console.log(`[LAYOUT] Messages loaded successfully for locale '${locale}', keys:`, Object.keys(messages));
 
+    console.log(`[LAYOUT] Rendering layout with locale: ${locale}`);
   return (
-    <>
-      <I18nProvider locale={locale} messages={messages}>
-        <LanguageProvider>
+    <html lang={locale}>
+      <body className={inter.className}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
-            {children}
+              <Header />
+              <main>{children}</main>
+              <Footer />
             <CartDrawer />
           </CartProvider>
-        </LanguageProvider>
-      </I18nProvider>
-    </>
+        </NextIntlClientProvider>
+      </body>
+    </html>
   );
+  } catch (error) {
+    console.error(`[LAYOUT] Error rendering layout:`, error);
+    throw error;
+  }
 } 

@@ -20,7 +20,9 @@ export default function LoginPage() {
   const redirectPath = searchParams.get('from') || `/${locale}/admin/dashboard`;
   const supabase = createClient();
 
-  // Effect to check if user is already logged in
+  // This effect is causing a redirect loop and should be removed.
+  // The AdminLayout is already handling the auth check.
+  /*
   useEffect(() => {
     const checkExistingSession = async () => {
       setIsLoading(true);
@@ -36,6 +38,7 @@ export default function LoginPage() {
     
     checkExistingSession();
   }, [router, supabase, redirectPath]);
+  */
 
   // Effect to handle redirection after successful login
   useEffect(() => {

@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
-import withNextIntl from 'next-intl/plugin';
+import createNextIntlPlugin from 'next-intl/plugin';
 
-const nextConfig: NextConfig = {
+const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  trailingSlash: false,
+  // Your existing Next.js config here
   images: {
     remotePatterns: [
       {
@@ -12,8 +16,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Suppress the specific warnings from the Supabase Realtime client
+  webpack: (config) => {
     config.ignoreWarnings = [
       { module: /node_modules\/@supabase\/realtime-js/ }
     ];
@@ -21,5 +24,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-// Export the config with next-intl
-export default withNextIntl('./i18n.ts')(nextConfig);
+export default withNextIntl(nextConfig); 
