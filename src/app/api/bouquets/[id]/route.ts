@@ -61,8 +61,8 @@ export async function PUT(
     // Create Supabase client
     const supabase = await createClient();
     
-    // Extract flowers data from the request if present
-    const { flowers, ...bouquetData } = updateData;
+    // Extract flowers and tags data from the request if present
+    const { flowers, tags, ...bouquetData } = updateData;
     
     // Start a transaction by using multiple operations
     
@@ -109,6 +109,35 @@ export async function PUT(
       }
     }
     
+    // 3. If we have tags data, update the bouquet tags
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      // First, remove all existing tag associations
+      const { error: deleteTagsError } = await supabase
+        .from('bouquet_tags')
+        .delete()
+        .eq('bouquet_id', bouquetId);
+      
+      if (deleteTagsError) {
+        logger.error('PUT', `/api/bouquets/${bouquetId}/tags`, deleteTagsError);
+        return NextResponse.json({ error: deleteTagsError.message }, { status: 500 });
+      }
+      
+      // Then add the new tag associations
+      const bouquetTags = tags.map((tag: any) => ({
+        bouquet_id: bouquetId,
+        tag_id: typeof tag === 'string' ? tag : tag.id
+      }));
+      
+      const { error: insertTagsError } = await supabase
+        .from('bouquet_tags')
+        .insert(bouquetTags);
+      
+      if (insertTagsError) {
+        logger.error('PUT', `/api/bouquets/${bouquetId}/tags`, insertTagsError, { bouquetTags });
+        return NextResponse.json({ error: insertTagsError.message }, { status: 500 });
+      }
+    }
+    
     // Log the successful response
     logger.response('PUT', `/api/bouquets/${bouquetId}`, 200, startTime, updatedBouquet);
     
@@ -139,6 +168,17 @@ export async function DELETE(
     if (flowersError) {
       logger.error('DELETE', `/api/bouquets/${bouquetId}/flowers`, flowersError);
       return NextResponse.json({ error: flowersError.message }, { status: 500 });
+    }
+    
+    // Delete all tag associations
+    const { error: tagsError } = await supabase
+      .from('bouquet_tags')
+      .delete()
+      .eq('bouquet_id', bouquetId);
+    
+    if (tagsError) {
+      logger.error('DELETE', `/api/bouquets/${bouquetId}/tags`, tagsError);
+      return NextResponse.json({ error: tagsError.message }, { status: 500 });
     }
     
     // Then delete the bouquet

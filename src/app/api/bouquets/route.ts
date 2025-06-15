@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createClient, createAdminClient } from '@/utils/supabase/server';
 import { ApiLogger } from '@/utils/api-logger';
-import { generateUUID, toUUID } from '@/utils/uuid';
+import { generateUUID, toUUID, isValidUUID } from '@/utils/uuid';
 
 // Create an API logger specifically for bouquets endpoints
 const logger = new ApiLogger('BouquetsAPI');
@@ -59,11 +59,18 @@ export async function POST(request: Request) {
     // Parse the request body
     const bouquetData = await request.json();
     
-    // Create Supabase client
-    const supabase = await createClient();
+    // Create Supabase admin client
+    const supabase = await createAdminClient();
     
-    // Extract flowers from bouquet data if present
-    const { flowers, ...bouquetDetails } = bouquetData;
+    // Extract flowers and tags from bouquet data if present
+    const { flowers, tags, ...bouquetDetails } = bouquetData;
+    
+    // Validate category_id
+    if (!bouquetDetails.category_id || !isValidUUID(bouquetDetails.category_id)) {
+      const error = new Error('Valid category_id is required');
+      logger.error('POST', '/api/bouquets', error, { bouquetData });
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     
     // Generate a UUID for the new bouquet
     const bouquetWithId = {
@@ -87,22 +94,53 @@ export async function POST(request: Request) {
     if (flowers && Array.isArray(flowers) && flowers.length > 0) {
       const bouquetId = data.id;
       
-      // Prepare bouquet flowers data with proper UUIDs
-      const bouquetFlowers = flowers.map((flower: any) => ({
-        bouquet_id: bouquetId,
-        flower_id: toUUID(flower.id),
-        quantity: flower.quantity
-      }));
+      // Prepare bouquet flowers data with proper UUIDs, filtering out invalid ones
+      const bouquetFlowers = flowers
+        .filter((flower: any) => flower.id && isValidUUID(flower.id))
+        .map((flower: any) => ({
+          bouquet_id: bouquetId,
+          flower_id: toUUID(flower.id),
+          quantity: flower.quantity
+        }));
       
-      // Insert the bouquet flowers
-      const { error: flowersError } = await supabase
-        .from('bouquet_flowers')
-        .insert(bouquetFlowers);
+      if (bouquetFlowers.length > 0) {
+        // Insert the bouquet flowers
+        const { error: flowersError } = await supabase
+          .from('bouquet_flowers')
+          .insert(bouquetFlowers);
+        
+        if (flowersError) {
+          logger.error('POST', '/api/bouquets/flowers', flowersError, { bouquetFlowers });
+          // We don't return an error here as the bouquet was created successfully
+          // but we should log the error
+        }
+      }
+    }
+    
+    // If tags were included, add them to the bouquet
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      const bouquetId = data.id;
       
-      if (flowersError) {
-        logger.error('POST', '/api/bouquets/flowers', flowersError, { bouquetFlowers });
-        // We don't return an error here as the bouquet was created successfully
-        // but we should log the error
+      // Prepare bouquet tags data, filtering out invalid ones
+      const bouquetTags = tags
+        .map((tag: any) => (typeof tag === 'string' ? tag : tag.id))
+        .filter((tagId: any) => tagId && isValidUUID(tagId))
+        .map((tagId: string) => ({
+          bouquet_id: bouquetId,
+          tag_id: tagId
+        }));
+      
+      if (bouquetTags.length > 0) {
+        // Insert the bouquet tags
+        const { error: tagsError } = await supabase
+          .from('bouquet_tags')
+          .insert(bouquetTags);
+        
+        if (tagsError) {
+          logger.error('POST', '/api/bouquets/tags', tagsError, { bouquetTags });
+          // We don't return an error here as the bouquet was created successfully
+          // but we should log the error
+        }
       }
     }
     
