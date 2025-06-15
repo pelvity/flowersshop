@@ -1,11 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, parse } from 'uuid';
 
 /**
  * Checks if a string is a valid UUID
  */
-export const isValidUUID = (id: string): boolean => {
-  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidPattern.test(id);
+export const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 };
 
 /**
@@ -13,14 +13,14 @@ export const isValidUUID = (id: string): boolean => {
  * If it's already a valid UUID, returns it unchanged
  * Otherwise creates a deterministic UUID-like string from the input
  */
-export const toUUID = (id: string | number): string => {
-  // If it's already a proper UUID, return it
-  if (typeof id === 'string' && isValidUUID(id)) {
-    return id;
+export const toUUID = (uuidString: string): string => {
+  try {
+    const parsed = parse(uuidString);
+    return Buffer.from(parsed).toString('hex');
+  } catch (e) {
+    // Return original string if parsing fails, assuming it might be in the correct format
+    return uuidString;
   }
-  
-  // For existing numeric IDs, convert to UUID format
-  return `00000000-0000-0000-0000-${id.toString().padStart(12, '0')}`;
 };
 
 /**
