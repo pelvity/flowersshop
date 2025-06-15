@@ -46,7 +46,14 @@ export const ru: Translation = {
     emailSent: "Сообщение успешно отправлено!",
     emailError: "Ошибка при отправке сообщения. Пожалуйста, попробуйте позже.",
     each: "за шт.",
-    customBouquet: "Свой букет"
+    customBouquet: "Свой букет",
+    description: "Описание",
+    price: "Цена",
+    discountPrice: "Цена со скидкой",
+    category: "Категория",
+    selectCategory: "Выберите категорию",
+    inStock: "В наличии",
+    featured: "Рекомендуемые"
   },
   cart: {
     cart: "Корзина",
@@ -144,6 +151,12 @@ export const ru: Translation = {
       flowershop: "Админ Цветочного Магазина",
       translations: "Переводы"
     },
+    tags: {
+      assignedTags: "Назначенные теги",
+      noTagsAssigned: "Нет назначенных тегов",
+      addTag: "Добавить тег",
+      searchTags: "Поиск тегов..."
+    },
     bouquets: {
       name: "Название",
       price: "Цена",
@@ -167,7 +180,11 @@ export const ru: Translation = {
       flowerSelection: "Выбор цветов",
       selectedFlowers: "Выбранные цветы",
       addFlower: "Добавить цветок",
-      noFlowersSelected: "Цветы еще не выбраны. Добавьте цветы, чтобы создать букет."
+      noFlowersSelected: "Цветы еще не выбраны. Добавьте цветы, чтобы создать букет.",
+      details: "Детали букета",
+      flowers: "Цветы в букете",
+      searchFlowers: "Поиск цветов",
+      noFlowers: "В букете нет цветов"
     },
     flowers: {
       name: "Название",

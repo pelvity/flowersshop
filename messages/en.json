@@ -44,7 +44,14 @@
     "emailSent": "Message sent successfully!",
     "emailError": "Error sending message. Please try again later.",
     "each": "each",
-    "customBouquet": "Custom Bouquet"
+    "customBouquet": "Custom Bouquet",
+    "description": "Description",
+    "price": "Price",
+    "discountPrice": "Discount Price",
+    "category": "Category",
+    "selectCategory": "Select Category",
+    "inStock": "In Stock",
+    "featured": "Featured"
   },
   "cart": {
     "cart": "Cart",
@@ -127,7 +134,15 @@
       "search": "Search",
       "filter": "Filter",
       "actions": "Actions",
-      "noResults": "No results found"
+      "noResults": "No results found",
+      "discountPrice": "Discount Price",
+      "category": "Category",
+      "selectCategory": "Select Category",
+      "inStock": "In Stock",
+      "featured": "Featured",
+      "description": "Description",
+      "price": "Price",
+      "name": "Name"
     },
     "navigation": {
       "dashboard": "Dashboard",
@@ -141,6 +156,13 @@
       "logout": "Logout",
       "flowershop": "Flower Shop Admin",
       "translations": "Translations"
+    },
+    "tags": {
+      "title": "Tags",
+      "assignedTags": "Assigned Tags",
+      "noTagsAssigned": "No tags assigned",
+      "addTag": "Add Tag",
+      "searchTags": "Search tags..."
     },
     "bouquets": {
       "name": "Name",
@@ -165,7 +187,11 @@
       "flowerSelection": "Flower Selection",
       "selectedFlowers": "Selected Flowers",
       "addFlower": "Add Flower",
-      "noFlowersSelected": "No flowers selected yet. Add flowers to create your bouquet."
+      "noFlowersSelected": "No flowers selected yet. Add flowers to create your bouquet.",
+      "details": "Bouquet Details",
+      "flowers": "Flowers in Bouquet",
+      "searchFlowers": "Search Flowers",
+      "noFlowers": "No flowers in bouquet"
     },
     "flowers": {
       "name": "Name",

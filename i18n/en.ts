@@ -46,7 +46,14 @@ export const en: Translation = {
     emailSent: "Message sent successfully!",
     emailError: "Error sending message. Please try again later.",
     each: "each",
-    customBouquet: "Custom Bouquet"
+    customBouquet: "Custom Bouquet",
+    description: "Description",
+    price: "Price",
+    discountPrice: "Discount Price",
+    category: "Category",
+    selectCategory: "Select Category",
+    inStock: "In Stock",
+    featured: "Featured"
   },
   cart: {
     cart: "Cart",
@@ -144,6 +151,12 @@ export const en: Translation = {
       flowershop: "Flower Shop Admin",
       translations: "Translations"
     },
+    tags: {
+      assignedTags: "Assigned Tags",
+      noTagsAssigned: "No tags assigned",
+      addTag: "Add Tag",
+      searchTags: "Search tags..."
+    },
     bouquets: {
       name: "Name",
       price: "Price",
@@ -167,7 +180,11 @@ export const en: Translation = {
       flowerSelection: "Flower Selection",
       selectedFlowers: "Selected Flowers",
       addFlower: "Add Flower",
-      noFlowersSelected: "No flowers selected yet. Add flowers to create your bouquet."
+      noFlowersSelected: "No flowers selected yet. Add flowers to create your bouquet.",
+      details: "Bouquet Details",
+      flowers: "Flowers in Bouquet",
+      searchFlowers: "Search Flowers",
+      noFlowers: "No flowers in bouquet"
     },
     flowers: {
       name: "Name",

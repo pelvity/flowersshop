@@ -45,6 +45,13 @@ export type Translation = {
     emailError: string;
     each: string;
     customBouquet: string;
+    description: string;
+    price: string;
+    discountPrice: string;
+    category: string;
+    selectCategory: string;
+    inStock: string;
+    featured: string;
   };
   cart: {
     cart: string;
@@ -142,6 +149,12 @@ export type Translation = {
       flowershop: string;
       translations: string;
     };
+    tags: {
+      assignedTags: string;
+      noTagsAssigned: string;
+      addTag: string;
+      searchTags: string;
+    };
     bouquets: {
       name: string;
       price: string;
@@ -166,6 +179,10 @@ export type Translation = {
       selectedFlowers: string;
       addFlower: string;
       noFlowersSelected: string;
+      details: string;
+      flowers: string;
+      searchFlowers: string;
+      noFlowers: string;
     };
     flowers: {
       name: string;

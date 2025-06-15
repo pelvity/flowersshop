@@ -46,7 +46,14 @@ export const uk: Translation = {
     emailSent: "Повідомлення успішно надіслано!",
     emailError: "Помилка при надсиланні повідомлення. Спробуйте пізніше.",
     each: "за шт.",
-    customBouquet: "Індивідуальний букет"
+    customBouquet: "Індивідуальний букет",
+    description: "Опис",
+    price: "Ціна",
+    discountPrice: "Знижкова ціна",
+    category: "Категорія",
+    selectCategory: "Виберіть категорію",
+    inStock: "В наявності",
+    featured: "Рекомендовано"
   },
   cart: {
     cart: "Кошик",
@@ -144,6 +151,12 @@ export const uk: Translation = {
       flowershop: "Адмін Квіткового Магазину",
       translations: "Переклади"
     },
+    tags: {
+      assignedTags: "Призначені теги",
+      noTagsAssigned: "Немає призначених тегів",
+      addTag: "Додати тег",
+      searchTags: "Пошук тегів..."
+    },
     bouquets: {
       name: "Назва",
       price: "Ціна",
@@ -167,7 +180,11 @@ export const uk: Translation = {
       flowerSelection: "Вибір квітів",
       selectedFlowers: "Вибрані квіти",
       addFlower: "Додати квітку",
-      noFlowersSelected: "Квіти ще не вибрані. Додайте квіти, щоб створити ваш букет."
+      noFlowersSelected: "Квіти ще не вибрані. Додайте квіти, щоб створити ваш букет.",
+      details: "Деталі букету",
+      flowers: "Квіти в букеті",
+      searchFlowers: "Пошук квітів",
+      noFlowers: "Немає квітів у букеті"
     },
     flowers: {
       name: "Назва",

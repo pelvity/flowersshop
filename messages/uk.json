@@ -44,7 +44,14 @@
     "emailSent": "Повідомлення успішно надіслано!",
     "emailError": "Помилка при надсиланні повідомлення. Спробуйте пізніше.",
     "each": "за шт.",
-    "customBouquet": "Індивідуальний букет"
+    "customBouquet": "Індивідуальний букет",
+    "description": "Опис",
+    "price": "Ціна",
+    "discountPrice": "Знижкова ціна",
+    "category": "Категорія",
+    "selectCategory": "Виберіть категорію",
+    "inStock": "В наявності",
+    "featured": "Рекомендовано"
   },
   "cart": {
     "cart": "Кошик",
@@ -142,6 +149,12 @@
       "flowershop": "Адмін Квіткового Магазину",
       "translations": "Переклади"
     },
+    "tags": {
+      "assignedTags": "Призначені теги",
+      "noTagsAssigned": "Немає призначених тегів",
+      "addTag": "Додати тег",
+      "searchTags": "Пошук тегів..."
+    },
     "bouquets": {
       "name": "Назва",
       "price": "Ціна",
@@ -165,7 +178,11 @@
       "flowerSelection": "Вибір квітів",
       "selectedFlowers": "Вибрані квіти",
       "addFlower": "Додати квітку",
-      "noFlowersSelected": "Квіти ще не вибрані. Додайте квіти, щоб створити ваш букет."
+      "noFlowersSelected": "Квіти ще не вибрані. Додайте квіти, щоб створити ваш букет.",
+      "details": "Деталі букету",
+      "flowers": "Квіти в букеті",
+      "searchFlowers": "Пошук квітів",
+      "noFlowers": "Немає квітів у букеті"
     },
     "flowers": {
       "name": "Назва",
@@ -193,6 +210,31 @@
       "password": "Password",
       "signIn": "Sign In",
       "loginError": "Invalid login credentials. Please try again."
+    },
+    "dashboard": {
+      "title": "Панель керування інвентарем",
+      "quickActions": "Швидкі дії",
+      "addNewBouquet": "Додати новий букет",
+      "addNewFlower": "Додати нову квітку",
+      "manageCategories": "Керувати категоріями",
+      "updateInventory": "Оновити інвентар",
+      "manageBouquets": "Керувати букетами",
+      "totalBouquets": "Всього букетів",
+      "viewAllBouquets": "Переглянути всі букети",
+      "totalFlowers": "Всього квітів",
+      "viewAllFlowers": "Переглянути всі квіти",
+      "lowStockFlowers": "Квіти з низьким запасом",
+      "checkInventory": "Перевірити інвентар",
+      "categories": "Категорії",
+      "featuredBouquets": "Рекомендовані букети",
+      "manageFeatured": "Керувати рекомендованими",
+      "inStockBouquets": "Букети в наявності",
+      "viewStockLevels": "Переглянути рівні запасів",
+      "inStock": "В наявності",
+      "outOfStock": "Немає в наявності",
+      "noFeaturedBouquets": "Немає рекомендованих букетів",
+      "remaining": "залишилось",
+      "allFlowersWellStocked": "Всі квіти добре забезпечені"
     }
   },
   "entities": {
