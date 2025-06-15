@@ -51,9 +51,12 @@ export class BouquetRepository {
     }
     
     // Get count before applying pagination
-    // Using any type to handle Supabase typing issues
-    const countResult = await query.count() as any;
-    const total = countResult?.count || 0;
+    // Using a separate query for count
+    const { count } = await this.supabase
+      .from('bouquets')
+      .select('*', { count: 'exact', head: true });
+    
+    const total = count || 0;
     
     // Apply pagination if provided
     if (pagination) {

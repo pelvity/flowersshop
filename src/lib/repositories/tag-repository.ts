@@ -95,7 +95,7 @@ export class TagRepository {
   async getTagsForBouquet(bouquetId: string): Promise<Tag[]> {
     const { data, error } = await this.supabase
       .from('bouquet_tags')
-      .select('tags(*)')
+      .select('tag:tag_id(*)')
       .eq('bouquet_id', bouquetId);
       
     if (error) {
@@ -106,7 +106,7 @@ export class TagRepository {
     // Transform the nested tags structure to a flat array of Tag objects
     // Using explicit type casting to handle Supabase typing issues
     return data.map(item => {
-      const tagData = item.tags as any;
+      const tagData = item.tag as any;
       return {
         id: tagData.id,
         name: tagData.name,
