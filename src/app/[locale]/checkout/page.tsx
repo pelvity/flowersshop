@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const repositories = useMemo(() => getRepositories(), []);
   const router = useRouter();
+  const locale = t('locale');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -44,7 +45,7 @@ export default function CheckoutPage() {
       
       // Redirect to success page after a delay
       setTimeout(() => {
-        router.push('/');
+        router.push(`/${locale}`);
       }, 3000);
     }, 1500);
   };
@@ -60,7 +61,7 @@ export default function CheckoutPage() {
             <h1 className="text-3xl font-bold text-pink-700 mb-4">{t('orderSuccess')}</h1>
             <p className="text-gray-700 mb-8">{t('orderSuccessDescription')}</p>
             <Link 
-              href="/"
+              href={`/${locale}`}
               className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors inline-block"
             >
               {t('continueShopping')}
@@ -78,7 +79,7 @@ export default function CheckoutPage() {
           <div className="text-center py-16">
             <h1 className="text-3xl font-bold text-pink-700 mb-4">{t('emptyCart')}</h1>
             <p className="text-gray-600 mb-8">{t('cartEmptyCheckout')}</p>
-            <Link href="/catalog" className="text-pink-600 hover:text-pink-700 font-medium">
+            <Link href={`/${locale}/catalog`} className="text-pink-600 hover:text-pink-700 font-medium">
               {t('backToCatalog')}
             </Link>
           </div>
@@ -90,7 +91,7 @@ export default function CheckoutPage() {
   return (
     <Section className="bg-gradient-to-b from-pink-50 to-white py-12">
       <Container>
-        <Link href="/catalog" className="flex items-center text-pink-600 hover:text-pink-700 mb-8">
+        <Link href={`/${locale}/catalog`} className="flex items-center text-pink-600 hover:text-pink-700 mb-8">
           <ChevronLeft size={20} />
           <span>{t('backToCatalog')}</span>
         </Link>

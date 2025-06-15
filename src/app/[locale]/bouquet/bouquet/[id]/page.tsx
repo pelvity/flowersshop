@@ -6,15 +6,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { catalogRepository } from "@/lib/repositories/catalog";
 import AddToCartButton from "@/components/client/add-to-cart-button";
+import { getMessages } from '@/utils/get-messages';
 
 interface BouquetPageProps {
   params: {
     id: string;
+    locale: string;
   };
 }
 
 export default async function BouquetPage({ params }: BouquetPageProps) {
-  const { id } = params;
+  const { id, locale } = params;
+  const messages = await getMessages(locale);
+  const t = (key: string) => messages?.catalog?.[key] || key;
   
   try {
     // Get data from Supabase
@@ -53,7 +57,7 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                     <div className="mb-6">
                       {category && (
                         <Link 
-                          href={`/catalog/category/${category.id}`}
+                          href={`/${locale}/catalog?category=${category.id}`}
                           className="inline-block bg-pink-50 text-pink-600 text-sm px-3 py-1 rounded-full mb-3"
                         >
                           {category.name}
@@ -68,7 +72,7 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                     
                     {bouquet.tags && bouquet.tags.length > 0 && (
                       <div className="mb-6">
-                        <h3 className="text-sm font-medium text-gray-500 mb-2">Tags</h3>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">{t('tags')}</h3>
                         <div className="flex flex-wrap gap-2">
                           {bouquet.tags.map((tag, index) => (
                             <span 
@@ -83,25 +87,25 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                     )}
                     
                     <div className="mb-6">
-                      <h3 className="text-sm font-medium text-gray-500 mb-2">Price</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-2">{t('price')}</h3>
                       <div className="flex items-center">
                         {bouquet.discount_price ? (
                           <>
-                            <span className="text-2xl font-bold text-amber-600">${bouquet.discount_price}</span>
-                            <span className="ml-2 text-lg text-gray-400 line-through">${bouquet.price}</span>
+                            <span className="text-2xl font-bold text-amber-600">₴{bouquet.discount_price}</span>
+                            <span className="ml-2 text-lg text-gray-400 line-through">₴{bouquet.price}</span>
                           </>
                         ) : (
-                          <span className="text-2xl font-bold text-amber-600">${bouquet.price}</span>
+                          <span className="text-2xl font-bold text-amber-600">₴{bouquet.price}</span>
                         )}
                       </div>
                     </div>
                     
                     <div className="mb-6">
-                      <h3 className="text-sm font-medium text-gray-500 mb-2">Availability</h3>
+                      <h3 className="text-sm font-medium text-gray-500 mb-2">{t('availability')}</h3>
                       <div className="flex items-center">
                         <div className={`w-3 h-3 rounded-full mr-2 ${bouquet.in_stock ? 'bg-green-500' : 'bg-red-500'}`}></div>
                         <span className={bouquet.in_stock ? 'text-green-600' : 'text-red-600'}>
-                          {bouquet.in_stock ? 'In Stock' : 'Out of Stock'}
+                          {bouquet.in_stock ? t('inStock') : t('outOfStock')}
                         </span>
                       </div>
                     </div>
@@ -115,10 +119,10 @@ export default async function BouquetPage({ params }: BouquetPageProps) {
                         image={thumbnailUrl}
                       />
                       <Link
-                        href="/catalog"
+                        href={`/${locale}/catalog`}
                         className="inline-block text-center bg-white hover:bg-pink-50 text-pink-600 border border-pink-200 px-6 py-3 rounded-md shadow-sm transition-colors"
                       >
-                        Continue Shopping
+                        {t('continueShopping')}
                       </Link>
                     </div>
                   </div>
