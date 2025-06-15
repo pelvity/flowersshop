@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react";
 import { Container, Section, Card } from "../ui";
 import { useCart } from "@/context/cart-context";
-import { useTranslations } from 'next-intl';
-import { Search } from "lucide-react";
+import { useTranslations, useLocale } from 'next-intl';
+import { Search, Grid, List } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Bouquet, Category, Tag } from "@/lib/supabase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import { BouquetMediaGallery, Lightbox } from "../bouquets/bouquet-media-gallery";
+import { formatPrice } from '@/lib/functions';
 
 // Custom CSS for the scrollbar
 const scrollbarStyles = `
@@ -33,6 +34,7 @@ interface CatalogClientProps {
 
 export default function CatalogClientNew({ initialBouquets, initialCategories, initialTags }: CatalogClientProps) {
   const t = useTranslations('catalog');
+  const locale = useLocale();
   const { addProduct } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -208,10 +210,10 @@ export default function CatalogClientNew({ initialBouquets, initialCategories, i
             <div className="flex items-center justify-between mt-4">
               <div className="flex flex-col">
                 {bouquet.discount_price && (
-                  <span className="text-sm text-gray-400 line-through">₴{bouquet.price}</span>
+                  <span className="text-sm text-gray-400 line-through">{formatPrice(bouquet.price, locale)}</span>
                 )}
                 <span className="text-xl font-bold text-amber-600">
-                  ₴{bouquet.discount_price || bouquet.price}
+                  {formatPrice(bouquet.discount_price || bouquet.price, locale)}
                 </span>
               </div>
               <button 
@@ -279,10 +281,10 @@ export default function CatalogClientNew({ initialBouquets, initialCategories, i
               <div className="flex items-end justify-between">
                 <div className="flex flex-col">
                   {bouquet.discount_price && (
-                    <span className="text-sm text-gray-400 line-through">₴{bouquet.price}</span>
+                    <span className="text-sm text-gray-400 line-through">{formatPrice(bouquet.price, locale)}</span>
                   )}
                   <span className="text-xl font-bold text-amber-600">
-                    ₴{bouquet.discount_price || bouquet.price}
+                    {formatPrice(bouquet.discount_price || bouquet.price, locale)}
                   </span>
                 </div>
                 <button 

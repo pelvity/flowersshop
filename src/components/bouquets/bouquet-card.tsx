@@ -7,15 +7,16 @@ import { Card } from "../ui";
 import { BouquetMediaGallery, Lightbox } from "@/components/bouquets/bouquet-media-gallery";
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { formatPrice } from '@/lib/functions';
 
 interface BouquetCardProps {
   bouquet: Bouquet;
   category?: Category;
-  tags: Tag[];
+  tags?: Tag[];
   onAddToCart: (bouquetId: string) => void;
 }
 
-export default function BouquetCard({ bouquet, category, tags, onAddToCart }: BouquetCardProps) {
+export default function BouquetCard({ bouquet, category, tags = [], onAddToCart }: BouquetCardProps) {
   const t = useTranslations('catalog');
   const router = useRouter();
   const { locale } = useParams();
@@ -74,20 +75,29 @@ export default function BouquetCard({ bouquet, category, tags, onAddToCart }: Bo
           </div>
           
           <div>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {tags.slice(0, 3).map(tag => (
-                <span key={tag.id} className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1 rounded-full">
-                  {tag.name}
-                </span>
-              ))}
-            </div>
+            {tags.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {tags.slice(0, 3).map(tag => (
+                  <span key={tag.id} className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1 rounded-full">
+                    {tag.name}
+                  </span>
+                ))}
+                {tags.length > 3 && (
+                  <span className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1 rounded-full">
+                    +{tags.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex items-end justify-between">
               <div className="flex flex-col">
                 {bouquet.discount_price && (
-                  <span className="text-sm text-gray-400 line-through">₴{bouquet.price}</span>
+                  <span className="text-sm text-gray-400 line-through">
+                    {formatPrice(bouquet.price, locale as string)}
+                  </span>
                 )}
                 <span className="text-xl font-bold text-amber-600">
-                  ₴{bouquet.discount_price || bouquet.price}
+                  {formatPrice(bouquet.discount_price || bouquet.price, locale as string)}
                 </span>
               </div>
               <button 

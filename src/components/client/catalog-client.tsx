@@ -10,6 +10,7 @@ import { Bouquet, Category, Tag } from "@/lib/supabase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import BouquetCard from "../bouquets/bouquet-card";
+import { TagRepository } from "@/lib/repositories/tag-repository";
 
 // Custom CSS for the scrollbar
 const scrollbarStyles = `
@@ -44,6 +45,8 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBouquets, setFilteredBouquets] = useState<Bouquet[]>(initialBouquets);
+  const [bouquetTagsMap, setBouquetTagsMap] = useState<Record<string, Tag[]>>({});
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
   
   // Add scrollbar styles once when component mounts
   useEffect(() => {
@@ -92,6 +95,31 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
 
     applyFilters();
   }, [selectedCategory, selectedTags, searchQuery, initialBouquets]);
+  
+  // Load tags for all bouquets
+  useEffect(() => {
+    async function loadBouquetTags() {
+      setIsLoadingTags(true);
+      const tagRepository = new TagRepository();
+      const tagsMap: Record<string, Tag[]> = {};
+      
+      // Load tags for each bouquet
+      for (const bouquet of initialBouquets) {
+        try {
+          const bouquetTags = await tagRepository.getTagsForBouquet(bouquet.id);
+          tagsMap[bouquet.id] = bouquetTags;
+        } catch (error) {
+          console.error(`Error loading tags for bouquet ${bouquet.id}:`, error);
+          tagsMap[bouquet.id] = [];
+        }
+      }
+      
+      setBouquetTagsMap(tagsMap);
+      setIsLoadingTags(false);
+    }
+    
+    loadBouquetTags();
+  }, [initialBouquets]);
   
   // Handle tag selection/deselection
   const toggleTag = (tagId: string) => {
@@ -191,10 +219,8 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
                   // Find the category for this bouquet
                   const category = initialCategories.find(cat => cat.id === bouquet.category_id);
                   
-                  // Get tags for this bouquet (if tags array exists)
-                  const bouquetTags = initialTags.filter(tag => 
-                    bouquet.tags && Array.isArray(bouquet.tags) && bouquet.tags.includes(tag.id)
-                  );
+                  // Get tags for this bouquet from our map
+                  const bouquetTags = bouquetTagsMap[bouquet.id] || [];
                   
                   return (
                     <BouquetCard 

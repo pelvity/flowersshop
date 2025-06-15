@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Plus, Minus, X, ShoppingCart } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import { toUUID } from "@/utils/uuid";
+import { formatPrice } from '@/lib/functions';
 
 // The Flower type from lib/supabase doesn't have colors or image, so we extend it.
 interface Flower extends FlowerType {
@@ -29,6 +30,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   const router = useRouter();
   const searchParams = useSearchParams();
   const bouquetId = searchParams.get('bouquetId');
+  const locale = useLocale();
   
   // Create Supabase client
   const supabase = createClientComponentClient<Database>();
@@ -278,7 +280,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
                 </div>
                 <div className="p-3">
                   <p className="font-medium text-pink-700 truncate">{flower.name}</p>
-                  <p className="text-sm text-gray-500">${flower.price} {t('each')}</p>
+                  <p className="text-sm text-gray-500">{formatPrice(flower.price, locale)} {t('each')}</p>
                 </div>
               </Card>
             ))}
@@ -317,7 +319,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
                     
                     <div className="flex flex-col items-end">
                       <p className="font-medium text-amber-600">
-                        ${(flower.price * item.quantity).toFixed(2)}
+                        {formatPrice(flower.price * item.quantity, locale)}
                       </p>
                       <select
                         value={item.color}
@@ -342,7 +344,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
           <div className="border-t border-pink-100 pt-4 mt-4">
             <div className="flex justify-between items-center font-bold text-pink-700 text-lg">
               <span>{t('totalPrice')}:</span>
-              <span>${totalPrice.toFixed(2)}</span>
+              <span>{formatPrice(totalPrice, locale)}</span>
             </div>
           </div>
         </div>
@@ -391,7 +393,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
                     </div>
                   </div>
                   <p className="font-medium text-amber-600">
-                    ${(flower.price * item.quantity).toFixed(2)}
+                    {formatPrice(flower.price * item.quantity, locale)}
                   </p>
                 </div>
               );
@@ -402,7 +404,7 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
 
           <div className="flex justify-between items-center font-bold text-pink-700 text-xl">
             <span>{t('totalPrice')}:</span>
-            <span>${totalPrice.toFixed(2)}</span>
+            <span>{formatPrice(totalPrice, locale)}</span>
           </div>
           
           <div className="mt-8 text-center">

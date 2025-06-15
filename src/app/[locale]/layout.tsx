@@ -5,20 +5,19 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { CartProvider } from "@/context/cart-context";
 import CartDrawer from "@/components/cart/cart-drawer";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import MainLayout from "@/components/layout/MainLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export async function generateMetadata({ 
-  params 
+  params
 }: { 
-  params: { locale: string } 
+  params: Promise<{ locale: string }> 
 }): Promise<Metadata> {
   // Get locale safely by awaiting params
   const { locale } = await params;
   console.log(`[METADATA] Generating metadata for locale: ${locale}`);
-  
+
   return {
     title: "Flower Paradise - Fresh Flowers & Bouquets",
     description: "Beautiful flowers for every occasion. Fresh, high-quality blooms delivered with care and love.",
@@ -27,13 +26,13 @@ export async function generateMetadata({
 
 export default async function LocaleLayout({
   children,
-  params,
+  params
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  try {
   const { locale } = await params;
+  try {
     console.log(`[LAYOUT] Locale from params: ${locale}`);
   
     const messages = await getMessages({ locale });
@@ -45,9 +44,9 @@ export default async function LocaleLayout({
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CartProvider>
-              <Header />
-              <main>{children}</main>
-              <Footer />
+            <MainLayout>
+              {children}
+            </MainLayout>
             <CartDrawer />
           </CartProvider>
         </NextIntlClientProvider>

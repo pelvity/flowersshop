@@ -1,9 +1,20 @@
-import HomeClient from "@/components/client/home-client";
+import HomeClient from '@/components/client/home-client';
+import { catalogRepository } from '@/lib/repositories/catalog';
 
-export default function HomePage({ 
+export default async function HomePage({ 
   params 
 }: { 
-  params: { locale: string } 
+  params: Promise<{ locale: string }>
 }) {
-  return <HomeClient />;
-} 
+  const { locale } = await params;
+  
+  // Fetch featured bouquets for the home page
+  const featuredBouquets = await catalogRepository.getFeaturedBouquets();
+  
+  return (
+    <HomeClient 
+      locale={locale}
+      initialFeaturedBouquets={featuredBouquets}
+    />
+  );
+}

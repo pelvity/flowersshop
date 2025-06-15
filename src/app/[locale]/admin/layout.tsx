@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, Package, Grid, Tag, Palette, LogOut, Menu, X, Globe } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import { useTranslations, useLocale } from 'next-intl';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -102,15 +101,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex justify-between items-center">
           <span className="font-semibold text-pink-600">{t('navigation.flowershop')}</span>
-          <div className="flex items-center">
-            <LanguageSwitcher />
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="ml-2 p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="ml-2 p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
       
@@ -178,9 +174,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:border-gray-200 lg:bg-white">
         <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-          <div className="flex items-center flex-shrink-0 px-4 justify-between">
+          <div className="flex items-center flex-shrink-0 px-4">
             <span className="text-xl font-bold text-pink-600">{t('navigation.flowershop')}</span>
-            <LanguageSwitcher />
           </div>
           <div className="mt-8 px-3 space-y-1">
             {navigation.map((item) => {

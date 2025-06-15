@@ -1,11 +1,16 @@
 'use client';
 
-import Image from "next/image";
 import { Button } from "./ui";
 import { useTranslations } from 'next-intl';
 import Link from "next/link";
+import HeroCarousel from "./hero-carousel";
+import { BouquetMedia } from "@/lib/supabase";
 
-export default function Hero() {
+interface HeroProps {
+  carouselMedia: BouquetMedia[];
+}
+
+export default function Hero({ carouselMedia = [] }: HeroProps) {
   const t = useTranslations();
   
   // Function to scroll to the contact section
@@ -61,14 +66,7 @@ export default function Hero() {
         </div>
       </div>
       <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-        <Image
-          src="/placeholder.svg"
-          alt="Beautiful flower arrangements"
-          className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
-          width={800}
-          height={600}
-          priority
-        />
+        <HeroCarousel media={carouselMedia} />
       </div>
     </div>
   );
