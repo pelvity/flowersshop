@@ -8,6 +8,7 @@ import { useBouquetForm } from '@/hooks/useBouquetForm';
 import BouquetDetailsForm from './BouquetDetailsForm';
 import BouquetFlowersForm from './BouquetFlowersForm';
 import BouquetMediaUploader from './BouquetMediaUploader';
+import BouquetTagsManager from './BouquetTagsManager';
 
 export default function ClientBouquetEditPage({ id, locale }: { id: string; locale: string }) {
   const t = useTranslations('admin');
@@ -81,6 +82,12 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
           onUpdateQuantity={updateFlowerQuantity}
           onRemoveFlower={removeFlower}
         />
+        
+        {/* Tags Section */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('tags.title')}</h3>
+          <BouquetTagsManager bouquetId={id} initialTags={bouquet.tags} />
+        </div>
         
         {/* Media Section */}
         <div className="bg-white shadow rounded-lg p-6">

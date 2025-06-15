@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { FlowerRepository, Flower } from '@/lib/supabase';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
+import { formatPrice } from '@/lib/functions';
 
 // Create a logger for this component
 const logger = new ApiLogger('FlowersPage');
@@ -73,11 +74,6 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
     if (!categoryId) return 'Uncategorized';
     const category = categories.find(c => c.id === categoryId);
     return category ? category.name : 'Uncategorized';
-  };
-  
-  // Format price for display
-  const formatPrice = (price: number): string => {
-    return `$${price.toFixed(2)}`;
   };
   
   // Filter flowers based on search query
@@ -193,7 +189,7 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="font-medium text-gray-900">{flower.name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatPrice(flower.price)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatPrice(flower.price, locale)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{getCategoryName(flower.category_id)}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { getFileUrl } from '@/utils/cloudflare-worker';
+import { Tag } from '@/lib/repositories/repository-types';
 
 // Define types
 export type Flower = {
@@ -61,6 +62,7 @@ export type Bouquet = {
   featured: boolean;
   flowers: FlowerWithQuantity[];
   media: BouquetMedia[];
+  tags: Tag[];
 };
 
 export type Category = {
@@ -83,7 +85,8 @@ export function useBouquetData(bouquetId: string) {
     in_stock: true,
     featured: false,
     flowers: [],
-    media: []
+    media: [],
+    tags: []
   });
   
   const [categories, setCategories] = useState<Category[]>([]);
@@ -159,6 +162,25 @@ export function useBouquetData(bouquetId: string) {
           // This allows the app to function before migrations are run
         }
         
+        // Fetch bouquet tags
+        const { data: bouquetTags, error: tagsError } = await supabase
+          .from('bouquet_tags')
+          .select(`
+            tags (
+              id,
+              name
+            )
+          `)
+          .eq('bouquet_id', bouquetId);
+
+        if (tagsError) {
+          console.warn('Error fetching bouquet tags:', tagsError);
+        }
+
+        const transformedTags: Tag[] = bouquetTags
+          ? bouquetTags.map((bt: any) => bt.tags).filter(Boolean)
+          : [];
+        
         // Transform the bouquet flowers data to the format expected by the component
         const transformedFlowers: FlowerWithQuantity[] = [];
         if (bouquetFlowers && bouquetFlowers.length > 0) {
@@ -180,7 +202,8 @@ export function useBouquetData(bouquetId: string) {
           price: bouquetData.price.toString(),
           discount_price: bouquetData.discount_price ? bouquetData.discount_price.toString() : '',
           flowers: transformedFlowers,
-          media: bouquetMedia || []
+          media: bouquetMedia || [],
+          tags: transformedTags || []
         });
         
         // Process and format media items with proper URLs

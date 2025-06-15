@@ -1,5 +1,5 @@
 import { createClient as createClientBrowser } from '@/utils/supabase/client';
-import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createClient as createServerClient, createAdminClient } from '@/utils/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Function to create a logging-enabled Supabase client for browser
@@ -12,6 +12,13 @@ export function createLoggingClient(): SupabaseClient {
 // Function to create a logging-enabled Supabase client for server components
 export async function createServerLoggingClient(): Promise<SupabaseClient> {
   const supabase = await createServerClient();
+  
+  return createLoggingProxy(supabase);
+}
+
+// Function to create a logging-enabled Supabase client for admin operations
+export async function createAdminLoggingClient(): Promise<SupabaseClient> {
+  const supabase = await createAdminClient();
   
   return createLoggingProxy(supabase);
 }

@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Plus, Minus, X } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { formatPrice } from '@/lib/functions';
 
 type Flower = {
   id: string;
@@ -36,6 +37,7 @@ export default function BouquetFlowersForm({
   onRemoveFlower
 }: BouquetFlowersFormProps) {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFlowerDropdownOpen, setIsFlowerDropdownOpen] = useState(false);
   
@@ -82,7 +84,7 @@ export default function BouquetFlowersForm({
                 >
                   <div className="flex items-center">
                     <span className="font-medium block truncate">{flower.name}</span>
-                    <span className="ml-2 text-sm text-gray-500">${flower.price.toFixed(2)}</span>
+                    <span className="ml-2 text-sm text-gray-500">{formatPrice(flower.price, locale)}</span>
                   </div>
                 </div>
               ))}
@@ -101,7 +103,7 @@ export default function BouquetFlowersForm({
                 <div className="flex items-center">
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">{flower.name}</p>
-                    <p className="text-sm text-gray-500">${flower.price.toFixed(2)} each</p>
+                    <p className="text-sm text-gray-500">{formatPrice(flower.price, locale)} {t('common.each')}</p>
                   </div>
                 </div>
                 

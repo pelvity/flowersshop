@@ -4,12 +4,16 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Flower2, Plus, Edit, Trash2, ArrowUpDown, Search } from 'lucide-react';
 import { Flower } from '@/lib/supabase';
+import { useParams } from 'next/navigation';
 
 interface FlowersClientProps {
   initialFlowers: Flower[];
 }
 
 export default function FlowersClient({ initialFlowers }: FlowersClientProps) {
+  const params = useParams();
+  const locale = params.locale as string;
+  
   const [flowers, setFlowers] = useState<Flower[]>(initialFlowers);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,17 +86,17 @@ export default function FlowersClient({ initialFlowers }: FlowersClientProps) {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Flower Inventory</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Manage Flowers</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Manage your individual flowers for bouquet creation
+            Create, edit, and manage your individual flowers
           </p>
         </div>
         <Link 
-          href="/admin/flowers/new"
+          href={`/${locale}/admin/flowers/new`}
           className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
         >
           <Plus className="h-5 w-5 mr-1" />
-          Add New Flower
+          Create Flower
         </Link>
       </div>
       
@@ -152,20 +156,20 @@ export default function FlowersClient({ initialFlowers }: FlowersClientProps) {
       )}
 
       {/* Flowers List */}
-      {sortedFlowers.length === 0 ? (
+      {filteredFlowers.length === 0 ? (
         <div className="bg-white p-8 text-center rounded-lg shadow">
           <Flower2 className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-lg font-medium text-gray-900">No flowers found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm ? 'Try a different search term' : 'Get started by adding a new flower'}
+            {searchTerm ? 'Try adjusting your search' : 'Get started by creating a new flower'}
           </p>
           <div className="mt-6">
             <Link
-              href="/admin/flowers/new"
+              href={`/${locale}/admin/flowers/new`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
             >
               <Plus className="h-5 w-5 mr-1" />
-              Add New Flower
+              Create Flower
             </Link>
           </div>
         </div>
@@ -239,7 +243,7 @@ export default function FlowersClient({ initialFlowers }: FlowersClientProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/flowers/${flower.id}/edit`} className="text-pink-600 hover:text-pink-900 mr-4">
+                    <Link href={`/${locale}/admin/flowers/${flower.id}/edit`} className="text-pink-600 hover:text-pink-900 mr-4">
                       <Edit className="h-4 w-4 inline-block mr-1" />
                       Edit
                     </Link>

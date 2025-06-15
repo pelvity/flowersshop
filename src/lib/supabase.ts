@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { createServerLoggingClient } from '@/utils/supabase-logger';
+import { createAdminLoggingClient, createServerLoggingClient } from '@/utils/supabase-logger';
 import { Database } from '@/types/supabase';
 import { toUUID, generateUUID } from '@/utils/uuid';
 
@@ -552,7 +552,7 @@ export const TagRepository = {
     const startTime = performance.now();
     
     try {
-      const supabase = await createServerLoggingClient();
+      const supabase = await createAdminLoggingClient();
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -575,7 +575,7 @@ export const TagRepository = {
     const startTime = performance.now();
     
     try {
-      const supabase = await createServerLoggingClient();
+      const supabase = await createAdminLoggingClient();
       const { data, error } = await supabase
         .from('tags')
         .select('*')
@@ -599,7 +599,7 @@ export const TagRepository = {
     const startTime = performance.now();
     
     try {
-      const supabase = await createServerLoggingClient();
+      const supabase = await createAdminLoggingClient();
       const tagWithId = {
         ...tag,
         id: generateUUID()
@@ -627,7 +627,7 @@ export const TagRepository = {
     const startTime = performance.now();
     
     try {
-      const supabase = await createServerLoggingClient();
+      const supabase = await createAdminLoggingClient();
       const { data, error } = await supabase
         .from('tags')
         .update(tag)
@@ -652,7 +652,7 @@ export const TagRepository = {
     const startTime = performance.now();
     
     try {
-      const supabase = await createServerLoggingClient();
+      const supabase = await createAdminLoggingClient();
       const { error } = await supabase
         .from('tags')
         .delete()

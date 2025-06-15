@@ -4,11 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
 import { Bouquet as BaseBouquet } from '@/lib/supabase';
+import { formatPrice } from '@/lib/functions';
 
 interface Bouquet extends BaseBouquet {
   image_url?: string | null;
@@ -27,6 +28,7 @@ export default function CartDrawer() {
   const t = useTranslations();
   const cartT = useTranslations('cart');
   const supabase = createClientComponentClient<Database>();
+  const locale = useLocale();
   const [products, setProducts] = useState<Bouquet[]>([]);
   const placeholderImage = '/placeholder.svg';
 
@@ -142,9 +144,9 @@ export default function CartDrawer() {
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between">
                             <h3 className="text-base font-medium text-pink-700">{product.name}</h3>
-                            <p className="text-base font-medium text-amber-600">₴{product.price * item.quantity}</p>
+                            <p className="text-base font-medium text-amber-600">{formatPrice(product.price * item.quantity, locale)}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">₴{product.price} {t('common.each')}</p>
+                          <p className="mt-1 text-sm text-gray-500">{formatPrice(product.price, locale)} {t('common.each')}</p>
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
@@ -200,7 +202,7 @@ export default function CartDrawer() {
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between">
                             <h3 className="text-base font-medium text-pink-700">{name}</h3>
-                            <p className="text-base font-medium text-amber-600">₴{item.price * item.quantity}</p>
+                            <p className="text-base font-medium text-amber-600">{formatPrice(item.price * item.quantity, locale)}</p>
                           </div>
                           <p className="mt-1 text-sm text-gray-500">{t('common.customBouquet')}</p>
                           
@@ -248,7 +250,7 @@ export default function CartDrawer() {
           <div className="border-t border-pink-100 p-4">
             <div className="flex justify-between text-base font-medium text-gray-900 mb-4">
               <p>{cartT('subtotal')}</p>
-              <p className="text-amber-600">₴{totalPrice}</p>
+              <p className="text-amber-600">{formatPrice(totalPrice, locale)}</p>
             </div>
             <div className="flex flex-col space-y-2">
               <Link 

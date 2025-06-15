@@ -162,23 +162,26 @@ class SupabaseCatalogRepository implements CatalogRepository {
     
     if (error) throw error;
     
-    // For each bouquet, get its thumbnail image
+    // For each bouquet, get all media items
     if (data && data.length > 0) {
       const bouquetsWithMedia = await Promise.all(
         data.map(async (bouquet) => {
-          const { data: media } = await supabase
+          // Get all media items for this bouquet
+          const { data: mediaItems } = await supabase
             .from('bouquet_media')
             .select('*')
             .eq('bouquet_id', bouquet.id)
-            .eq('is_thumbnail', true)
-            .limit(1)
-            .single();
+            .order('display_order', { ascending: true });
           
-          // Add the thumbnail URL to the bouquet object
+          // Find the thumbnail image
+          const thumbnail = mediaItems?.find(item => item.is_thumbnail) || mediaItems?.[0] || null;
+          
+          // Add media and thumbnail to the bouquet object
           return {
             ...bouquet,
-            thumbnail: media || null,
-            image: media ? media.file_url : null
+            media: mediaItems || [],
+            image: thumbnail?.file_url || null,
+            thumbnail
           };
         })
       );

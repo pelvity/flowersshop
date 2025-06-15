@@ -5,12 +5,16 @@ import Link from 'next/link';
 import { Grid, Plus, Edit, Trash2, Search } from 'lucide-react';
 import { Category, CategoryRepository } from '@/lib/supabase';
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 
 interface CategoriesClientProps {
   initialCategories: Category[];
 }
 
 export default function CategoriesClient({ initialCategories }: CategoriesClientProps) {
+  const params = useParams();
+  const locale = params.locale as string;
+  
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,17 +59,17 @@ export default function CategoriesClient({ initialCategories }: CategoriesClient
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{t('categories.title')}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Manage Categories</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {t('categories.subtitle')}
+            Create, edit, and manage your bouquet categories
           </p>
         </div>
         <Link 
-          href="/admin/categories/new"
+          href={`/${locale}/admin/categories/new`}
           className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
         >
           <Plus className="h-5 w-5 mr-1" />
-          {t('categories.newCategory')}
+          Create Category
         </Link>
       </div>
       
@@ -96,17 +100,17 @@ export default function CategoriesClient({ initialCategories }: CategoriesClient
       {filteredCategories.length === 0 ? (
         <div className="bg-white p-8 text-center rounded-lg shadow">
           <Grid className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900">{t('categories.noCategories')}</h3>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No categories found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm ? t('common.tryDifferentSearch') : t('categories.getStarted')}
+            {searchTerm ? 'Try adjusting your search' : 'Get started by creating a new category'}
           </p>
           <div className="mt-6">
             <Link
-              href="/admin/categories/new"
+              href={`/${locale}/admin/categories/new`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
             >
               <Plus className="h-5 w-5 mr-1" />
-              {t('categories.newCategory')}
+              Create Category
             </Link>
           </div>
         </div>
@@ -145,7 +149,7 @@ export default function CategoriesClient({ initialCategories }: CategoriesClient
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/admin/categories/${category.id}/edit`} className="text-pink-600 hover:text-pink-900 mr-4">
+                    <Link href={`/${locale}/admin/categories/${category.id}/edit`} className="text-pink-600 hover:text-pink-900 mr-4">
                       <Edit className="h-4 w-4 inline-block mr-1" />
                       {t('common.edit')}
                     </Link>

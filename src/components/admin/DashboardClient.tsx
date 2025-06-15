@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Package, Flower2, Tag, AlertCircle, ChevronRight, ShoppingBasket, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { Flower, Bouquet } from '@/lib/supabase';
+import { useTranslations } from 'next-intl';
 
 interface DashboardStats {
   totalBouquets: number;
@@ -30,48 +31,49 @@ export default function DashboardClient({
   const [stats, setStats] = useState<DashboardStats>(initialStats);
   const [featuredBouquets, setFeaturedBouquets] = useState<Bouquet[]>(initialFeaturedBouquets);
   const [lowStockFlowers, setLowStockFlowers] = useState<Flower[]>(initialLowStockFlowers);
+  const t = useTranslations('admin');
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-6">Inventory Management Dashboard</h1>
+      <h1 className="text-2xl font-semibold mb-6">{t('dashboard.title')}</h1>
       
       {/* Admin Quick Links */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-medium mb-4">Quick Actions</h2>
+        <h2 className="text-lg font-medium mb-4">{t('dashboard.quickActions')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Link href={`/${locale}/admin/bouquets/create`} className="flex items-center p-3 bg-pink-50 hover:bg-pink-100 rounded-lg transition">
             <span className="bg-pink-100 p-2 rounded-md mr-3">
               <Package className="h-5 w-5 text-pink-600" />
             </span>
-            <span>Add New Bouquet</span>
+            <span>{t('dashboard.addNewBouquet')}</span>
           </Link>
           
           <Link href={`/${locale}/admin/flowers/create`} className="flex items-center p-3 bg-green-50 hover:bg-green-100 rounded-lg transition">
             <span className="bg-green-100 p-2 rounded-md mr-3">
               <Flower2 className="h-5 w-5 text-green-600" />
             </span>
-            <span>Add New Flower</span>
+            <span>{t('dashboard.addNewFlower')}</span>
           </Link>
           
           <Link href={`/${locale}/admin/categories`} className="flex items-center p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition">
             <span className="bg-blue-100 p-2 rounded-md mr-3">
               <Tag className="h-5 w-5 text-blue-600" />
             </span>
-            <span>Manage Categories</span>
+            <span>{t('dashboard.manageCategories')}</span>
           </Link>
           
           <Link href={`/${locale}/admin/flowers`} className="flex items-center p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition">
             <span className="bg-amber-100 p-2 rounded-md mr-3">
               <Edit className="h-5 w-5 text-amber-600" />
             </span>
-            <span>Update Inventory</span>
+            <span>{t('dashboard.updateInventory')}</span>
           </Link>
           
           <Link href={`/${locale}/admin/bouquets`} className="flex items-center p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition">
             <span className="bg-purple-100 p-2 rounded-md mr-3">
               <ShoppingBasket className="h-5 w-5 text-purple-600" />
             </span>
-            <span>Manage Bouquets</span>
+            <span>{t('dashboard.manageBouquets')}</span>
           </Link>
         </div>
       </div>
@@ -81,7 +83,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Bouquets</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.totalBouquets')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.totalBouquets}</h3>
             </div>
             <span className="bg-pink-100 p-3 rounded-full">
@@ -90,7 +92,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/bouquets`} className="text-sm text-pink-600 hover:text-pink-800 flex items-center">
-              View all bouquets
+              {t('dashboard.viewAllBouquets')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -99,7 +101,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Total Flowers</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.totalFlowers')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.totalFlowers}</h3>
             </div>
             <span className="bg-green-100 p-3 rounded-full">
@@ -108,7 +110,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/flowers`} className="text-sm text-green-600 hover:text-green-800 flex items-center">
-              View all flowers
+              {t('dashboard.viewAllFlowers')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -117,7 +119,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Low Stock Flowers</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.lowStockFlowers')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.lowStockFlowers}</h3>
             </div>
             <span className="bg-red-100 p-3 rounded-full">
@@ -126,7 +128,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/flowers`} className="text-sm text-red-600 hover:text-red-800 flex items-center">
-              Check inventory
+              {t('dashboard.checkInventory')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -135,7 +137,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Categories</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.categories')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.totalCategories}</h3>
             </div>
             <span className="bg-blue-100 p-3 rounded-full">
@@ -144,7 +146,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/categories`} className="text-sm text-blue-600 hover:text-blue-800 flex items-center">
-              Manage categories
+              {t('dashboard.manageCategories')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -153,7 +155,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Featured Bouquets</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.featuredBouquets')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.totalFeaturedBouquets}</h3>
             </div>
             <span className="bg-purple-100 p-3 rounded-full">
@@ -162,7 +164,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/bouquets`} className="text-sm text-purple-600 hover:text-purple-800 flex items-center">
-              Manage featured
+              {t('dashboard.manageFeatured')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -171,7 +173,7 @@ export default function DashboardClient({
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm text-gray-500 mb-1">In-Stock Bouquets</p>
+              <p className="text-sm text-gray-500 mb-1">{t('dashboard.inStockBouquets')}</p>
               <h3 className="text-3xl font-bold text-gray-900">{stats.totalInStockBouquets}</h3>
             </div>
             <span className="bg-emerald-100 p-3 rounded-full">
@@ -180,7 +182,7 @@ export default function DashboardClient({
           </div>
           <div className="mt-4">
             <Link href={`/${locale}/admin/bouquets`} className="text-sm text-emerald-600 hover:text-emerald-800 flex items-center">
-              View stock levels
+              {t('dashboard.viewStockLevels')}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
@@ -191,39 +193,39 @@ export default function DashboardClient({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Featured Bouquets */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-medium mb-4">Featured Bouquets</h3>
+          <h3 className="text-lg font-medium mb-4">{t('dashboard.featuredBouquets')}</h3>
           {featuredBouquets.length > 0 ? (
             <ul className="divide-y divide-gray-200">
               {featuredBouquets.map(bouquet => (
                 <li key={bouquet.id} className="py-3 flex items-center justify-between">
                   <span className="font-medium text-gray-800">{bouquet.name}</span>
                   <span className={`text-sm font-semibold ${bouquet.in_stock ? 'text-green-600' : 'text-red-600'}`}>
-                    {bouquet.in_stock ? 'In Stock' : 'Out of Stock'}
+                    {bouquet.in_stock ? t('dashboard.inStock') : t('dashboard.outOfStock')}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No featured bouquets.</p>
+            <p className="text-gray-500">{t('dashboard.noFeaturedBouquets')}</p>
           )}
         </div>
         
         {/* Low Stock Flowers */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-medium mb-4 text-red-600">Low Stock Flowers</h3>
+          <h3 className="text-lg font-medium mb-4 text-red-600">{t('dashboard.lowStockFlowers')}</h3>
           {lowStockFlowers.length > 0 ? (
             <ul className="divide-y divide-gray-200">
               {lowStockFlowers.map(flower => (
                 <li key={flower.id} className="py-3 flex items-center justify-between">
                   <span className="font-medium text-gray-800">{flower.name}</span>
                   <span className="text-sm font-semibold text-red-600">
-                    {flower.in_stock} remaining
+                    {flower.in_stock} {t('dashboard.remaining')}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">All flowers are well-stocked.</p>
+            <p className="text-gray-500">{t('dashboard.allFlowersWellStocked')}</p>
           )}
         </div>
       </div>

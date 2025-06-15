@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Plus, X, Flower2 } from 'lucide-react';
 import { Bouquet, Category, Tag, Flower, BouquetFlower } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
+import BouquetTagsManager from './bouquets/BouquetTagsManager';
+import { useTranslations } from 'next-intl';
+import { formatPrice } from '@/lib/functions';
 
 interface BouquetFormProps {
   bouquet?: Bouquet;
@@ -27,12 +30,14 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
+  const t = useTranslations('admin');
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>(initialCategories || []);
   const [tags, setTags] = useState<Tag[]>(initialTags || []);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [flowers, setFlowers] = useState<Flower[]>(initialFlowers || []);
   const [bouquetFlowers, setBouquetFlowers] = useState<FlowerWithQuantity[]>([]);
   
@@ -42,7 +47,6 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
     price: bouquet?.price || 0,
     discount_price: bouquet?.discount_price || null,
     category_id: bouquet?.category_id || '',
-    tags: bouquet?.tags || [],
     featured: bouquet?.featured || false,
     in_stock: bouquet?.in_stock || true,
   });
@@ -89,7 +93,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
           if (!initialFlowers) setFlowers(flowersData);
         }
 
-        // If editing, fetch the bouquet flowers
+        // If editing, fetch the bouquet flowers and set initial tags
         if (isEdit && bouquet) {
           const bouquetWithFlowers = await fetch(`/api/bouquets/${bouquet.id}/flowers`).then(res => res.json());
           if (bouquetWithFlowers && bouquetWithFlowers.flowers) {
@@ -100,17 +104,32 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
             }));
             setBouquetFlowers(flowersWithQuantities);
           }
+          
+          // Set initial tags if available
+          // Use type assertion to handle potential missing tags property
+          const bouquetTags = (bouquet as any).tags;
+          if (bouquetTags && Array.isArray(bouquetTags)) {
+            // Convert string tags to Tag objects if needed
+            const initialTagObjects = bouquetTags.map(tag => {
+              if (typeof tag === 'string') {
+                const foundTag = tags.find(t => t.name === tag || t.id === tag);
+                return foundTag || { id: tag, name: tag, created_at: '', updated_at: '' };
+              }
+              return tag as Tag;
+            });
+            setSelectedTags(initialTagObjects);
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
-        setError('Failed to load required data. Please try again.');
+        setError(t('bouquets.loadError'));
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchData();
-  }, [isEdit, bouquet, initialCategories, initialTags, initialFlowers]);
+  }, [isEdit, bouquet, initialCategories, initialTags, initialFlowers, tags, t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -124,17 +143,6 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-  };
-
-  const handleTagToggle = (tagName: string) => {
-    setFormData(prev => {
-      const currentTags = [...prev.tags];
-      if (currentTags.includes(tagName)) {
-        return { ...prev, tags: currentTags.filter(t => t !== tagName) };
-      } else {
-        return { ...prev, tags: [...currentTags, tagName] };
-      }
-    });
   };
 
   const handleAddFlower = () => {
@@ -176,6 +184,11 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
     );
   };
 
+  // Handle tag selection from the TagsManager component
+  const handleTagsChange = (newTags: Tag[]) => {
+    setSelectedTags(newTags);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -185,6 +198,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
       // Prepare bouquet data
       const bouquetData = {
         ...formData,
+        tags: selectedTags.map(tag => tag.id),
         flowers: bouquetFlowers.map(bf => ({
           id: bf.id,
           quantity: bf.quantity
@@ -220,7 +234,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
       router.refresh();
     } catch (err) {
       console.error('Error saving bouquet:', err);
-      setError('Failed to save bouquet. Please try again.');
+      setError(t('bouquets.saveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -236,7 +250,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -248,12 +262,12 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
         <div className="md:col-span-1">
           <div className="px-4 sm:px-0">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
-              {isEdit ? 'Edit Bouquet' : 'New Bouquet'}
+              {isEdit ? t('bouquets.edit') : t('bouquets.create')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               {isEdit 
-                ? 'Update the details of this bouquet.' 
-                : 'Create a new bouquet for your shop.'}
+                ? t('bouquets.editDescription') 
+                : t('bouquets.createDescription')}
             </p>
           </div>
         </div>
@@ -265,7 +279,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   <div className="rounded-md bg-red-50 p-4 mb-6">
                     <div className="flex">
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">Error</h3>
+                        <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
                         <div className="mt-2 text-sm text-red-700">
                           <p>{error}</p>
                         </div>
@@ -277,7 +291,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                 <div className="grid grid-cols-6 gap-6">
                   <div className="col-span-6 sm:col-span-4">
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Name *
+                      {t('common.name')} *
                     </label>
                     <input
                       type="text"
@@ -293,14 +307,14 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   
                   <div className="col-span-6">
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      Description
+                      {t('common.description')}
                     </label>
                     <textarea
                       id="description"
                       name="description"
                       rows={3}
                       className="mt-1 focus:ring-pink-500 focus:border-pink-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      placeholder="Describe this bouquet"
+                      placeholder={t('bouquets.descriptionPlaceholder')}
                       value={formData.description || ''}
                       onChange={handleChange}
                       disabled={isSubmitting}
@@ -309,12 +323,12 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   
                   {/* Flower selection section */}
                   <div className="col-span-6 border-t border-gray-200 pt-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Bouquet Flowers</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.flowers')}</h3>
                     
                     <div className="grid grid-cols-6 gap-3">
                       <div className="col-span-6 sm:col-span-3">
                         <label htmlFor="flower" className="block text-sm font-medium text-gray-700">
-                          Flower
+                          {t('bouquets.flower')}
                         </label>
                         <select
                           id="flower"
@@ -323,10 +337,10 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                           onChange={(e) => setSelectedFlowerId(e.target.value)}
                           disabled={isSubmitting}
                         >
-                          <option value="">Select a flower</option>
+                          <option value="">{t('bouquets.selectFlower')}</option>
                           {flowers.map((flower) => (
                             <option key={flower.id} value={flower.id}>
-                              {flower.name} - ${flower.price.toFixed(2)}
+                              {flower.name} - {formatPrice(flower.price, locale)}
                             </option>
                           ))}
                         </select>
@@ -334,7 +348,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                       
                       <div className="col-span-6 sm:col-span-2">
                         <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
-                          Quantity
+                          {t('bouquets.quantity')}
                         </label>
                         <input
                           type="number"
@@ -349,7 +363,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                       
                       <div className="col-span-6 sm:col-span-1">
                         <label className="invisible block text-sm font-medium text-gray-700">
-                          Add
+                          {t('bouquets.add')}
                         </label>
                         <button
                           type="button"
@@ -358,17 +372,17 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                           disabled={!selectedFlowerId || isSubmitting}
                         >
                           <Plus className="-ml-0.5 mr-2 h-4 w-4" />
-                          Add
+                          {t('bouquets.add')}
                         </button>
                       </div>
                     </div>
                     
                     {/* Selected flowers list */}
                     <div className="mt-6">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Flowers</h4>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">{t('bouquets.selectedFlowers')}</h4>
                       
                       {bouquetFlowers.length === 0 ? (
-                        <p className="text-sm text-gray-500">No flowers added to this bouquet yet.</p>
+                        <p className="text-sm text-gray-500">{t('bouquets.noFlowersSelected')}</p>
                       ) : (
                         <ul className="divide-y divide-gray-200 border rounded-md">
                           {bouquetFlowers.map((flower) => (
@@ -380,7 +394,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                               
                               <div className="flex items-center">
                                 <div className="flex items-center mr-4">
-                                  <label htmlFor={`qty-${flower.id}`} className="sr-only">Quantity</label>
+                                  <label htmlFor={`qty-${flower.id}`} className="sr-only">{t('bouquets.quantity')}</label>
                                   <input
                                     type="number"
                                     id={`qty-${flower.id}`}
@@ -393,7 +407,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                                 </div>
                                 
                                 <span className="text-sm text-gray-500 mr-4">
-                                  ${(flower.price * flower.quantity).toFixed(2)}
+                                  {formatPrice(flower.price * flower.quantity, locale)}
                                 </span>
                                 
                                 <button
@@ -409,9 +423,9 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                           ))}
                           
                           <li className="py-3 px-4 flex justify-between bg-gray-50">
-                            <span className="text-sm font-medium text-gray-700">Total Flowers Cost:</span>
+                            <span className="text-sm font-medium text-gray-700">{t('bouquets.totalFlowersCost')}:</span>
                             <span className="text-sm font-medium text-gray-900">
-                              ${calculateTotalPrice().toFixed(2)}
+                              {formatPrice(calculateTotalPrice(), locale)}
                             </span>
                           </li>
                         </ul>
@@ -421,11 +435,11 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   
                   <div className="col-span-6 sm:col-span-3">
                     <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                      Price *
+                      {t('common.price')} *
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">$</span>
+                        <span className="text-gray-500 sm:text-sm">zł</span>
                       </div>
                       <input
                         type="number"
@@ -442,17 +456,17 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                       />
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      Suggested price based on flowers: ${calculateTotalPrice().toFixed(2)}
+                      {t('bouquets.suggestedPrice')}: {formatPrice(calculateTotalPrice(), locale)}
                     </p>
                   </div>
                   
                   <div className="col-span-6 sm:col-span-3">
                     <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700">
-                      Discount Price (Optional)
+                      {t('common.discountPrice')}
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">$</span>
+                        <span className="text-gray-500 sm:text-sm">zł</span>
                       </div>
                       <input
                         type="number"
@@ -471,7 +485,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   
                   <div className="col-span-6 sm:col-span-3">
                     <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">
-                      Category
+                      {t('common.category')}
                     </label>
                     <select
                       id="category_id"
@@ -481,7 +495,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                       onChange={handleChange}
                       disabled={isSubmitting}
                     >
-                      <option value="">Select a category</option>
+                      <option value="">{t('common.selectCategory')}</option>
                       {categories?.map((category) => (
                         <option key={category.id} value={category.id}>
                           {category.name}
@@ -492,21 +506,13 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   
                   <div className="col-span-6">
                     <fieldset>
-                      <legend className="text-sm font-medium text-gray-700">Tags</legend>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {tags?.map(tag => (
-                          <span 
-                            key={tag.id}
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium cursor-pointer ${
-                              formData.tags.includes(tag.name)
-                                ? 'bg-pink-100 text-pink-800 hover:bg-pink-200'
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                            }`}
-                            onClick={() => handleTagToggle(tag.name)}
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
+                      <legend className="text-sm font-medium text-gray-700">{t('tags.title')}</legend>
+                      <div className="mt-2">
+                        <BouquetTagsManager 
+                          bouquetId={bouquet?.id || ''} 
+                          initialTags={selectedTags} 
+                          onTagsChange={handleTagsChange}
+                        />
                       </div>
                     </fieldset>
                   </div>
@@ -523,7 +529,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                         disabled={isSubmitting}
                       />
                       <label htmlFor="featured" className="ml-2 block text-sm text-gray-700">
-                        Featured bouquet
+                        {t('common.featured')}
                       </label>
                     </div>
                   </div>
@@ -540,7 +546,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                         disabled={isSubmitting}
                       />
                       <label htmlFor="in_stock" className="ml-2 block text-sm text-gray-700">
-                        In stock
+                        {t('common.inStock')}
                       </label>
                     </div>
                   </div>
@@ -553,14 +559,14 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                   onClick={() => router.push(`/${locale}/admin/bouquets`)}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Saving...' : isEdit ? 'Update Bouquet' : 'Create Bouquet'}
+                  {isSubmitting ? t('common.saving') : isEdit ? t('bouquets.update') : t('bouquets.create')}
                 </button>
               </div>
             </div>

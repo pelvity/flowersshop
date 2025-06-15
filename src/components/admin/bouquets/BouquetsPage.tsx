@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Loader2, Tag as TagIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -9,6 +9,7 @@ import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { toUUID } from '@/utils/uuid';
 import { getFileUrl } from '@/utils/cloudflare-worker';
+import { formatPrice } from '@/lib/functions';
 
 // Create a logger for this component
 const logger = new ApiLogger('BouquetsPage');
@@ -22,6 +23,11 @@ type BouquetMedia = {
 };
 
 // Define types for Supabase responses
+type Tag = {
+  id: string;
+  name: string;
+};
+
 type Bouquet = {
   id: string;
   name: string;
@@ -35,6 +41,7 @@ type Bouquet = {
   updated_at: string;
   image_url?: string | null;
   media: BouquetMedia[];
+  tags: Tag[];
 };
 
 type Category = {
@@ -88,7 +95,27 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
         if (bouquetsResult.error) throw bouquetsResult.error;
         if (categoriesResult.error) throw categoriesResult.error;
         
-        setBouquets(bouquetsResult.data || []);
+        // Fetch tags for each bouquet
+        const bouquetsWithTags = await Promise.all(
+          (bouquetsResult.data || []).map(async (bouquet) => {
+            try {
+              const { data: tagData, error: tagError } = await supabase
+                .from('bouquet_tags')
+                .select('tag:tag_id(id, name)')
+                .eq('bouquet_id', bouquet.id);
+              
+              if (tagError) throw tagError;
+              
+              const tags = tagData?.map(item => item.tag) || [];
+              return { ...bouquet, tags };
+            } catch (err) {
+              console.error(`Error fetching tags for bouquet ${bouquet.id}:`, err);
+              return { ...bouquet, tags: [] };
+            }
+          })
+        );
+        
+        setBouquets(bouquetsWithTags);
         setCategories(categoriesResult.data || []);
         
         logger.response('GET', 'bouquets', 200, startTime, {
@@ -143,11 +170,6 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
     if (!categoryId) return 'Uncategorized';
     const category = categories.find(c => c.id === categoryId);
     return category ? category.name : 'Uncategorized';
-  };
-  
-  // Format price for display
-  const formatPrice = (price: number): string => {
-    return `$${price.toFixed(2)}`;
   };
 
   if (loading) {
@@ -247,12 +269,26 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
                         {t('bouquets.featured')}
                       </span>
                     )}
+                    {/* Display tags */}
+                    {bouquet.tags && bouquet.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {bouquet.tags.map(tag => (
+                          <span 
+                            key={tag.id}
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800"
+                          >
+                            <TagIcon size={12} className="mr-1" />
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    {formatPrice(bouquet.price)}
+                    {formatPrice(bouquet.price, locale)}
                     {bouquet.discount_price && (
                       <span className="ml-2 line-through text-gray-400">
-                        {formatPrice(bouquet.discount_price)}
+                        {formatPrice(bouquet.discount_price, locale)}
                       </span>
                     )}
                   </td>

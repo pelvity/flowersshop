@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { generateUUID } from '@/utils/uuid';
 import ImageUploadR2 from '@/components/common/ImageUploadR2';
+import { getCurrencyByLocale } from '@/lib/functions';
 
 // Create a logger for this component
 const logger = new ApiLogger('CreateFlowerPage');
@@ -22,6 +23,7 @@ type Category = {
 
 export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
   const t = useTranslations('admin');
+  const currentLocale = useLocale();
   const router = useRouter();
   
   // Initial empty state for a new flower
@@ -41,6 +43,16 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [colorInput, setColorInput] = useState('');
+
+  const currencyCode = getCurrencyByLocale(currentLocale);
+  
+  // Get currency symbol from the locale
+  const currencySymbol = new Intl.NumberFormat(currentLocale, {
+    style: 'currency',
+    currency: currencyCode,
+  })
+    .formatToParts(0)
+    .find(part => part.type === 'currency')?.value || 'zł';
 
   // Fetch categories
   useEffect(() => {
@@ -232,7 +244,7 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="text-gray-500 sm:text-sm">$</span>
+                  <span className="text-gray-500 sm:text-sm">{currencySymbol}</span>
                 </div>
                 <input
                   type="number"
