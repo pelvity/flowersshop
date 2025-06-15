@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Package, Plus, Edit, Trash2, Search, Filter, Eye } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Search, Filter, Eye, Tag } from 'lucide-react';
 import { Bouquet, Category, BouquetRepository } from '@/lib/supabase';
+import { useParams } from 'next/navigation';
 
 interface BouquetsClientProps {
   initialBouquets: Bouquet[];
@@ -11,14 +12,30 @@ interface BouquetsClientProps {
 }
 
 export default function BouquetsClient({ initialBouquets, initialCategories }: BouquetsClientProps) {
+  const params = useParams();
+  const locale = params.locale as string;
+  
   const [bouquets, setBouquets] = useState<Bouquet[]>(initialBouquets);
   const [categories] = useState<Category[]>(initialCategories);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [tagFilter, setTagFilter] = useState<string>('');
 
-  // Filter bouquets by search term and category
+  // Get all unique tags from bouquets
+  const allTags = Array.from(
+    new Set(
+      bouquets
+        .flatMap(bouquet => {
+          const tags = bouquet.tags || [];
+          return Array.isArray(tags) ? tags : [];
+        })
+        .filter(Boolean)
+    )
+  );
+
+  // Filter bouquets by search term, category, and tag
   const filteredBouquets = bouquets.filter(bouquet => {
     const matchesSearch = 
       bouquet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,7 +43,20 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
     
     const matchesCategory = categoryFilter === 'all' || bouquet.category_id === categoryFilter;
     
-    return matchesSearch && matchesCategory;
+    const matchesTag = !tagFilter || (
+      bouquet.tags && 
+      Array.isArray(bouquet.tags) && 
+      bouquet.tags.some(tag => {
+        if (typeof tag === 'string') {
+          return tag.toLowerCase().includes(tagFilter.toLowerCase());
+        } else if (typeof tag === 'object' && tag !== null) {
+          return (tag as any).name?.toLowerCase().includes(tagFilter.toLowerCase());
+        }
+        return false;
+      })
+    );
+    
+    return matchesSearch && matchesCategory && matchesTag;
   });
 
   // Handle bouquet deletion
@@ -65,6 +95,17 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
     return category ? category.name : 'Unknown Category';
   };
 
+  // Format tags for display
+  const formatTags = (tags: any[] | undefined): string[] => {
+    if (!tags || !Array.isArray(tags)) return [];
+    
+    return tags.map(tag => {
+      if (typeof tag === 'string') return tag;
+      if (typeof tag === 'object' && tag.name) return tag.name;
+      return String(tag);
+    });
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -75,7 +116,7 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
           </p>
         </div>
         <Link 
-          href="/admin/bouquets/new"
+          href={`/${locale}/admin/bouquets/new`}
           className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
         >
           <Plus className="h-5 w-5 mr-1" />
@@ -99,21 +140,42 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
             />
           </div>
           
-          <div className="flex items-center">
-            <Filter className="h-4 w-4 text-gray-400 mr-2" />
-            <span className="text-sm text-gray-600 mr-2">Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="all">All Categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center">
+              <Filter className="h-4 w-4 text-gray-400 mr-2" />
+              <span className="text-sm text-gray-600 mr-2">Category:</span>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+              >
+                <option value="all">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {allTags.length > 0 && (
+              <div className="flex items-center ml-0 md:ml-4">
+                <Tag className="h-4 w-4 text-gray-400 mr-2" />
+                <span className="text-sm text-gray-600 mr-2">Tag:</span>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                  className="border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="">All Tags</option>
+                  {allTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -131,13 +193,13 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
           <Package className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-lg font-medium text-gray-900">No bouquets found</h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchTerm || categoryFilter !== 'all' 
+            {searchTerm || categoryFilter !== 'all' || tagFilter
               ? 'Try adjusting your filters' 
               : 'Get started by creating a new bouquet'}
           </p>
           <div className="mt-6">
             <Link
-              href="/admin/bouquets/new"
+              href={`/${locale}/admin/bouquets/new`}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
             >
               <Plus className="h-5 w-5 mr-1" />
@@ -204,9 +266,10 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
                   {bouquet.description}
                 </p>
                 
-                <div className="mt-2">
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {Array.isArray(bouquet.tags) && bouquet.tags.map((tag) => (
+                {/* Tags */}
+                <div className="mt-3">
+                  <div className="flex flex-wrap gap-1">
+                    {formatTags(bouquet.tags).map((tag) => (
                       <span 
                         key={tag} 
                         className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-pink-100 text-pink-800"
@@ -220,7 +283,7 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
                 <div className="mt-4 flex justify-between">
                   <div className="flex space-x-2">
                     <Link
-                      href={`/admin/bouquets/${bouquet.id}/edit`}
+                      href={`/${locale}/admin/bouquets/${bouquet.id}/edit`}
                       className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm rounded-md text-gray-700 bg-white hover:bg-gray-50"
                     >
                       <Edit className="h-4 w-4 mr-1" />
@@ -236,7 +299,7 @@ export default function BouquetsClient({ initialBouquets, initialCategories }: B
                     </button>
                   </div>
                   <Link
-                    href={`/bouquet/${bouquet.id}`}
+                    href={`/${locale}/bouquet/${bouquet.id}`}
                     className="inline-flex items-center px-3 py-1 border border-transparent text-sm rounded-md text-pink-600 bg-pink-100 hover:bg-pink-200"
                   >
                     <Eye className="h-4 w-4 mr-1" />
