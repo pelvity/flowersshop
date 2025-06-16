@@ -45,7 +45,7 @@ export default function Hero({ carouselMedia = [] }: HeroProps) {
               </p>
               <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                 <div className="rounded-md shadow">
-                  <Link href="/catalog">
+                  <Link href={`/${t('locale')}/catalog`}>
                     <Button size="lg">
                       {t('catalog.ourCollection')}
                     </Button>
