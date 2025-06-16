@@ -127,6 +127,7 @@
     "common": {
       "loading": "Завантаження...",
       "save": "Зберегти",
+      "saving": "Збереження...",
       "cancel": "Скасувати",
       "delete": "Видалити",
       "edit": "Редагувати",
@@ -134,7 +135,23 @@
       "search": "Пошук",
       "filter": "Фільтр",
       "actions": "Дії",
-      "noResults": "Нічого не знайдено"
+      "noResults": "Нічого не знайдено",
+      "each": "за шт.",
+      "selectCategory": "Виберіть категорію",
+      "all": "Всі",
+      "loadError": "Помилка завантаження даних",
+      "submitError": "Помилка відправлення даних",
+      "updateSuccess": "Успішно оновлено",
+      "createSuccess": "Успішно створено",
+      "deleteSuccess": "Успішно видалено",
+      "confirmDelete": "Ви впевнені, що хочете видалити це?",
+      "discountPrice": "Знижкова ціна",
+      "category": "Категорія",
+      "inStock": "В наявності",
+      "featured": "Рекомендовано",
+      "price": "Ціна",
+      "description": "Опис",
+      "name": "Назва"
     },
     "navigation": {
       "dashboard": "Панель керування",
@@ -153,7 +170,14 @@
       "assignedTags": "Призначені теги",
       "noTagsAssigned": "Немає призначених тегів",
       "addTag": "Додати тег",
-      "searchTags": "Пошук тегів..."
+      "searchTags": "Пошук тегів...",
+      "manageTags": "Керування тегами",
+      "tagName": "Назва тегу",
+      "createTag": "Створити тег",
+      "editTag": "Редагувати тег",
+      "deleteTag": "Видалити тег",
+      "confirmDeleteTag": "Ви впевнені, що хочете видалити цей тег?",
+      "title": "Керування тегами"
     },
     "bouquets": {
       "name": "Назва",
@@ -182,7 +206,10 @@
       "details": "Деталі букету",
       "flowers": "Квіти в букеті",
       "searchFlowers": "Пошук квітів",
-      "noFlowers": "Немає квітів у букеті"
+      "noFlowers": "Немає квітів у букеті",
+      "loadError": "Помилка завантаження букетів",
+      "manageBouquets": "Керування букетами",
+      "createBouquet": "Створити букет"
     },
     "flowers": {
       "name": "Назва",
@@ -202,14 +229,18 @@
       "imageRequirements": "Рекомендований розмір: 800x600px. Максимальний розмір файлу: 2MB.",
       "createSuccess": "Квітку успішно створено",
       "updateSuccess": "Квітку успішно оновлено",
-      "deleteSuccess": "Квітку успішно видалено"
+      "deleteSuccess": "Квітку успішно видалено",
+      "manageFlowers": "Керування квітами",
+      "createFlower": "Створити квітку",
+      "lowStock": "Низький запас",
+      "inStockCount": "В наявності: {count}"
     },
     "auth": {
-      "login": "Sign in to your account",
-      "email": "Email address",
-      "password": "Password",
-      "signIn": "Sign In",
-      "loginError": "Invalid login credentials. Please try again."
+      "login": "Увійдіть у свій обліковий запис",
+      "email": "Адреса електронної пошти",
+      "password": "Пароль",
+      "signIn": "Увійти",
+      "loginError": "Неправильні дані для входу. Будь ласка, спробуйте ще раз."
     },
     "dashboard": {
       "title": "Панель керування інвентарем",
@@ -235,6 +266,15 @@
       "noFeaturedBouquets": "Немає рекомендованих букетів",
       "remaining": "залишилось",
       "allFlowersWellStocked": "Всі квіти добре забезпечені"
+    },
+    "categories": {
+      "name": "Назва",
+      "description": "Опис",
+      "manageCategories": "Керування категоріями",
+      "createCategory": "Створити категорію",
+      "editCategory": "Редагувати категорію",
+      "deleteCategory": "Видалити категорію",
+      "confirmDelete": "Ви впевнені, що хочете видалити цю категорію?"
     }
   },
   "entities": {
