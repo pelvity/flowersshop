@@ -9,110 +9,140 @@ export class TagRepository {
    * Get all tags
    */
   async getAll(): Promise<Tag[]> {
-    const { data, error } = await this.supabase
-      .from('tags')
-      .select('*')
-      .order('name');
+    try {
+      const { data, error } = await this.supabase
+        .from('tags')
+        .select('*')
+        .order('name');
+        
+      if (error) {
+        console.error('Error fetching tags:', error);
+        return [];
+      }
       
-    if (error) {
-      console.error('Error fetching tags:', error);
+      return data || [];
+    } catch (err) {
+      console.error('Unexpected error in getAll:', err);
       return [];
     }
-    
-    return data || [];
   }
   
   /**
    * Get a tag by ID
    */
   async getById(id: string): Promise<Tag | null> {
-    const { data, error } = await this.supabase
-      .from('tags')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from('tags')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching tag:', error);
+        return null;
+      }
       
-    if (error) {
-      console.error('Error fetching tag:', error);
+      return data;
+    } catch (err) {
+      console.error('Unexpected error in getById:', err);
       return null;
     }
-    
-    return data;
   }
   
   /**
    * Create a new tag
    */
   async create(tag: Partial<Tag>): Promise<Tag | null> {
-    const { data, error } = await this.supabase
-      .from('tags')
-      .insert(tag)
-      .select()
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from('tags')
+        .insert(tag)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating tag:', error);
+        return null;
+      }
       
-    if (error) {
-      console.error('Error creating tag:', error);
+      return data;
+    } catch (err) {
+      console.error('Unexpected error in create:', err);
       return null;
     }
-    
-    return data;
   }
   
   /**
    * Update an existing tag
    */
   async update(id: string, tag: Partial<Tag>): Promise<Tag | null> {
-    const { data, error } = await this.supabase
-      .from('tags')
-      .update(tag)
-      .eq('id', id)
-      .select()
-      .single();
+    try {
+      const { data, error } = await this.supabase
+        .from('tags')
+        .update(tag)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error updating tag:', error);
+        return null;
+      }
       
-    if (error) {
-      console.error('Error updating tag:', error);
+      return data;
+    } catch (err) {
+      console.error('Unexpected error in update:', err);
       return null;
     }
-    
-    return data;
   }
   
   /**
    * Delete a tag
    */
   async delete(id: string): Promise<boolean> {
-    const { error } = await this.supabase
-      .from('tags')
-      .delete()
-      .eq('id', id);
-      
-    return !error;
+    try {
+      const { error } = await this.supabase
+        .from('tags')
+        .delete()
+        .eq('id', id);
+        
+      return !error;
+    } catch (err) {
+      console.error('Unexpected error in delete:', err);
+      return false;
+    }
   }
   
   /**
    * Get tags for a bouquet
    */
   async getTagsForBouquet(bouquetId: string): Promise<Tag[]> {
-    const { data, error } = await this.supabase
-      .from('bouquet_tags')
-      .select('tag:tag_id(*)')
-      .eq('bouquet_id', bouquetId);
+    try {
+      const { data, error } = await this.supabase
+        .from('bouquet_tags')
+        .select('tag:tag_id(*)')
+        .eq('bouquet_id', bouquetId);
+        
+      if (error) {
+        console.error('Error fetching tags for bouquet:', error);
+        return [];
+      }
       
-    if (error) {
-      console.error('Error fetching tags for bouquet:', error);
+      // Transform the nested tags structure to a flat array of Tag objects
+      // Using explicit type casting to handle Supabase typing issues
+      return data.map(item => {
+        const tagData = item.tag as any;
+        return {
+          id: tagData.id,
+          name: tagData.name,
+          created_at: tagData.created_at,
+          updated_at: tagData.updated_at
+        } as Tag;
+      }) || [];
+    } catch (err) {
+      console.error('Unexpected error in getTagsForBouquet:', err);
       return [];
     }
-    
-    // Transform the nested tags structure to a flat array of Tag objects
-    // Using explicit type casting to handle Supabase typing issues
-    return data.map(item => {
-      const tagData = item.tag as any;
-      return {
-        id: tagData.id,
-        name: tagData.name,
-        created_at: tagData.created_at,
-        updated_at: tagData.updated_at
-      } as Tag;
-    }) || [];
   }
 } 

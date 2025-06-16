@@ -1,99 +1,146 @@
-import { NextResponse } from 'next/server';
-import { TagRepository } from '@/lib/supabase';
+import { NextRequest, NextResponse } from 'next/server';
+import { createAdminClient } from '@/utils/supabase/server';
+import { Database } from '@/types/supabase';
+
+// Define the Tag interface
+interface Tag {
+  id: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 // Get all tags
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const tags = await TagRepository.getAll();
-    return NextResponse.json(tags);
+    // Use server-side admin client with service role
+    const supabase = await createAdminClient();
+    
+    const { data, error } = await supabase
+      .from('tags')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      console.error('Failed to fetch tags:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching tags:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch tags' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch tags:', error);
+    return NextResponse.json({ error: 'Failed to fetch tags' }, { status: 500 });
   }
 }
 
 // Create a new tag
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const tagData = await request.json();
+    // Use server-side admin client with service role
+    const supabase = await createAdminClient();
     
-    if (!tagData.name) {
-      return NextResponse.json(
-        { error: 'Tag name is required' },
-        { status: 400 }
-      );
+    const { name } = await req.json();
+
+    if (!name) {
+      return NextResponse.json({ error: 'Tag name is required' }, { status: 400 });
     }
     
-    const newTag = await TagRepository.create({
-      name: tagData.name
-    });
+    // Generate UUID for the tag
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
     
-    return NextResponse.json(newTag, { status: 201 });
+    const { data, error } = await supabase
+      .from('tags')
+      .insert({
+        id,
+        name,
+        created_at: now,
+        updated_at: now
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Failed to create tag:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error('Error creating tag:', error);
-    return NextResponse.json(
-      { error: 'Failed to create tag' },
-      { status: 500 }
-    );
+    console.error('Failed to create tag:', error);
+    return NextResponse.json({ error: 'Failed to create tag' }, { status: 500 });
   }
 }
 
 // Update an existing tag
-export async function PUT(request: Request) {
+export async function PUT(req: NextRequest) {
   try {
-    const tagData = await request.json();
+    // Use server-side admin client with service role
+    const supabase = await createAdminClient();
     
-    if (!tagData.id) {
-      return NextResponse.json(
-        { error: 'Tag ID is required' },
-        { status: 400 }
-      );
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if(!id) {
+      return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 });
+    }
+
+    const { name } = await req.json();
+
+    if (!name) {
+      return NextResponse.json({ error: 'Tag name is required' }, { status: 400 });
     }
     
-    if (!tagData.name) {
-      return NextResponse.json(
-        { error: 'Tag name is required' },
-        { status: 400 }
-      );
+    const now = new Date().toISOString();
+    
+    const { data, error } = await supabase
+      .from('tags')
+      .update({ 
+        name, 
+        updated_at: now 
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to update tag:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    
-    const updatedTag = await TagRepository.update(tagData.id, {
-      name: tagData.name
-    });
-    
-    return NextResponse.json(updatedTag);
+
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error updating tag:', error);
-    return NextResponse.json(
-      { error: 'Failed to update tag' },
-      { status: 500 }
-    );
+    console.error('Failed to update tag:', error);
+    return NextResponse.json({ error: 'Failed to update tag' }, { status: 500 });
   }
 }
 
 // Delete a tag
-export async function DELETE(request: Request) {
+export async function DELETE(req: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
+    // Use server-side admin client with service role
+    const supabase = await createAdminClient();
     
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
     if (!id) {
-      return NextResponse.json(
-        { error: 'Tag ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Tag ID is required' }, { status: 400 });
     }
-    
-    await TagRepository.delete(id);
-    return NextResponse.json({ success: true });
+
+    const { error } = await supabase
+      .from('tags')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to delete tag:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Tag deleted successfully' });
   } catch (error) {
-    console.error('Error deleting tag:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete tag' },
-      { status: 500 }
-    );
+    console.error('Failed to delete tag:', error);
+    return NextResponse.json({ error: 'Failed to delete tag' }, { status: 500 });
   }
 } 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createClient, createAdminClient } from '@/utils/supabase/server';
 import { ApiLogger } from '@/utils/api-logger';
 import { toUUID } from '@/utils/uuid';
 
@@ -58,25 +58,45 @@ export async function PUT(
     // Parse request body
     const updateData = await request.json();
     
-    // Create Supabase client
-    const supabase = await createClient();
+    // Use admin client for operations requiring admin privileges
+    const supabase = await createAdminClient();
     
     // Extract flowers and tags data from the request if present
     const { flowers, tags, ...bouquetData } = updateData;
     
     // Start a transaction by using multiple operations
     
-    // 1. Update the bouquet details
-    const { data: updatedBouquet, error: bouquetError } = await supabase
-      .from('bouquets')
-      .update(bouquetData)
-      .eq('id', bouquetId)
-      .select()
-      .single();
+    // 1. Update the bouquet details (only if we have bouquet data to update)
+    let updatedBouquet = null;
     
-    if (bouquetError) {
-      logger.error('PUT', `/api/bouquets/${bouquetId}`, bouquetError, { bouquetData });
-      return NextResponse.json({ error: bouquetError.message }, { status: 500 });
+    if (Object.keys(bouquetData).length > 0) {
+      const { data, error: bouquetError } = await supabase
+        .from('bouquets')
+        .update(bouquetData)
+        .eq('id', bouquetId)
+        .select()
+        .single();
+      
+      if (bouquetError) {
+        logger.error('PUT', `/api/bouquets/${bouquetId}`, bouquetError, { bouquetData });
+        return NextResponse.json({ error: bouquetError.message }, { status: 500 });
+      }
+      
+      updatedBouquet = data;
+    } else {
+      // If we're only updating tags or flowers, fetch the current bouquet data
+      const { data, error: fetchError } = await supabase
+        .from('bouquets')
+        .select()
+        .eq('id', bouquetId)
+        .single();
+        
+      if (fetchError) {
+        logger.error('PUT', `/api/bouquets/${bouquetId}`, fetchError);
+        return NextResponse.json({ error: fetchError.message }, { status: fetchError.code === 'PGRST116' ? 404 : 500 });
+      }
+      
+      updatedBouquet = data;
     }
     
     // 2. If we have flowers data, update the bouquet flowers
@@ -157,7 +177,7 @@ export async function DELETE(
   const startTime = logger.request('DELETE', `/api/bouquets/${bouquetId}`);
   
   try {
-    const supabase = await createClient();
+    const supabase = await createAdminClient();
     
     // First delete all flower associations
     const { error: flowersError } = await supabase
