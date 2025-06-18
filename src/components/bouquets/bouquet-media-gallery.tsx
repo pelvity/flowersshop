@@ -14,6 +14,22 @@ export const getValidImageUrl = (mediaItem: BouquetMedia) => {
   return "";
 };
 
+// Get a video poster/thumbnail (first frame)
+export const getVideoPoster = (mediaItem: BouquetMedia) => {
+  // If this is not a video, return the regular image URL
+  if (mediaItem.media_type !== 'video') {
+    return getValidImageUrl(mediaItem);
+  }
+  
+  // For videos, use our thumbnail API
+  if (mediaItem.id) {
+    return `/api/media/thumbnail?id=${mediaItem.id}`;
+  }
+  
+  // Fallback to the regular URL
+  return getValidImageUrl(mediaItem);
+};
+
 // Lightbox component for displaying enlarged images
 export function Lightbox({ bouquet, onClose, initialIndex = 0 }: { bouquet: Bouquet; onClose: () => void; initialIndex?: number }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -29,6 +45,9 @@ export function Lightbox({ bouquet, onClose, initialIndex = 0 }: { bouquet: Bouq
 
   const currentMedia = media[currentIndex];
   if (!currentMedia) return null;
+  
+  // Check if the current media is a video
+  const isVideo = currentMedia.media_type === 'video';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -54,13 +73,26 @@ export function Lightbox({ bouquet, onClose, initialIndex = 0 }: { bouquet: Bouq
       )}
       
       <div className="relative w-full h-full max-w-4xl max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <Image
-          src={getValidImageUrl(currentMedia)}
-          alt={bouquet.name}
-          layout="fill"
-          objectFit="contain"
-          className="rounded-lg"
-        />
+        {isVideo ? (
+          <video
+            src={getValidImageUrl(currentMedia)}
+            className="w-full h-full max-w-full max-h-full object-contain rounded-lg"
+            controls
+            autoPlay
+            controlsList="nodownload"
+            poster={getValidImageUrl(currentMedia)}
+          >
+            Your browser does not support HTML5 video.
+          </video>
+        ) : (
+          <Image
+            src={getValidImageUrl(currentMedia)}
+            alt={bouquet.name}
+            layout="fill"
+            objectFit="contain"
+            className="rounded-lg"
+          />
+        )}
       </div>
 
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 rounded-full px-3 py-1 text-white text-sm">
@@ -96,17 +128,32 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
   }
   
   if (media.length === 1) {
+    const isVideo = media[0].media_type === 'video';
+    
     return (
       <div className={`relative w-full ${height} overflow-hidden group cursor-pointer`} onClick={onImageClick}>
         <div className="relative w-full h-full transition-transform duration-300 group-hover:scale-105">
           <Image 
-            src={getValidImageUrl(media[0])}
+            src={isVideo ? getVideoPoster(media[0]) : getValidImageUrl(media[0])}
             alt={alt || media[0].file_name || "Bouquet image"}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={true}
           />
+          {isVideo && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="bg-black/50 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="white" stroke="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </div>
+              
+              <div className="mt-2 bg-black/70 px-3 py-1 rounded-full text-white text-xs font-medium">
+                Video
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -118,14 +165,32 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
         className="relative w-full h-full cursor-pointer transition-transform duration-300 group-hover:scale-105" 
         onClick={onImageClick}
       >
-        <Image 
-          src={getValidImageUrl(media[currentIndex])}
-          alt={alt || media[currentIndex].file_name || "Bouquet image"}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority={true}
-        />
+        <div className="relative w-full h-full">
+          <Image 
+            src={media[currentIndex].media_type === 'video' 
+              ? getVideoPoster(media[currentIndex]) 
+              : getValidImageUrl(media[currentIndex])}
+            alt={alt || media[currentIndex].file_name || "Bouquet image"}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={true}
+          />
+          
+          {media[currentIndex].media_type === 'video' && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="bg-black/50 rounded-full p-4 shadow-lg transform transition-transform group-hover:scale-110">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="white" stroke="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </div>
+              
+              <div className="mt-2 bg-black/70 px-3 py-1 rounded-full text-white text-xs font-medium">
+                Video
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       <button 
@@ -162,13 +227,22 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
               setCurrentIndex(idx);
             }}
           >
-            <Image 
-              src={getValidImageUrl(item)}
-              alt={`Thumbnail ${idx + 1}`}
-              width={28}
-              height={28}
-              className="rounded-full object-cover w-full h-full"
-            />
+            <div className="relative w-full h-full">
+              <Image 
+                src={item.media_type === 'video' ? getVideoPoster(item) : getValidImageUrl(item)}
+                alt={`Thumbnail ${idx + 1}`}
+                width={28}
+                height={28}
+                className="rounded-full object-cover w-full h-full"
+              />
+              {item.media_type === 'video' && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

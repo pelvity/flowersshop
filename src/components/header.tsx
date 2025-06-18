@@ -36,9 +36,6 @@ export default function Header() {
               <Link href={getLocalePath("/custom-bouquet")} className="text-base font-medium text-gray-700 hover:text-pink-600">
               {t('catalog.customize')}
             </Link>
-              <Link href={getLocalePath("/about")} className="text-base font-medium text-gray-700 hover:text-pink-600">
-              {t('common.header.about')}
-            </Link>
               <Link href={getLocalePath("/contact")} className="text-base font-medium text-gray-700 hover:text-pink-600">
               {t('common.header.contact')}
             </Link>
@@ -46,11 +43,6 @@ export default function Header() {
           <div className="flex items-center space-x-6">
             <LanguageSwitcher />
             <CartButton />
-            <div className="hidden sm:flex">
-              <Button>
-                {t('catalog.addToCart')}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -66,9 +58,6 @@ export default function Header() {
           </Link>
             <Link href={getLocalePath("/custom-bouquet")} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
             {t('catalog.customize')}
-          </Link>
-            <Link href={getLocalePath("/about")} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
-            {t('common.header.about')}
           </Link>
             <Link href={getLocalePath("/contact")} className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-pink-600">
             {t('common.header.contact')}

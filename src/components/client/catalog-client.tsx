@@ -75,9 +75,12 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
       // Filter by tags if selected
       if (selectedTags.length > 0) {
         result = result.filter(bouquet => {
-          // Check if any of the bouquet's tags are in the selected tags
-          const bouquetTagsArray = bouquet.tags || [];
-          return selectedTags.some(tagId => bouquetTagsArray.includes(tagId));
+          // Check if any of the bouquet's tags match the selected tags
+          // Access our loaded tag map instead of the bouquet.tags property
+          const bouquetTags = bouquetTagsMap[bouquet.id] || [];
+          return selectedTags.some(selectedTagId => 
+            bouquetTags.some(tag => tag.id === selectedTagId)
+          );
         });
       }
       
@@ -94,7 +97,7 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
     }
 
     applyFilters();
-  }, [selectedCategory, selectedTags, searchQuery, initialBouquets]);
+  }, [selectedCategory, selectedTags, searchQuery, initialBouquets, bouquetTagsMap]);
   
   // Load tags for all bouquets
   useEffect(() => {

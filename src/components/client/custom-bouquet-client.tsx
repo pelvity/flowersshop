@@ -4,15 +4,16 @@ import { useState, useEffect, useMemo } from "react";
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, Minus, X, ShoppingCart } from "lucide-react";
+import { Plus, Minus, X, ShoppingCart, PlusCircle } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
-import { Flower as FlowerType, FlowerQuantity } from "@/lib/supabase";
+import { Flower as FlowerType, FlowerQuantity, Bouquet } from "@/lib/supabase";
 import { v4 as uuidv4 } from 'uuid';
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import { toUUID } from "@/utils/uuid";
 import { formatPrice } from '@/lib/functions';
+import { getValidImageUrl } from "../bouquets/bouquet-media-gallery";
 
 // The Flower type from lib/supabase doesn't have colors or image, so we extend it.
 interface Flower extends FlowerType {
@@ -44,6 +45,33 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // State for template bouquets
+  const [templateBouquets, setTemplateBouquets] = useState<Bouquet[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  
+  // Fetch template bouquets when component mounts
+  useEffect(() => {
+    async function fetchTemplateBouquets() {
+      setLoadingTemplates(true);
+      try {
+        const { data, error } = await supabase
+          .from('bouquets')
+          .select('*, media(*)')
+          .eq('in_stock', true)
+          .order('name');
+          
+        if (error) throw error;
+        setTemplateBouquets(data || []);
+      } catch (error) {
+        console.error('Error fetching template bouquets:', error);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    }
+    
+    fetchTemplateBouquets();
+  }, [supabase]);
   
   // Fetch bouquet details if bouquetId is provided
   useEffect(() => {
@@ -146,8 +174,14 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
   // Helper function to add a flower with default color
   const addFlowerWithDefaultColor = (flower: Flower) => {
     // Use the first color as default or a fallback
-    const defaultColor = flower.colors && flower.colors.length > 0 ? flower.colors[0] : 'mixed';
-    addFlower(flower, defaultColor);
+    if (flower.colors && flower.colors.length > 0) {
+      // Open a color selection modal or use a default color
+      const defaultColor = flower.colors[0];
+      addFlower(flower, defaultColor);
+    } else {
+      // If no colors defined for this flower, use 'mixed' as fallback
+      addFlower(flower, 'mixed');
+    }
   };
   
   // Helper function to remove a flower
@@ -195,6 +229,11 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
     router.push('/cart');
   };
   
+  // Function to select a template bouquet
+  const selectTemplateBouquet = (bouquet: Bouquet) => {
+    router.push(`/custom-bouquet?bouquetId=${bouquet.id}`);
+  };
+  
   // Templates view
   const renderTemplates = () => (
     <div className="py-8">
@@ -205,13 +244,74 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
         </p>
       </div>
       
-      <div className="mb-8 text-center">
-        <button 
-          onClick={() => setStep('customize')}
-          className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors"
-        >
-          {t('startFromScratch')}
-        </button>
+      <div className="mb-8 flex flex-col items-center">
+        <h2 className="text-2xl font-bold text-pink-600 mb-6">{t('chooseTemplate')}</h2>
+        
+        {loadingTemplates ? (
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+            {/* Start from scratch card */}
+            <Card 
+              onClick={() => setStep('customize')}
+              className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow border border-pink-100 flex flex-col h-full"
+            >
+              <div className="relative h-48 bg-gradient-to-r from-pink-100 to-pink-200 flex items-center justify-center">
+                <PlusCircle size={64} className="text-pink-500" />
+              </div>
+              <div className="p-4 flex-grow flex flex-col">
+                <h3 className="font-semibold text-lg text-pink-700">{t('startFromScratch')}</h3>
+                <p className="text-sm text-gray-500 mt-1 flex-grow">
+                  {t('startFromScratchDescription')}
+                </p>
+                <div className="mt-4">
+                  <button className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-4 py-2 rounded-md font-medium shadow-sm transition-colors">
+                    {t('start')}
+                  </button>
+                </div>
+              </div>
+            </Card>
+            
+            {/* Template bouquets */}
+            {templateBouquets.map(bouquet => {
+              // Get thumbnail image
+              const thumbnailMedia = bouquet.media?.find(m => m.is_thumbnail) || bouquet.media?.[0];
+              const thumbnailUrl = thumbnailMedia ? getValidImageUrl(thumbnailMedia) : '/placeholder-bouquet.jpg';
+              
+              return (
+                <Card 
+                  key={bouquet.id}
+                  onClick={() => selectTemplateBouquet(bouquet)}
+                  className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow border border-pink-100 flex flex-col h-full"
+                >
+                  <div className="relative h-48">
+                    <Image 
+                      src={thumbnailUrl}
+                      alt={bouquet.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div className="p-4 flex-grow flex flex-col">
+                    <h3 className="font-semibold text-lg text-pink-700">{bouquet.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1 flex-grow line-clamp-3">
+                      {bouquet.description || t('noDescription')}
+                    </p>
+                    <div className="flex justify-between items-center mt-4">
+                      <span className="font-medium text-pink-600">
+                        {formatPrice(bouquet.price, locale)}
+                      </span>
+                      <button className="bg-pink-100 hover:bg-pink-200 text-pink-700 px-3 py-1 rounded-md text-sm font-medium transition-colors">
+                        {t('customize')}
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -321,15 +421,26 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
                       <p className="font-medium text-amber-600">
                         {formatPrice(flower.price * item.quantity, locale)}
                       </p>
-                      <select
-                        value={item.color}
-                        onChange={(e) => changeFlowerColor(index, e.target.value)}
-                        className="mt-1 text-xs border border-pink-200 rounded py-0.5 px-1 focus:outline-none focus:ring-1 focus:ring-pink-400"
-                      >
-                        {(flower.colors || ['mixed']).map((color: string) => (
-                          <option key={color} value={color}>{color}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center mt-1">
+                        <div 
+                          className="w-5 h-5 rounded-full mr-2 border border-gray-300 shadow-sm"
+                          style={{ 
+                            background: item.color === 'mixed' 
+                              ? 'linear-gradient(to right, #ef4444, #f59e0b, #8b5cf6, #3b82f6)' 
+                              : getColorHex(item.color)
+                          }}
+                        ></div>
+                        <select
+                          value={item.color}
+                          onChange={(e) => changeFlowerColor(index, e.target.value)}
+                          className="text-xs border border-pink-200 rounded py-1 px-2 focus:outline-none focus:ring-1 focus:ring-pink-400 bg-white"
+                          aria-label={t('color')}
+                        >
+                          {(flower.colors && flower.colors.length > 0 ? flower.colors : ['mixed']).map((color: string) => (
+                            <option key={color} value={color}>{color}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </Card>
                 );
@@ -387,9 +498,22 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
                     />
                     <div className="ml-4">
                       <p className="font-medium text-pink-700">{flower.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {t('quantity')}: {item.quantity}, {t('color')}: {item.color}
-                      </p>
+                      <div className="flex items-center">
+                        <p className="text-sm text-gray-500">
+                          {t('quantity')}: {item.quantity}
+                        </p>
+                        <div className="flex items-center ml-3">
+                          <div 
+                            className="w-4 h-4 rounded-full mr-2 border border-gray-300 shadow-sm"
+                            style={{ 
+                              background: item.color === 'mixed' 
+                                ? 'linear-gradient(to right, #ef4444, #f59e0b, #8b5cf6, #3b82f6)' 
+                                : getColorHex(item.color)
+                            }}
+                          ></div>
+                          <span className="text-sm text-gray-500 capitalize">{item.color}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <p className="font-medium text-amber-600">
@@ -443,6 +567,14 @@ export default function CustomBouquetClient({ initialFlowers }: CustomBouquetCli
       case 'purple': return '#8b5cf6';
       case 'orange': return '#f97316';
       case 'blue': return '#3b82f6';
+      case 'green': return '#10b981';
+      case 'violet': return '#8b5cf6';
+      case 'peach': return '#ffcba4';
+      case 'lavender': return '#e6e6fa';
+      case 'cream': return '#fff8dc';
+      case 'burgundy': return '#800020';
+      case 'coral': return '#ff7f50';
+      case 'mixed': return 'linear-gradient(to right, #ef4444, #f59e0b, #8b5cf6, #3b82f6)';
       default: return '#cccccc';
     }
   };

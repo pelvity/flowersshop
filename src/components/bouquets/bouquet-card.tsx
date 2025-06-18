@@ -89,8 +89,8 @@ export default function BouquetCard({ bouquet, category, tags = [], onAddToCart 
                 )}
               </div>
             )}
-            <div className="flex items-end justify-between">
-              <div className="flex flex-col">
+            <div className="flex items-end justify-between mt-3">
+              <div className="flex flex-col mr-4">
                 {bouquet.discount_price && (
                   <span className="text-sm text-gray-400 line-through">
                     {formatPrice(bouquet.price, locale as string)}

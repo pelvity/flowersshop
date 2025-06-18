@@ -23,7 +23,7 @@ export default function LanguageSwitcher() {
   function onSelectChange(newLocale: string) {
     startTransition(() => {
       // Regular expression to remove the locale prefix
-      const newPath = pathname.replace(/^\/(en|uk|ru)/, '');
+      const newPath = pathname.replace(/^\/(en|uk|ru|pl)/, '');
       router.replace(`/${newLocale}${newPath}`);
     });
   }

@@ -36,9 +36,9 @@ export default function Hero({ carouselMedia = [] }: HeroProps) {
           </svg>
 
           <div className="pt-10 sm:pt-16 lg:pt-8 xl:pt-16">
-            <div className="sm:text-center lg:text-left">
+            <div className="px-4 sm:px-6 sm:text-center lg:text-left">
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block xl:inline">{t('home.hero.title')}</span>
+                <span className="block">{t('home.hero.title')}</span>
               </h1>
               <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                 {t('home.hero.subtitle')}

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import Contact from "../contact";
 
 export default function ContactClient() {
-  const t = useTranslations();
+  const t = useTranslations('contact');
   
   return (
     <>

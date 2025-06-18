@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useCart } from '@/context/cart-context';
 import { ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface AddToCartButtonProps {
   bouquetId: string;
@@ -13,6 +14,7 @@ export default function AddToCartButton({ bouquetId, available }: AddToCartButto
   const { addProduct } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const t = useTranslations();
 
   const handleAddToCart = () => {
     if (!available) return;
@@ -32,7 +34,7 @@ export default function AddToCartButton({ bouquetId, available }: AddToCartButto
         <button
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
           className="px-3 py-1 border border-pink-200 rounded-l-md bg-white text-pink-600 hover:bg-pink-50"
-          aria-label="Decrease quantity"
+          aria-label={t('common.decreaseQuantity')}
         >
           -
         </button>
@@ -42,12 +44,12 @@ export default function AddToCartButton({ bouquetId, available }: AddToCartButto
           value={quantity}
           onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
           className="w-12 text-center py-1 border-t border-b border-pink-200 text-pink-600"
-          aria-label="Quantity"
+          aria-label={t('common.quantity')}
         />
         <button
           onClick={() => setQuantity(quantity + 1)}
           className="px-3 py-1 border border-pink-200 rounded-r-md bg-white text-pink-600 hover:bg-pink-50"
-          aria-label="Increase quantity"
+          aria-label={t('common.increaseQuantity')}
         >
           +
         </button>
@@ -63,7 +65,7 @@ export default function AddToCartButton({ bouquetId, available }: AddToCartButto
         }`}
       >
         <ShoppingCart size={18} />
-        {isAdding ? 'Added!' : available ? 'Add to Cart' : 'Out of Stock'}
+        {isAdding ? t('cart.added') : available ? t('catalog.addToCart') : t('catalog.outOfStock')}
       </button>
     </div>
   );

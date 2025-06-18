@@ -27,53 +27,96 @@ export default function HeroCarousel({ media = [] }: HeroCarouselProps) {
   const useDefaultImages = !media || media.length === 0;
   const displayMedia = useDefaultImages ? DEFAULT_IMAGES : media;
 
+  console.log('Carousel mounted/updated', { 
+    mediaCount: displayMedia.length, 
+    currentIndex, 
+    isUsingDefaultImages: useDefaultImages 
+  });
+
   // Auto-advance the carousel every 5 seconds
   useEffect(() => {
-    if (displayMedia.length <= 1) return;
+    if (displayMedia.length <= 1) {
+      console.log('Auto-advance disabled: only one image available');
+      return;
+    }
     
+    console.log('Setting up auto-advance timer');
     const interval = setInterval(() => {
+      console.log('Auto-advance timer triggered, calling goToNext()');
       goToNext();
     }, 5000);
     
-    return () => clearInterval(interval);
+    return () => {
+      console.log('Clearing auto-advance timer');
+      clearInterval(interval);
+    };
   }, [currentIndex, displayMedia.length]);
 
   const goToNext = useCallback(() => {
-    if (isTransitioning || displayMedia.length <= 1) return;
+    console.log('goToNext called', { currentIndex, mediaLength: displayMedia.length, isTransitioning });
+    
+    if (isTransitioning || displayMedia.length <= 1) {
+      console.log('Cannot go to next: transitioning or only one image');
+      return;
+    }
     
     setIsTransitioning(true);
     setFadeOut(true);
     setPreviousIndex(currentIndex);
     
+    const nextIndex = currentIndex === displayMedia.length - 1 ? 0 : currentIndex + 1;
+    console.log('Will transition to index', nextIndex);
+    
     // Wait for fade out, then change image and fade in
     setTimeout(() => {
-      setCurrentIndex(prev => (prev === displayMedia.length - 1 ? 0 : prev + 1));
+      console.log('Setting new currentIndex', nextIndex);
+      setCurrentIndex(nextIndex);
       setFadeOut(false);
     }, 350);
     
     // Reset transition state after animation completes
-    setTimeout(() => setIsTransitioning(false), 700);
+    setTimeout(() => {
+      console.log('Transition complete, resetting transition state');
+      setIsTransitioning(false);
+    }, 700);
   }, [isTransitioning, currentIndex, displayMedia.length]);
 
   const goToPrev = useCallback(() => {
-    if (isTransitioning || displayMedia.length <= 1) return;
+    console.log('goToPrev called', { currentIndex, mediaLength: displayMedia.length, isTransitioning });
+    
+    if (isTransitioning || displayMedia.length <= 1) {
+      console.log('Cannot go to prev: transitioning or only one image');
+      return;
+    }
     
     setIsTransitioning(true);
     setFadeOut(true);
     setPreviousIndex(currentIndex);
     
+    const prevIndex = currentIndex === 0 ? displayMedia.length - 1 : currentIndex - 1;
+    console.log('Will transition to index', prevIndex);
+    
     // Wait for fade out, then change image and fade in
     setTimeout(() => {
-      setCurrentIndex(prev => (prev === 0 ? displayMedia.length - 1 : prev - 1));
+      console.log('Setting new currentIndex', prevIndex);
+      setCurrentIndex(prevIndex);
       setFadeOut(false);
     }, 350);
     
     // Reset transition state after animation completes
-    setTimeout(() => setIsTransitioning(false), 700);
+    setTimeout(() => {
+      console.log('Transition complete, resetting transition state');
+      setIsTransitioning(false);
+    }, 700);
   }, [isTransitioning, currentIndex, displayMedia.length]);
 
   const goToSlide = useCallback((index: number) => {
-    if (isTransitioning || index === currentIndex) return;
+    console.log('goToSlide called', { requestedIndex: index, currentIndex, isTransitioning });
+    
+    if (isTransitioning || index === currentIndex) {
+      console.log('Cannot go to slide: transitioning or same index');
+      return;
+    }
     
     setIsTransitioning(true);
     setFadeOut(true);
@@ -81,20 +124,33 @@ export default function HeroCarousel({ media = [] }: HeroCarouselProps) {
     
     // Wait for fade out, then change image and fade in
     setTimeout(() => {
+      console.log('Setting new currentIndex', index);
       setCurrentIndex(index);
       setFadeOut(false);
     }, 350);
     
     // Reset transition state after animation completes
-    setTimeout(() => setIsTransitioning(false), 700);
+    setTimeout(() => {
+      console.log('Transition complete, resetting transition state');
+      setIsTransitioning(false);
+    }, 700);
   }, [isTransitioning, currentIndex]);
 
   // Make sure currentIndex is valid
   const safeCurrentIndex = Math.min(currentIndex, displayMedia.length - 1);
   const safePreviousIndex = Math.min(previousIndex, displayMedia.length - 1);
   
+  console.log('Rendering carousel', { 
+    safeCurrentIndex, 
+    safePreviousIndex, 
+    isTransitioning, 
+    fadeOut, 
+    displayingImageIndex: isTransitioning && fadeOut ? safePreviousIndex : safeCurrentIndex 
+  });
+  
   // If we're still showing a placeholder despite our efforts
   if (displayMedia.length === 0) {
+    console.log('No images available, showing placeholder');
     return (
       <div className="relative h-56 w-full sm:h-72 md:h-96 lg:w-full lg:h-full bg-gradient-to-r from-pink-100 to-pink-50 flex items-center justify-center">
         <span className="text-pink-400 font-medium">Beautiful flower arrangements</span>
