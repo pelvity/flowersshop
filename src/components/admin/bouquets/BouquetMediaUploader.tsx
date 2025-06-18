@@ -5,6 +5,7 @@ import { Upload, Image as ImageIcon, Film, X } from 'lucide-react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { getFileUrl, uploadToWorker, deleteFromWorker } from '@/utils/cloudflare-worker';
+import { useTranslations } from 'next-intl';
 
 // Add a browser-compatible UUID function
 function generateUUID(): string {
@@ -56,6 +57,7 @@ type MediaItemType = {
 
 const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnail, handleImageError }: MediaItemProps) => {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useTranslations('admin');
   
   const [{ isDragging }, drag] = useDrag({
     type: 'MEDIA_ITEM',
@@ -123,11 +125,17 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
         </div>
       )}
         
-        {isThumbnail && (
-          <div className="absolute top-0 left-0 w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-2 py-1 z-20 font-medium text-center">
-            DEFAULT
-          </div>
-        )}
+      {isThumbnail && (
+        <div className="absolute top-0 left-0 w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white text-xs px-2 py-1 z-20 font-medium text-center">
+          {t('media.thumbnail')}
+        </div>
+      )}
+      
+      {!isImage && (
+        <div className="absolute top-0 right-0 bg-black bg-opacity-60 text-white text-xs px-2 py-1 z-20">
+          {t('media.video')}
+        </div>
+      )}
 
       {mediaUrl ? (
         isImage ? (
@@ -146,8 +154,36 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
             />
           </>
         ) : (
-          <div className="flex items-center justify-center h-full bg-gray-100">
-            <Film size={40} className="text-gray-400" />
+          // Video player for video content
+          <div className="relative w-full h-full bg-black">
+            <video
+              src={mediaUrl}
+              className="w-full h-full object-contain"
+              controls
+              controlsList="nodownload"
+              preload="metadata"
+              onError={(e) => {
+                console.error('Video loading error:', e);
+                // Show fallback icon if video fails to load
+                const target = e.target as HTMLVideoElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  const fallback = document.createElement('div');
+                  fallback.className = 'absolute inset-0 flex items-center justify-center';
+                  fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>';
+                  parent.appendChild(fallback);
+                }
+              }}
+            >
+              Your browser does not support HTML5 video.
+            </video>
+            {/* Play button overlay to make it clear this is a video */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black bg-opacity-30 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="text-white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </div>
+            </div>
           </div>
         )
       ) : (
@@ -161,7 +197,7 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
           type="button"
           onClick={() => onDelete(item.id)}
           className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md z-20"
-          title="Delete"
+          title={t('common.delete')}
         >
           <X size={14} />
         </button>
@@ -169,14 +205,15 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
       
       {/* Radio button below the media container */}
       <div className="mt-2">
-        <label className="flex items-center cursor-pointer">
+        <label className={`flex items-center cursor-pointer ${!isImage ? 'opacity-50' : ''}`} title={!isImage ? t('media.onlyPhotoThumbnail') : t('media.setAsThumbnail')}>
           <input
             type="radio"
             className="form-radio h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 mr-2"
             checked={isThumbnail}
-            onChange={() => onSetThumbnail(item.id)}
+            onChange={() => isImage && onSetThumbnail(item.id)}
+            disabled={!isImage}
           />
-          <span className="text-sm text-gray-700">Default</span>
+          <span className="text-sm text-gray-700">{t('media.thumbnail')}</span>
         </label>
       </div>
     </div>
@@ -203,6 +240,7 @@ export default function BouquetMediaUploader({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations('admin');
   
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     (e.target as HTMLImageElement).style.display = 'none';
@@ -213,6 +251,18 @@ export default function BouquetMediaUploader({
     if (!files || files.length === 0) return;
     
     setError(null);
+    
+    // Check if any video is being uploaded and verify there's at least one image
+    const videoFiles = Array.from(files).filter(file => file.type.startsWith('video/'));
+    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    const hasExistingImages = media.some(item => item.media_type === 'image');
+    
+    // If there are videos being uploaded but no images (neither existing nor new), show an error
+    if (videoFiles.length > 0 && !hasExistingImages && imageFiles.length === 0) {
+      setError(t('media.photoRequiredForVideo'));
+      return;
+    }
+    
     setUploading(true);
     
     try {
@@ -229,6 +279,16 @@ export default function BouquetMediaUploader({
         const tempId = `temp-${Date.now()}-${i}`;
         const tempUrl = URL.createObjectURL(file);
         
+        // For thumbnail selection:
+        // 1. If it's the first upload and it's an image, make it the thumbnail
+        // 2. If there are no existing thumbnails and it's an image, make it the thumbnail
+        // 3. Never make a video a thumbnail automatically
+        const shouldBeThumbnail = 
+          (!isVideo && (
+            (media.length === 0 && i === 0) || // First media ever
+            (!media.some(m => m.is_thumbnail)) // No existing thumbnail
+          ));
+        
         // Add to local state for immediate preview
         const tempMedia: BouquetMedia = {
           id: tempId,
@@ -239,7 +299,7 @@ export default function BouquetMediaUploader({
           file_size: file.size,
           content_type: file.type,
           display_order: media.length + i,
-          is_thumbnail: media.length === 0 && i === 0, // First media is thumbnail by default
+          is_thumbnail: shouldBeThumbnail,
           file,
           url: tempUrl,
           isUploading: true,
@@ -262,31 +322,32 @@ export default function BouquetMediaUploader({
               throw new Error(`${errorMessage}${errorDetails ? ` - ${errorDetails}` : ''}`);
             }
 
-          // After successful upload, save to Supabase
-          const { createClient } = await import('@/utils/supabase/client');
-          const supabase = createClient();
-
-          // Create a new media record in the database
-          const { data: dbMedia, error: dbError } = await supabase
-            .from('bouquet_media')
-            .insert({
-              bouquet_id: bouquetId,
-              media_type: mediaType,
+            // After successful upload, save to database via our server API
+            const response = await fetch('/api/admin/media', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                bouquet_id: bouquetId,
+                media_type: mediaType,
                 file_path: uploadResult.path,
                 file_url: uploadResult.url,
-              file_name: file.name,
-              file_size: file.size,
-              content_type: file.type,
-              display_order: media.length + i,
-              is_thumbnail: media.length === 0 && i === 0
-            })
-            .select()
-            .single();
+                file_name: file.name,
+                file_size: file.size,
+                content_type: file.type,
+                display_order: media.length + i,
+                is_thumbnail: shouldBeThumbnail
+              }),
+            });
 
-          if (dbError) {
-            console.error('Error saving media to database:', dbError);
-            throw new Error('Failed to save media to database');
-          }
+            if (!response.ok) {
+              const errorData = await response.json();
+              console.error('Error saving media to database:', errorData);
+              throw new Error('Failed to save media to database');
+            }
+
+            const dbMedia = await response.json();
 
             return { 
               success: true, 
@@ -367,7 +428,7 @@ export default function BouquetMediaUploader({
   const handleDeleteMedia = async (mediaId: string) => {
     try {
       // Ask for confirmation before deleting
-      if (!window.confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
+      if (!window.confirm(t('media.deleteConfirm'))) {
         return;
       }
       
@@ -380,42 +441,42 @@ export default function BouquetMediaUploader({
       // Otherwise handle deletion internally
       // First, update the local state
       const mediaToDelete = media.find(item => item.id === mediaId);
-      const updatedMedia = media.filter(item => item.id !== mediaId);
-
-      // If the deleted item was the thumbnail and we have other media, set the first one as thumbnail
-      const wasThumbnail = mediaToDelete?.is_thumbnail || false;
-      if (wasThumbnail && updatedMedia.length > 0) {
-        updatedMedia[0].is_thumbnail = true;
-
-        // Call onThumbnailChange if provided
-        if (onThumbnailChange) {
-          onThumbnailChange(updatedMedia[0].file_url || updatedMedia[0].url || '', updatedMedia[0].file_path);
-        }
-      } else if (wasThumbnail && updatedMedia.length === 0 && onThumbnailChange) {
-        // If it was the only item and it was the thumbnail, clear the thumbnail
-        onThumbnailChange('', '');
-      }
-
-      // Update UI immediately for better UX
-      onMediaChange(updatedMedia);
-
+      
       // Delete from database if it's a real DB entry (not a temp ID)
       if (mediaId && !mediaId.startsWith('temp-') && !mediaId.startsWith('new-')) {
-        // Import the Supabase client
-        const { createClient } = await import('@/utils/supabase/client');
-        const supabase = createClient();
+        // Delete using our API endpoint
+        const response = await fetch(`/api/admin/media?id=${mediaId}`, {
+          method: 'DELETE',
+        });
 
-        const { error } = await supabase
-          .from('bouquet_media')
-          .delete()
-          .eq('id', mediaId);
-
-        if (error) {
-          console.error('Error deleting media from database:', error);
-          throw error;
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error deleting media from database:', errorData);
+          setError(errorData.error || 'Failed to delete media from database');
+          return; // Stop the process if we couldn't delete from database
         }
 
         console.log('Successfully deleted media from database:', mediaId);
+
+        // Only if deletion was successful, update the local state
+        const updatedMedia = media.filter(item => item.id !== mediaId);
+
+        // If the deleted item was the thumbnail and we have other media, set the first one as thumbnail
+        const wasThumbnail = mediaToDelete?.is_thumbnail || false;
+        if (wasThumbnail && updatedMedia.length > 0) {
+          updatedMedia[0].is_thumbnail = true;
+
+          // Call onThumbnailChange if provided
+          if (onThumbnailChange) {
+            onThumbnailChange(updatedMedia[0].file_url || updatedMedia[0].url || '', updatedMedia[0].file_path);
+          }
+        } else if (wasThumbnail && updatedMedia.length === 0 && onThumbnailChange) {
+          // If it was the only item and it was the thumbnail, clear the thumbnail
+          onThumbnailChange('', '');
+        }
+
+        // Update UI
+        onMediaChange(updatedMedia);
 
         // Also delete from R2 storage using worker if we have a file path
         if (mediaToDelete?.file_path) {
@@ -431,11 +492,15 @@ export default function BouquetMediaUploader({
           } catch (storageError) {
             console.warn('Error deleting from storage, will require cleanup later:', storageError);
           }
-          }
         }
+      } else {
+        // For temp files, just update the UI
+        const updatedMedia = media.filter(item => item.id !== mediaId);
+        onMediaChange(updatedMedia);
+      }
     } catch (error) {
       console.error('Error in handleDeleteMedia:', error);
-      setError('Failed to delete media. Please try again.');
+      setError(t('media.deleteError'));
     }
   };
   
@@ -481,7 +546,7 @@ export default function BouquetMediaUploader({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium text-gray-900">Media</h3>
+        <h3 className="text-lg font-medium text-gray-900">{t('media.title')}</h3>
         <div>
           <input
             type="file"
@@ -499,21 +564,25 @@ export default function BouquetMediaUploader({
             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
           >
             <Upload className="mr-2 h-4 w-4" />
-            Upload Media
+            {t('media.uploadButton')}
           </button>
         </div>
       </div>
       
       {/* Simplified instructions */}
       <div className="text-sm text-gray-500 mb-4">
-        Upload images and select one as the default display image using the radio buttons below each photo.
+        {t('media.instructions')}
+        <br />
+        <strong>{t('common.note')}:</strong> {t('media.videoRequirement')}
+        <br />
+        <span className="italic">{t('media.thumbnailNote')}</span>
       </div>
       
       {error && (
         <div className="rounded-md bg-red-50 p-4">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
+              <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
               <div className="mt-2 text-sm text-red-700">
                 <p>{error}</p>
               </div>
@@ -526,7 +595,7 @@ export default function BouquetMediaUploader({
         <div className="flex justify-center my-4">
           <div className="text-center">
             <div className="spinner border-t-4 border-pink-500 border-solid rounded-full w-10 h-10 animate-spin mb-2 mx-auto"></div>
-            <p className="text-sm text-gray-500">Uploading media...</p>
+            <p className="text-sm text-gray-500">{t('media.uploading')}</p>
           </div>
         </div>
       )}
@@ -550,15 +619,15 @@ export default function BouquetMediaUploader({
             <div className="col-span-full flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-md">
               <div className="text-center">
                 <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-1 text-sm text-gray-500">No media added to this bouquet</p>
-                <p className="mt-1 text-xs text-gray-400 mb-4">Upload images or videos to showcase your bouquet</p>
+                <p className="mt-1 text-sm text-gray-500">{t('media.noMedia')}</p>
+                <p className="mt-1 text-xs text-gray-400 mb-4">{t('media.uploadPrompt')}</p>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
                 >
                   <Upload className="mr-1 h-4 w-4" />
-                  Upload Media
+                  {t('media.uploadButton')}
                 </button>
               </div>
             </div>

@@ -7,7 +7,7 @@ import { Bouquet, Category, Tag, Flower, BouquetFlower } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
 import BouquetTagsManager from './bouquets/BouquetTagsManager';
 import { useTranslations } from 'next-intl';
-import { formatPrice } from '@/lib/functions';
+import { formatPrice, getCurrencyByLocale } from '@/lib/functions';
 
 interface BouquetFormProps {
   bouquet?: Bouquet;
@@ -31,6 +31,9 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
   const params = useParams();
   const locale = params.locale as string;
   const t = useTranslations('admin');
+  
+  // Get currency code from locale
+  const currencyCode = getCurrencyByLocale(locale);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -439,7 +442,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">zł</span>
+                        <span className="text-gray-500 sm:text-sm font-medium">{currencyCode}</span>
                       </div>
                       <input
                         type="number"
@@ -448,7 +451,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                         required
                         min="0"
                         step="0.01"
-                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
                         placeholder="0.00"
                         value={formData.price}
                         onChange={handleChange}
@@ -466,7 +469,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                     </label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">zł</span>
+                        <span className="text-gray-500 sm:text-sm font-medium">{currencyCode}</span>
                       </div>
                       <input
                         type="number"
@@ -474,7 +477,7 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
                         id="discount_price"
                         min="0"
                         step="0.01"
-                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
                         placeholder="0.00"
                         value={formData.discount_price || ''}
                         onChange={handleChange}

@@ -156,6 +156,16 @@ export function useBouquetForm(
     setSubmitting(true);
     setError(null);
     
+    // Validate that if there are videos, there's at least one image set as a thumbnail
+    const hasVideos = bouquet.media.some(media => media.media_type === 'video');
+    const hasThumbnail = bouquet.media.some(media => media.media_type === 'image' && media.is_thumbnail);
+    
+    if (hasVideos && !hasThumbnail) {
+      setError('You must set at least one photo as a thumbnail when you have videos. Photos are used as thumbnails for videos.');
+      setSubmitting(false);
+      return;
+    }
+    
     const startTime = logger.request('PUT', `bouquet/${bouquetId}`);
     
     try {

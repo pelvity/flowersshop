@@ -7,11 +7,13 @@ import { Tag } from '@/lib/repositories/repository-types';
 interface BouquetTagsManagerProps {
   bouquetId: string;
   initialTags?: Tag[];
+  onTagsChange?: (tags: Tag[]) => void;
 }
 
 export default function BouquetTagsManager({
   bouquetId,
-  initialTags = []
+  initialTags = [],
+  onTagsChange
 }: BouquetTagsManagerProps) {
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTags, setSelectedTags] = useState<Tag[]>(initialTags);
@@ -66,6 +68,11 @@ export default function BouquetTagsManager({
 
   // Update the bouquet with new tags
   const updateBouquetTags = async (updatedTags: Tag[]) => {
+    // Skip API update if no bouquet ID is provided (for new bouquets)
+    if (!bouquetId) {
+      return;
+    }
+    
     try {
       setIsSaving(true);
       
@@ -103,12 +110,22 @@ export default function BouquetTagsManager({
     setSelectedTags(newSelectedTags);
     updateBouquetTags(newSelectedTags);
     setSearchTerm('');
+    
+    // Call the onTagsChange callback if provided
+    if (onTagsChange) {
+      onTagsChange(newSelectedTags);
+    }
   };
 
   const handleRemoveTag = (tagId: string) => {
     const newSelectedTags = selectedTags.filter(tag => tag.id !== tagId);
     setSelectedTags(newSelectedTags);
     updateBouquetTags(newSelectedTags);
+    
+    // Call the onTagsChange callback if provided
+    if (onTagsChange) {
+      onTagsChange(newSelectedTags);
+    }
   };
 
   const handleCreateTag = async () => {

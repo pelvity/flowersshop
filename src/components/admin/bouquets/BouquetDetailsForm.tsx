@@ -29,13 +29,8 @@ export default function BouquetDetailsForm({
   const locale = useLocale();
   const currencyCode = getCurrencyByLocale(locale);
   
-  // Get currency symbol from the locale
-  const currencySymbol = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currencyCode,
-  })
-    .formatToParts(0)
-    .find(part => part.type === 'currency')?.value || 'zł';
+  // Display full currency code instead of just the symbol for clarity
+  const currencyDisplay = currencyCode;
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
@@ -83,7 +78,7 @@ export default function BouquetDetailsForm({
           </label>
           <div className="mt-1 relative rounded-md shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 sm:text-sm">{currencySymbol}</span>
+              <span className="text-gray-500 sm:text-sm font-medium">{currencyDisplay}</span>
             </div>
             <input
               type="number"
@@ -95,7 +90,7 @@ export default function BouquetDetailsForm({
               value={bouquet.price}
               onChange={onChange}
               disabled={submitting}
-              className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+              className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
             />
           </div>
         </div>
@@ -106,7 +101,7 @@ export default function BouquetDetailsForm({
           </label>
           <div className="mt-1 relative rounded-md shadow-sm">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 sm:text-sm">{currencySymbol}</span>
+              <span className="text-gray-500 sm:text-sm font-medium">{currencyDisplay}</span>
             </div>
             <input
               type="number"
@@ -117,7 +112,7 @@ export default function BouquetDetailsForm({
               value={bouquet.discount_price}
               onChange={onChange}
               disabled={submitting}
-              className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+              className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
             />
           </div>
         </div>
