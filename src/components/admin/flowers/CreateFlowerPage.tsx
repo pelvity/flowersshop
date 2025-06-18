@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { generateUUID } from '@/utils/uuid';
-import ImageUploadR2 from '@/components/common/ImageUploadR2';
+import MediaUploader from '@/components/admin/shared/MediaUploader';
 import { getCurrencyByLocale } from '@/lib/functions';
 
 // Create a logger for this component
@@ -19,6 +19,21 @@ type Category = {
   id: string;
   name: string;
   description: string | null;
+};
+
+// Define MediaItem type
+type MediaItem = {
+  id: string;
+  media_type: 'image' | 'video';
+  file_path: string;
+  file_url?: string;
+  file_name: string;
+  file_size: number;
+  content_type: string;
+  display_order: number;
+  is_thumbnail: boolean;
+  flower_id?: string;
+  [key: string]: any;
 };
 
 export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
@@ -34,8 +49,6 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
     colors: [] as string[],
     is_available: true,
     category_id: '',
-    image_url: '',
-    image_path: '',
   });
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -43,6 +56,8 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [colorInput, setColorInput] = useState('');
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [flowerId, setFlowerId] = useState<string>(generateUUID());
 
   const currencyCode = getCurrencyByLocale(currentLocale);
   
@@ -96,21 +111,18 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
       }
       
       const supabase = createLoggingClient();
-      const newFlowerId = generateUUID();
       
       const { error } = await supabase
         .from('flowers')
         .insert([
           {
-            id: newFlowerId,
+            id: flowerId,
             name: flower.name,
             price: flower.price,
             description: flower.description || null,
             colors: flower.colors.length ? flower.colors : null,
             is_available: flower.is_available,
             category_id: flower.category_id || null,
-            image_url: flower.image_url || null,
-            image_path: flower.image_path || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
@@ -173,12 +185,8 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
     });
   };
 
-  const handleImageUploaded = (url: string, path: string) => {
-    setFlower({
-      ...flower,
-      image_url: url,
-      image_path: path
-    });
+  const handleMediaChange = (updatedMedia: MediaItem[]) => {
+    setMedia(updatedMedia);
   };
 
   return (
@@ -351,18 +359,17 @@ export default function ClientCreateFlowerPage({ locale }: { locale: string }) {
               ></textarea>
             </div>
 
-            {/* Image Section - Using R2 integration */}
+            {/* Media Section - Using MediaUploader component */}
             <div className="md:col-span-2 mt-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
                 {t('flowers.image')}
               </h2>
               <div className="mt-4">
-                <ImageUploadR2 
-                  initialImageUrl={flower.image_url || undefined}
-                  onImageUploaded={handleImageUploaded}
-                  folder="flowers"
-                  className="relative w-full max-w-md mx-auto"
-                  imageClassName="max-h-64 object-contain"
+                <MediaUploader
+                  entityType="flowers"
+                  entityId={flowerId}
+                  media={media}
+                  onMediaChange={handleMediaChange}
                 />
               </div>
             </div>

@@ -5,6 +5,8 @@ import { Plus, Search, Edit, Trash2, Loader } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { FlowerRepository, Flower } from '@/lib/supabase';
+import { ColorRepository } from '@/lib/repositories/color-repository';
+import { Color } from '@/lib/repositories/repository-types';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { formatPrice } from '@/lib/functions';
@@ -19,9 +21,15 @@ type Category = {
   description: string | null;
 };
 
+// Define type for color with translation
+type ColorWithTranslation = Color & {
+  translated_name: string;
+};
+
 // Extended flower type with optional properties
 interface ExtendedFlower extends Flower {
   category_id?: string;
+  colors?: ColorWithTranslation[];
 }
 
 export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
@@ -52,8 +60,35 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
         
         if (categoriesError) throw categoriesError;
         
+        // Initialize color repository
+        const colorRepo = new ColorRepository();
+        
+        // Fetch translated colors for each flower
+        const colorsData = await colorRepo.getAllWithTranslations(locale);
+        
+        // Get colors for each flower and add to flower data
+        const extendedFlowers: ExtendedFlower[] = await Promise.all(
+          flowersData.map(async (flower) => {
+            const flowerColors = await colorRepo.getColorsForFlower(flower.id);
+            
+            // Map flower colors to include translations
+            const translatedColors = flowerColors.map(color => {
+              const colorWithTranslation = colorsData.find(c => c.id === color.id);
+              return colorWithTranslation || { 
+                ...color,
+                translated_name: color.name
+              };
+            });
+            
+            return {
+              ...flower,
+              colors: translatedColors
+            };
+          })
+        );
+        
         // Cast to extended flower type
-        setFlowers(flowersData as ExtendedFlower[]);
+        setFlowers(extendedFlowers);
         setCategories(categoriesData || []);
         
         logger.response('GET', 'flowers', 200, startTime);
@@ -67,7 +102,7 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
     }
     
     fetchData();
-  }, []);
+  }, [locale]);
   
   // Get category name by ID
   const getCategoryName = (categoryId: string | null | undefined): string => {
@@ -186,8 +221,30 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredFlowers.map((flower) => (
                 <tr key={flower.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{flower.name}</div>
+                    {/* Display color chips */}
+                    {flower.colors && flower.colors.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {flower.colors.map(color => (
+                          <div 
+                            key={color.id}
+                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+                            style={{ 
+                              backgroundColor: `${color.hex_code}20`, 
+                              color: color.hex_code,
+                              borderColor: color.hex_code
+                            }}
+                          >
+                            <div 
+                              className="w-2 h-2 mr-1 rounded-full" 
+                              style={{ backgroundColor: color.hex_code }}
+                            />
+                            {color.translated_name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatPrice(flower.price, locale)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{getCategoryName(flower.category_id)}</td>

@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, X } from 'lucide-react';
 import Link from 'next/link';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
-import ImageUploadR2 from '@/components/common/ImageUploadR2';
 import { FlowerRepository, Flower } from '@/lib/supabase';
+import { ColorRepository } from '@/lib/repositories/color-repository';
+import { Color } from '@/lib/repositories/repository-types';
 
 // Create a logger for this component
 const logger = new ApiLogger('EditFlowerPage');
@@ -24,23 +25,29 @@ type Category = {
 type FlowerData = {
   id: string;
   name: string;
-  price: number;
   description: string | null;
+  price: number;
   in_stock: boolean;
-  colors?: string[] | null;
+  low_stock_threshold: number;
+  scientific_name?: string | null;
+  is_available?: boolean;
   category_id?: string | null;
   image_url?: string | null;
   image_path?: string | null;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// Define type for color with translation
+type ColorWithTranslation = Color & {
+  translated_name: string;
 };
 
 // Convert from Flower to FlowerData
 function adaptFlower(flower: Flower): FlowerData {
   return {
     ...flower,
-    in_stock: flower.in_stock > 0,
-    colors: [] // The Flower type doesn't have colors, so initialize with empty array
+    in_stock: flower.in_stock > 0
   };
 }
 
@@ -50,12 +57,13 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
   
   const [flower, setFlower] = useState<FlowerData | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [availableColors, setAvailableColors] = useState<ColorWithTranslation[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [colorInput, setColorInput] = useState('');
 
-  // Fetch flower data and categories
+  // Fetch flower data, categories, and colors
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -82,9 +90,20 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
         
         if (categoriesError) throw categoriesError;
         
+        // Fetch colors with translations
+        const colorRepo = new ColorRepository();
+        const colorsData = await colorRepo.getAllWithTranslations(locale);
+        
+        // Fetch flower colors
+        const flowerColors = await colorRepo.getColorsForFlower(id);
+        const flowerColorIds = flowerColors.map(color => color.id);
+        
         // Convert to our component's data format
-        setFlower(adaptFlower(flowerData));
+        const adaptedFlower = adaptFlower(flowerData);
+        setFlower(adaptedFlower);
+        setSelectedColors(flowerColorIds);
         setCategories(categoriesData || []);
+        setAvailableColors(colorsData);
         
         logger.response('GET', `flower/${id}`, 200, startTime);
       } catch (err) {
@@ -97,7 +116,7 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
     }
     
     fetchData();
-  }, [id]);
+  }, [id, locale]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +134,10 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
         description: flower.description,
         in_stock: flower.in_stock ? 1 : 0, // Convert boolean back to number
       });
+      
+      // Update flower colors
+      const colorRepo = new ColorRepository();
+      await colorRepo.setColorsForFlower(id, selectedColors);
       
       logger.response('PUT', `flower/${id}`, 200, startTime);
       
@@ -156,31 +179,15 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
     }
   };
 
-  const handleAddColor = () => {
-    if (colorInput.trim() && !flower?.colors?.includes(colorInput.trim())) {
-      setFlower({
-        ...flower!,
-        colors: [...(flower!.colors || []), colorInput.trim()]
-      });
-      setColorInput('');
+  const handleColorSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const colorId = e.target.value;
+    if (colorId && !selectedColors.includes(colorId)) {
+      setSelectedColors([...selectedColors, colorId]);
     }
   };
 
-  const handleRemoveColor = (color: string) => {
-    if (!flower) return;
-    setFlower({
-      ...flower,
-      colors: flower.colors?.filter(c => c !== color) || []
-    });
-  };
-
-  const handleImageUploaded = (url: string, path: string) => {
-    if (!flower) return;
-    setFlower({
-      ...flower,
-      image_url: url,
-      image_path: path
-    });
+  const handleRemoveColor = (colorId: string) => {
+    setSelectedColors(selectedColors.filter(id => id !== colorId));
   };
 
   if (loading) {
@@ -287,43 +294,61 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
             </select>
           </div>
 
-          {/* Colors */}
+          {/* Colors Dropdown */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="color_select" className="block text-sm font-medium text-gray-700 mb-1">
               {t('flowers.colors')}
             </label>
-            <div className="flex">
-              <input
-                type="text"
-                value={colorInput}
-                onChange={(e) => setColorInput(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-                placeholder="Add a color..."
-              />
-              <button
-                type="button"
-                onClick={handleAddColor}
-                className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-r-md"
-              >
-                Add
-              </button>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {flower.colors?.map((color, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-pink-100 text-pink-800"
+            <select
+              id="color_select"
+              name="color_select"
+              value=""
+              onChange={handleColorSelect}
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
+            >
+              <option value="">-- {t('common.select')} --</option>
+              {availableColors.map(color => (
+                <option 
+                  key={color.id} 
+                  value={color.id}
+                  disabled={selectedColors.includes(color.id)}
                 >
-                  {color}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveColor(color)}
-                    className="ml-1 text-pink-500 hover:text-pink-700"
-                  >
-                    ×
-                  </button>
-                </span>
+                  {color.translated_name}
+                </option>
               ))}
+            </select>
+            
+            {/* Selected Colors */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {selectedColors.map(colorId => {
+                const color = availableColors.find(c => c.id === colorId);
+                if (!color) return null;
+                
+                return (
+                  <div 
+                    key={colorId}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium"
+                    style={{ 
+                      backgroundColor: `${color.hex_code}20`, 
+                      color: color.hex_code,
+                      borderColor: color.hex_code
+                    }}
+                  >
+                    <div 
+                      className="w-3 h-3 mr-1 rounded-full" 
+                      style={{ backgroundColor: color.hex_code }}
+                    />
+                    {color.translated_name}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveColor(colorId)}
+                      className="ml-1 hover:text-gray-900 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -355,22 +380,6 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
               rows={4}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
             ></textarea>
-          </div>
-
-          {/* Image Section - Using our new R2 integration */}
-          <div className="md:col-span-2 mt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
-              {t('flowers.image')}
-            </h2>
-            <div className="mt-4">
-              <ImageUploadR2 
-                initialImageUrl={flower.image_url || undefined}
-                onImageUploaded={handleImageUploaded}
-                folder="flowers"
-                className="relative w-full max-w-md mx-auto"
-                imageClassName="max-h-64 object-contain"
-              />
-            </div>
           </div>
         </div>
 
