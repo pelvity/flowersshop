@@ -6,10 +6,11 @@ alwaysApply: true
 use pnpm
 act as senior dev
 db: supabase
-make .sql file if some changes in db needed
+use supabase mcp to manage db
 ask me if u need or want to make changes (optimization etc) of code that is not directly connected with my task but it would be best approach
 don't give me command to start server or program after your changes
 os: windows
 don't try custom approaches.
 research web is some default solution that shoudl work but don't work
 if nothing help than just stop and tell me whats problem
+

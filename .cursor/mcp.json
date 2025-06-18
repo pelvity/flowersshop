@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "console-ninja": {
+      "command": "node",
+      "args": [
+        "~/.console-ninja/mcp/"
+      ]
+    },
+    "supabase-mcp": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@supabase-community/supabase-mcp",
+        "--key",
+        "6c428eb2-248d-445e-83b5-ca2b3de1396f",
+        "--profile",
+        "key-hookworm-JyBkq3"
+      ]
+    }
+  }
+}
