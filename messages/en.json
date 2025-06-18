@@ -51,14 +51,22 @@
     "category": "Category",
     "selectCategory": "Select Category",
     "inStock": "In Stock",
-    "featured": "Featured"
+    "featured": "Featured",
+    "quantity": "Quantity",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "loading": "Loading...",
+    "error": "Error",
+    "note": "Note",
+    "select": "Select"
   },
   "cart": {
     "cart": "Cart",
     "cartEmpty": "Your cart is empty",
     "continueShopping": "Continue Shopping",
     "subtotal": "Subtotal",
-    "checkout": "Checkout"
+    "checkout": "Checkout",
+    "added": "Added!"
   },
   "home": {
     "hero": {
@@ -83,7 +91,13 @@
     "details": "Details",
     "description": "Description",
     "related": "Related Products",
-    "reviews": "Reviews"
+    "reviews": "Reviews",
+    "price": "Price",
+    "availability": "Availability",
+    "created": "Created",
+    "updated": "Updated",
+    "includes": "Includes",
+    "discount": "off"
   },
   "catalog": {
     "ourCollection": "Our Collection",
@@ -99,34 +113,35 @@
   },
   "customBouquet": {
     "title": "Custom Bouquet",
-    "description": "Select flowers, colors, and quantities to create a unique bouquet",
+    "createYourOwn": "Create Your Own Bouquet",
+    "customizeDescription": "Design a unique bouquet with your favorite flowers or customize one of our popular templates",
+    "startFromScratch": "Start from Scratch",
+    "startFromScratchDescription": "Create a completely custom bouquet with your selection of flowers",
+    "chooseTemplate": "Choose a Template",
+    "noDescription": "No description available",
+    "customize": "Customize",
+    "start": "Start Creating",
     "selectFlowers": "Select Flowers",
-    "selectedFlowers": "Selected Flowers",
-    "quantity": "Quantity",
-    "color": "Color",
-    "addFlower": "Add Flower",
-    "removeFlower": "Remove",
-    "totalPrice": "Total Price",
-    "addToCart": "Add to Cart",
-    "flowerSelection": "Flower Selection",
-    "yourBouquet": "Your Bouquet",
-    "emptySelection": "You haven't selected any flowers yet. Choose flowers to create your bouquet.",
-    "createYourOwn": "Create Your Own Unique Bouquet",
-    "customizeDescription": "Select your favorite flowers, colors, and quantities to create the perfect bouquet for any occasion.",
-    "startFromScratch": "Start From Scratch",
     "backToTemplates": "Back to Templates",
     "continueToReview": "Continue to Review",
     "searchPlaceholder": "Search flowers...",
-    "each": "each",
+    "selectedFlowers": "Selected Flowers",
+    "emptySelection": "No flowers selected yet. Click on flowers to add them to your bouquet.",
     "backToCustomize": "Back to Customize",
     "reviewYourBouquet": "Review Your Bouquet",
     "yourBouquetSummary": "Your Bouquet Summary",
-    "loadingBouquet": "Loading your bouquet..."
+    "quantity": "Quantity",
+    "color": "Color",
+    "totalPrice": "Total Price",
+    "addToCart": "Add to Cart",
+    "each": "each",
+    "loadingBouquet": "Loading bouquet details..."
   },
   "admin": {
     "common": {
       "loading": "Loading...",
       "save": "Save",
+      "saving": "Saving...",
       "cancel": "Cancel",
       "delete": "Delete",
       "edit": "Edit",
@@ -142,7 +157,9 @@
       "featured": "Featured",
       "description": "Description",
       "price": "Price",
-      "name": "Name"
+      "name": "Name",
+      "error": "Error",
+      "note": "Note"
     },
     "navigation": {
       "dashboard": "Dashboard",
@@ -191,7 +208,19 @@
       "details": "Bouquet Details",
       "flowers": "Flowers in Bouquet",
       "searchFlowers": "Search Flowers",
-      "noFlowers": "No flowers in bouquet"
+      "noFlowers": "No flowers in bouquet",
+      "selectFlower": "Select Flower",
+      "quantity": "Quantity",
+      "add": "Add",
+      "totalFlowersCost": "Total Flowers Cost",
+      "flower": "Flower",
+      "suggestedPrice": "Suggested price",
+      "createDescription": "Fill in the details to create a new bouquet",
+      "editDescription": "Update bouquet details",
+      "update": "Update Bouquet",
+      "saveError": "Error saving bouquet",
+      "loadError": "Error loading bouquet data",
+      "descriptionPlaceholder": "Enter bouquet description..."
     },
     "flowers": {
       "name": "Name",
@@ -211,7 +240,11 @@
       "imageRequirements": "Recommended size: 800x600px. Max file size: 2MB.",
       "createSuccess": "Flower created successfully",
       "updateSuccess": "Flower updated successfully",
-      "deleteSuccess": "Flower deleted successfully"
+      "deleteSuccess": "Flower deleted successfully",
+      "colors": "Colors",
+      "selectColor": "Select a color",
+      "noColorsSelected": "No colors selected yet",
+      "colorSelection": "Color Selection"
     },
     "auth": {
       "login": "Sign in to your account",
@@ -219,6 +252,23 @@
       "password": "Password",
       "signIn": "Sign In",
       "loginError": "Invalid login credentials. Please try again."
+    },
+    "media": {
+      "title": "Media",
+      "uploadButton": "Upload Media",
+      "thumbnail": "Thumbnail",
+      "video": "Video",
+      "photoRequiredForVideo": "You must upload at least one photo along with videos. Photos are used as thumbnails for videos.",
+      "deleteConfirm": "Are you sure you want to delete this media? This action cannot be undone.",
+      "deleteError": "Failed to delete media. Please try again.",
+      "instructions": "Upload images and select one as the thumbnail using the radio buttons below each photo.",
+      "videoRequirement": "When uploading videos, at least one photo must be included to serve as the thumbnail.",
+      "thumbnailNote": "Videos cannot be set as thumbnails, only photos can.",
+      "uploading": "Uploading media...",
+      "noMedia": "No media added to this bouquet",
+      "uploadPrompt": "Upload images or videos to showcase your bouquet",
+      "onlyPhotoThumbnail": "Only photos can be set as thumbnails",
+      "setAsThumbnail": "Set as thumbnail"
     }
   },
   "entities": {

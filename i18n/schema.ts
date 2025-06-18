@@ -84,6 +84,12 @@ export type Translation = {
     description: string;
     related: string;
     reviews: string;
+    price: string;
+    availability: string;
+    created: string;
+    updated: string;
+    includes: string;
+    discount: string;
   };
   catalog: {
     ourCollection: string;
@@ -95,6 +101,7 @@ export type Translation = {
     noResults: string;
     addToCart: string;
     outOfStock: string;
+    inStock: string;
     customize: string;
   };
   customBouquet: {
@@ -127,6 +134,7 @@ export type Translation = {
     common: {
       loading: string;
       save: string;
+      saving: string;
       cancel: string;
       delete: string;
       edit: string;
@@ -135,6 +143,16 @@ export type Translation = {
       filter: string;
       actions: string;
       noResults: string;
+      discountPrice: string;
+      category: string;
+      selectCategory: string;
+      inStock: string;
+      featured: string;
+      description: string;
+      price: string;
+      name: string;
+      error: string;
+      note: string;
     };
     navigation: {
       dashboard: string;
@@ -150,6 +168,7 @@ export type Translation = {
       translations: string;
     };
     tags: {
+      title: string;
       assignedTags: string;
       noTagsAssigned: string;
       addTag: string;
@@ -210,6 +229,23 @@ export type Translation = {
       password: string;
       signIn: string;
       loginError: string;
+    };
+    media: {
+      title: string;
+      uploadButton: string;
+      thumbnail: string;
+      video: string;
+      photoRequiredForVideo: string;
+      deleteConfirm: string;
+      deleteError: string;
+      instructions: string;
+      videoRequirement: string;
+      thumbnailNote: string;
+      uploading: string;
+      noMedia: string;
+      uploadPrompt: string;
+      onlyPhotoThumbnail: string;
+      setAsThumbnail: string;
     };
   };
   entities: {
