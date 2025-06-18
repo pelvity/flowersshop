@@ -160,6 +160,44 @@ export const FlowerRepository = {
       .eq('id', toUUID(id));
       
     if (error) throw error;
+  },
+  
+  async getColors(flowerId: string): Promise<string[]> {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('flower_colors')
+      .select('color_id')
+      .eq('flower_id', toUUID(flowerId));
+    
+    if (error) throw error;
+    return data?.map(item => item.color_id) || [];
+  },
+  
+  async setColors(flowerId: string, colorIds: string[]): Promise<void> {
+    const supabase = await createClient();
+    
+    // First delete existing color associations
+    const { error: deleteError } = await supabase
+      .from('flower_colors')
+      .delete()
+      .eq('flower_id', toUUID(flowerId));
+    
+    if (deleteError) throw deleteError;
+    
+    // Skip if no colors to add
+    if (!colorIds.length) return;
+    
+    // Create new color associations
+    const flowerColors = colorIds.map(colorId => ({
+      flower_id: toUUID(flowerId),
+      color_id: toUUID(colorId)
+    }));
+    
+    const { error: insertError } = await supabase
+      .from('flower_colors')
+      .insert(flowerColors);
+    
+    if (insertError) throw insertError;
   }
 };
 
