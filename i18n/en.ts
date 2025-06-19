@@ -149,7 +149,8 @@ export const en: Translation = {
       settings: "Settings",
       logout: "Logout",
       flowershop: "Flower Shop Admin",
-      translations: "Translations"
+      translations: "Translations",
+      colors: "Colors"
     },
     tags: {
       assignedTags: "Assigned Tags",

@@ -110,33 +110,34 @@
     "addToCart": "Dodaj do koszyka",
     "outOfStock": "Niedostępny",
     "inStock": "Dostępny",
-    "customize": "Dostosuj"
+    "customize": "Dostosuj",
+    "customizeThis": "Dostosuj ten"
   },
   "customBouquet": {
     "title": "Własny bukiet",
-    "description": "Wybierz kwiaty, kolory i ilości, aby stworzyć unikalny bukiet",
-    "selectFlowers": "Wybierz kwiaty",
-    "selectedFlowers": "Wybrane kwiaty",
-    "quantity": "Ilość",
-    "color": "Kolor",
-    "addFlower": "Dodaj kwiat",
-    "removeFlower": "Usuń",
-    "totalPrice": "Łączna cena",
-    "addToCart": "Dodaj do koszyka",
-    "flowerSelection": "Wybór kwiatów",
-    "yourBouquet": "Twój bukiet",
-    "emptySelection": "Nie wybrałeś jeszcze żadnych kwiatów. Wybierz kwiaty, aby stworzyć swój bukiet.",
-    "createYourOwn": "Stwórz własny unikalny bukiet",
-    "customizeDescription": "Wybierz swoje ulubione kwiaty, kolory i ilości, aby stworzyć idealny bukiet na każdą okazję.",
-    "startFromScratch": "Zacznij od nowa",
+    "createYourOwn": "Stwórz własny bukiet",
+    "customizeDescription": "Zaprojektuj spersonalizowany bukiet, wybierając ulubione kwiaty i kolory",
+    "chooseTemplate": "Wybierz szablon lub zacznij od zera",
+    "startFromScratch": "Zacznij od zera",
+    "startFromScratchDescription": "Stwórz całkowicie niestandardowy bukiet, wybierając własne kwiaty",
+    "start": "Rozpocznij tworzenie",
     "backToTemplates": "Powrót do szablonów",
-    "continueToReview": "Kontynuuj do przeglądu",
+    "selectFlowers": "Wybierz kwiaty",
     "searchPlaceholder": "Szukaj kwiatów...",
-    "each": "za sztukę",
+    "selectedFlowers": "Wybrane kwiaty",
+    "emptySelection": "Nie wybrano jeszcze kwiatów. Kliknij na kwiaty, aby dodać je do bukietu.",
+    "each": "każdy",
+    "color": "Kolor",
+    "selectColor": "Wybierz kolor",
+    "cancel": "Anuluj",
+    "totalPrice": "Cena całkowita",
+    "continueToReview": "Przejdź do przeglądu",
     "backToCustomize": "Powrót do dostosowywania",
     "reviewYourBouquet": "Przejrzyj swój bukiet",
-    "yourBouquetSummary": "Podsumowanie Twojego bukietu",
-    "loadingBouquet": "Ładowanie bukietu..."
+    "yourBouquetSummary": "Podsumowanie twojego bukietu",
+    "quantity": "Ilość",
+    "addToCart": "Dodaj do koszyka",
+    "loadingBouquet": "Ładowanie szczegółów bukietu..."
   },
   "admin": {
     "common": {
@@ -277,5 +278,8 @@
     "label": "Język",
     "ariaLabel": "Przełącz na {locale, select, en {angielski} uk {ukraiński} pl {polski} ru {rosyjski} other {nieznany}}",
     "title": "Przełącz na {locale, select, en {angielski} uk {ukraiński} pl {polski} ru {rosyjski} other {nieznany}}"
+  },
+  "checkout": {
+    "orderProcessingError": "Wystąpił błąd podczas przetwarzania zamówienia. Spróbuj ponownie."
   }
 } 

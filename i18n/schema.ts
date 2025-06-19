@@ -103,31 +103,32 @@ export type Translation = {
     outOfStock: string;
     inStock: string;
     customize: string;
+    customizeThis: string;
   };
   customBouquet: {
     title: string;
-    description: string;
-    selectFlowers: string;
-    selectedFlowers: string;
-    quantity: string;
-    color: string;
-    addFlower: string;
-    removeFlower: string;
-    totalPrice: string;
-    addToCart: string;
-    flowerSelection: string;
-    yourBouquet: string;
-    emptySelection: string;
     createYourOwn: string;
     customizeDescription: string;
+    chooseTemplate: string;
     startFromScratch: string;
+    startFromScratchDescription: string;
+    start: string;
     backToTemplates: string;
-    continueToReview: string;
+    selectFlowers: string;
     searchPlaceholder: string;
+    selectedFlowers: string;
+    emptySelection: string;
     each: string;
+    color: string;
+    selectColor: string;
+    cancel: string;
+    totalPrice: string;
+    continueToReview: string;
     backToCustomize: string;
     reviewYourBouquet: string;
     yourBouquetSummary: string;
+    quantity: string;
+    addToCart: string;
     loadingBouquet: string;
   };
   admin: {
@@ -166,6 +167,7 @@ export type Translation = {
       logout: string;
       flowershop: string;
       translations: string;
+      colors: string;
     };
     tags: {
       title: string;
@@ -173,6 +175,15 @@ export type Translation = {
       noTagsAssigned: string;
       addTag: string;
       searchTags: string;
+    };
+    colors: {
+      title: string;
+      colorName: string;
+      colorHex: string;
+      addColor: string;
+      editColor: string;
+      deleteColor: string;
+      confirmDelete: string;
     };
     bouquets: {
       name: string;
