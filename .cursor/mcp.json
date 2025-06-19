@@ -7,10 +7,8 @@
       ]
     },
     "supabase-mcp": {
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@smithery/cli@latest",
         "run",
