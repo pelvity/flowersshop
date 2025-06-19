@@ -14,9 +14,18 @@ interface BouquetCardProps {
   category?: Category;
   tags?: Tag[];
   onAddToCart: (bouquetId: string) => void;
+  isTemplate?: boolean;
+  onCustomize?: (bouquet: Bouquet) => void;
 }
 
-export default function BouquetCard({ bouquet, category, tags = [], onAddToCart }: BouquetCardProps) {
+export default function BouquetCard({ 
+  bouquet, 
+  category, 
+  tags = [], 
+  onAddToCart,
+  isTemplate = false,
+  onCustomize
+}: BouquetCardProps) {
   const t = useTranslations('catalog');
   const router = useRouter();
   const { locale } = useParams();
@@ -103,12 +112,16 @@ export default function BouquetCard({ bouquet, category, tags = [], onAddToCart 
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onAddToCart(bouquet.id);
+                  if (isTemplate && onCustomize) {
+                    onCustomize(bouquet);
+                  } else {
+                    onAddToCart(bouquet.id);
+                  }
                 }}
                 className="z-10 bg-gradient-to-r from-pink-500 to-pink-400 text-white px-3 py-1.5 rounded-md text-sm font-semibold shadow-sm transition-all duration-200 hover:from-pink-600 hover:to-pink-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!bouquet.in_stock}
               >
-                {t('addToCart')}
+                {isTemplate ? t('customizeThis') : t('addToCart')}
               </button>
             </div>
           </div>

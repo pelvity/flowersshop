@@ -2,15 +2,29 @@
 
 import { Button } from "./ui";
 import { useTranslations } from 'next-intl';
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { sendEmail } from "@/utils/send-email";
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 
 type FormData = {
   name: string;
   email: string;
   phone: string;
   message: string;
+};
+
+// Map container style
+const mapContainerStyle = {
+  width: '100%',
+  height: '350px',
+  borderRadius: '0.5rem',
+};
+
+// Kyiv coordinates (matching the address in the footer)
+const defaultCenter = {
+  lat: 50.450001,
+  lng: 30.523333
 };
 
 export default function Contact() {
@@ -25,6 +39,7 @@ export default function Contact() {
     status: 'idle',
     message: '',
   });
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   
   const { 
     register, 
@@ -32,6 +47,15 @@ export default function Contact() {
     reset,
     formState: { errors } 
   } = useForm<FormData>();
+  
+  // Store the map instance when the map loads
+  const onLoad = useCallback((map: google.maps.Map) => {
+    setMap(map);
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
   
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
@@ -68,6 +92,9 @@ export default function Contact() {
       }
     }
   };
+  
+  // Get the address from the translations
+  const storeAddress = commonT('footer.address');
   
   return (
     <section id="contact-section" className="py-12 bg-white">
@@ -192,12 +219,28 @@ export default function Contact() {
           
           {/* Map and Info */}
           <div>
-            {/* Google Map Placeholder */}
-            <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center mb-6">
-              <div className="text-center p-4">
-                <p className="text-gray-500">{contactT('googleMap')}</p>
-                <p className="text-xs text-gray-400 mt-2">{contactT('mapApiNote')}</p>
-              </div>
+            {/* Google Map */}
+            <div className="mb-6 overflow-hidden rounded-lg shadow-md">
+              <LoadScript 
+                googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+                loadingElement={
+                  <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <p className="text-gray-500">{commonT('loading')}</p>
+                    </div>
+                  </div>
+                }
+              >
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={defaultCenter}
+                  zoom={15}
+                  onLoad={onLoad}
+                  onUnmount={onUnmount}
+                >
+                  <Marker position={defaultCenter} title={storeAddress} />
+                </GoogleMap>
+              </LoadScript>
             </div>
             
             {/* Contact Information */}
@@ -210,7 +253,7 @@ export default function Contact() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-gray-700">{commonT('footer.address')}</span>
+                  <span className="text-gray-700">{storeAddress}</span>
                 </div>
                 
                 <div className="flex">

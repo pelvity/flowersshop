@@ -8,9 +8,30 @@ import { getFileUrl } from "@/utils/cloudflare-worker";
 
 // Get a valid URL for the image
 export const getValidImageUrl = (mediaItem: BouquetMedia) => {
-  if (!mediaItem) return "";
-  if (mediaItem.file_url) return mediaItem.file_url;
-  if (mediaItem.file_path) return getFileUrl(mediaItem.file_path);
+  if (!mediaItem) {
+    console.log('getValidImageUrl: mediaItem is undefined or null');
+    return "";
+  }
+  
+  console.log('getValidImageUrl - mediaItem:', JSON.stringify({
+    id: mediaItem.id,
+    file_url: mediaItem.file_url,
+    file_path: mediaItem.file_path,
+    media_type: mediaItem.media_type
+  }));
+  
+  if (mediaItem.file_url) {
+    console.log('Using file_url:', mediaItem.file_url);
+    return mediaItem.file_url;
+  }
+  
+  if (mediaItem.file_path) {
+    const url = `/storage/bouquets/${mediaItem.file_path}`;
+    console.log('Using file_path:', url);
+    return url;
+  }
+  
+  console.log('No valid image URL found');
   return "";
 };
 
@@ -114,7 +135,11 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
+  console.log('BouquetMediaGallery - media:', media ? JSON.stringify(media.map(m => ({id: m.id, file_path: m.file_path, file_url: m.file_url}))) : 'undefined');
+  console.log('BouquetMediaGallery - alt:', alt);
+  
   if (!media || media.length === 0) {
+    console.log('BouquetMediaGallery - No media found, showing placeholder');
     return (
       <div 
         className={`relative w-full ${height} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`} 

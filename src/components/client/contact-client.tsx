@@ -3,9 +3,12 @@
 import { Container, Section } from "../ui";
 import { useTranslations } from 'next-intl';
 import Contact from "../contact";
+import { useParams } from 'next/navigation';
 
 export default function ContactClient() {
   const t = useTranslations('contact');
+  const params = useParams();
+  const locale = params.locale as string;
   
   return (
     <>

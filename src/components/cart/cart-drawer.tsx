@@ -25,7 +25,7 @@ export default function CartDrawer() {
     removeItem, 
     updateItemQuantity 
   } = useCart();
-  const t = useTranslations();
+  const t = useTranslations('common');
   const cartT = useTranslations('cart');
   const supabase = createClientComponentClient<Database>();
   const locale = useLocale();
@@ -146,7 +146,7 @@ export default function CartDrawer() {
                             <h3 className="text-base font-medium text-pink-700">{product.name}</h3>
                             <p className="text-base font-medium text-amber-600">{formatPrice(product.price * item.quantity, locale)}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">{formatPrice(product.price, locale)} {t('common.each')}</p>
+                          <p className="mt-1 text-sm text-gray-500">{formatPrice(product.price, locale)} {t('each')}</p>
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
@@ -204,7 +204,7 @@ export default function CartDrawer() {
                             <h3 className="text-base font-medium text-pink-700">{name}</h3>
                             <p className="text-base font-medium text-amber-600">{formatPrice(item.price * item.quantity, locale)}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">{t('common.customBouquet')}</p>
+                          <p className="mt-1 text-sm text-gray-500">{t('customBouquet')}</p>
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
@@ -254,7 +254,7 @@ export default function CartDrawer() {
             </div>
             <div className="flex flex-col space-y-2">
               <Link 
-                href="/checkout"
+                href={`/${locale}/checkout`}
                 className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors text-center"
                 onClick={closeCart}
               >

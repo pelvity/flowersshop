@@ -13,6 +13,24 @@ interface HeroProps {
 export default function Hero({ carouselMedia = [] }: HeroProps) {
   const t = useTranslations();
   
+  // Safe translation helper
+  const safeT = (key: string, defaultValue: string) => {
+    try {
+      return t(key, { defaultValue });
+    } catch (error) {
+      return defaultValue;
+    }
+  };
+  
+  // Safe locale helper
+  const safeLocale = () => {
+    try {
+      return t('locale', { defaultValue: 'uk' });
+    } catch (error) {
+      return 'uk';
+    }
+  };
+  
   // Function to scroll to the contact section
   const scrollToContact = () => {
     const contactSection = document.getElementById('contact-section');
@@ -38,16 +56,16 @@ export default function Hero({ carouselMedia = [] }: HeroProps) {
           <div className="pt-10 sm:pt-16 lg:pt-8 xl:pt-16">
             <div className="px-4 sm:px-6 sm:text-center lg:text-left">
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                <span className="block">{t('home.hero.title')}</span>
+                <span className="block">{safeT('home.hero.title', 'Beautiful Bouquets for Every Occasion')}</span>
               </h1>
               <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                {t('home.hero.subtitle')}
+                {safeT('home.hero.subtitle', 'Handcrafted with love and delivered with care')}
               </p>
               <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                 <div className="rounded-md shadow">
-                  <Link href={`/${t('locale')}/catalog`}>
+                  <Link href={`/${safeLocale()}/catalog`}>
                     <Button size="lg">
-                      {t('catalog.ourCollection')}
+                      {safeT('catalog.ourCollection', 'Our Collection')}
                     </Button>
                   </Link>
                 </div>
@@ -57,7 +75,7 @@ export default function Hero({ carouselMedia = [] }: HeroProps) {
                     size="lg"
                     onClick={scrollToContact}
                   >
-                    {t('common.header.contact')}
+                    {safeT('common.header.contact', 'Contact Us')}
                   </Button>
                 </div>
               </div>

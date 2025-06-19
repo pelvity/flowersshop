@@ -15,6 +15,24 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
   const t = useTranslations('home.featured');
   const params = useParams();
   const locale = params.locale as string;
+  // Safety check for locale
+  const safeLocale = locale === 'cart' ? 'uk' : locale;
+  
+  // Skip translations altogether if locale is invalid
+  const isValidLocale = !['cart'].includes(locale);
+  
+  // Use a custom translation function that always provides defaults
+  const tWithDefault = (key: string, defaultValue: string) => {
+    if (!isValidLocale) {
+      return defaultValue;
+    }
+    
+    try {
+      return t(key, { defaultValue });
+    } catch (error) {
+      return defaultValue;
+    }
+  };
   const [products, setProducts] = useState<Bouquet[]>(featuredBouquets);
   const [isLoading, setIsLoading] = useState(featuredBouquets.length === 0);
   const { addProduct } = useCart();
@@ -57,10 +75,10 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              {t('title')}
+              {tWithDefault('title', 'Featured Bouquets')}
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-              {t('subtitle', { defaultValue: 'Discover our most popular bouquets' })}
+              {tWithDefault('subtitle', 'Discover our most popular bouquets')}
             </p>
           </div>
           <div className="mt-10 flex justify-center">
@@ -76,10 +94,10 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-            {t('title')}
+            {tWithDefault('title', 'Featured Bouquets')}
           </h2>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-            {t('subtitle', { defaultValue: 'Discover our most popular bouquets' })}
+            {tWithDefault('subtitle', 'Discover our most popular bouquets')}
           </p>
         </div>
 
@@ -94,7 +112,7 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-gray-500">{t('noProducts', { defaultValue: 'No featured products available' })}</p>
+              <p className="text-gray-500">{tWithDefault('noProducts', 'No featured products available')}</p>
             </div>
           )}
         </div>
