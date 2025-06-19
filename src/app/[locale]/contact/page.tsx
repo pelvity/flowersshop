@@ -1,9 +1,13 @@
 import ContactClient from "@/components/client/contact-client";
 
-export default function ContactPage({ 
+export default async function ContactPage({ 
   params 
 }: { 
   params: { locale: string } 
 }) {
-  return <ContactClient />;
+  return (
+    <main>
+      <ContactClient />
+    </main>
+  );
 } 
