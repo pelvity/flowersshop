@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllColors, addColor } from '@/lib/colors';
+import { ColorRepository } from '@/lib/repositories/color-repository';
+
+const colorRepository = new ColorRepository();
 
 // GET /api/admin/colors - Get all colors
 export async function GET(request: NextRequest) {
   // Demo mode: Skip authentication
   try {
-    const colors = getAllColors();
+    const colors = await colorRepository.getAll();
     return NextResponse.json({ success: true, data: colors });
   } catch (error) {
     console.error('Failed to get colors:', error);
@@ -31,10 +33,9 @@ export async function POST(request: NextRequest) {
     }
     
     // Create new color
-    const newColor = addColor({
+    const newColor = await colorRepository.create({
       name: body.name,
-      hex: body.hex,
-      isActive: body.isActive !== false, // Default to true if not provided
+      hex_code: body.hex,
     });
     
     return NextResponse.json(

@@ -11,9 +11,12 @@ export class FlowerRepository {
 
   /**
    * Get all flowers with their media and colors
+   * @param options Optional filter options
    */
-  async getAll(): Promise<Flower[]> {
+  async getAll(options?: { includeColors?: boolean }): Promise<Flower[]> {
     try {
+      console.log('FlowerRepository.getAll called with options:', options);
+      
       const { data, error } = await this.supabase
         .from('flowers')
         .select('*')
@@ -24,11 +27,20 @@ export class FlowerRepository {
         return [];
       }
       
+      console.log(`Fetched ${data.length} flowers from Supabase`);
+      
       // Enhance each flower with media and colors
       const enhancedFlowers = await Promise.all(
         data.map(async flower => {
           const media = await this.mediaRepository.getMediaForFlower(flower.id);
-          const colors = await this.colorRepository.getColorsForFlower(flower.id);
+          
+          // Only fetch colors if explicitly requested or no options provided
+          let colors: any[] = [];
+          if (options?.includeColors !== false) {
+            console.log(`Fetching colors for flower ${flower.id} (${flower.name})`);
+            colors = await this.colorRepository.getColorsForFlower(flower.id);
+            console.log(`Flower ${flower.name} has ${colors.length} colors:`, colors);
+          }
           
           return {
             ...flower,
@@ -37,6 +49,8 @@ export class FlowerRepository {
           } as Flower;
         })
       );
+      
+      console.log(`Enhanced ${enhancedFlowers.length} flowers with media and colors`);
       
       return enhancedFlowers;
     } catch (err) {
@@ -108,9 +122,10 @@ export class FlowerRepository {
       if (media && media.length > 0) {
         await Promise.all(
           media.map(m => 
-            this.mediaRepository.addMedia({
+            this.mediaRepository.create({
               ...m,
-              flower_id: data.id
+              flower_id: data.id,
+              media_type: m.media_type as "image" | "video" // Cast to the correct type
             })
           )
         );

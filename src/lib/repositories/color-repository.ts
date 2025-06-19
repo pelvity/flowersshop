@@ -119,9 +119,11 @@ export class ColorRepository {
    */
   async getColorsForFlower(flowerId: string): Promise<Color[]> {
     try {
+      console.log(`Fetching colors for flower: ${flowerId}`);
+      
       const { data, error } = await this.supabase
         .from('flower_colors')
-        .select('color:color_id(*)')
+        .select('colors(*)')
         .eq('flower_id', flowerId);
         
       if (error) {
@@ -129,18 +131,23 @@ export class ColorRepository {
         return [];
       }
       
-      // Transform the nested colors structure to a flat array of Color objects
-      // Using explicit type casting to handle Supabase typing issues
-      return data.map(item => {
-        const colorData = item.color as any;
-        return {
-          id: colorData.id,
-          name: colorData.name,
-          hex_code: colorData.hex_code,
-          created_at: colorData.created_at,
-          updated_at: colorData.updated_at
-        } as Color;
-      }) || [];
+      console.log('Colors data from Supabase for flower', flowerId, JSON.stringify(data, null, 2));
+
+      if (!data || data.length === 0) {
+        console.log(`No colors found for flower ${flowerId}`);
+        return [];
+      }
+      
+      // The data from Supabase is an array of objects, where each object has a 'colors' property.
+      // This property can be a single object or null.
+      const colors = data.map(item => {
+        console.log('Processing color item:', item);
+        return item.colors;
+      }).filter(Boolean);
+      
+      console.log(`Processed ${colors.length} colors for flower ${flowerId}:`, colors);
+      
+      return colors as unknown as Color[];
     } catch (err) {
       console.error('Unexpected error in getColorsForFlower:', err);
       return [];
@@ -192,27 +199,22 @@ export class ColorRepository {
    */
   async getAllWithTranslations(locale: string): Promise<ColorWithTranslation[]> {
     try {
+      // Since color_translations table doesn't exist, just fetch colors directly
       const { data, error } = await this.supabase
         .from('colors')
-        .select(`
-          *,
-          translations:color_translations!inner(*)
-        `)
-        .eq('translations.locale', locale)
+        .select('*')
         .order('name');
         
       if (error) {
-        console.error('Error fetching colors with translations:', error);
+        console.error('Error fetching colors:', error);
         return [];
       }
       
-      return data.map(item => {
-        const translations = item.translations as any[];
-        return {
-          ...item,
-          translated_name: translations.length > 0 ? translations[0].name : item.name
-        } as ColorWithTranslation;
-      }) || [];
+      // Map each color to include a translated_name field that's the same as the name
+      return (data || []).map(item => ({
+        ...item,
+        translated_name: item.name
+      })) as ColorWithTranslation[];
     } catch (err) {
       console.error('Unexpected error in getAllWithTranslations:', err);
       return [];

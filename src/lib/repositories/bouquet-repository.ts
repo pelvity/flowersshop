@@ -75,22 +75,31 @@ export class BouquetRepository {
       throw error;
     }
     
-    // Fetch tags for each bouquet
-    const bouquetsWithTags = await Promise.all(
+    // Fetch tags and media for each bouquet
+    const bouquetsWithTagsAndMedia = await Promise.all(
       (bouquets || []).map(async (bouquet) => {
         const tags = await this.getBouquetTags(bouquet.id);
+        
+        // Fetch media for this bouquet
+        const { data: media } = await this.supabase
+          .from('bouquet_media')
+          .select('*')
+          .eq('bouquet_id', bouquet.id)
+          .order('display_order', { ascending: true });
+        
         return {
           ...bouquet,
-          tags
+          tags,
+          media: media || []
         };
       })
     );
     
     return {
-      data: bouquetsWithTags,
+      data: bouquetsWithTagsAndMedia,
       total,
       page: pagination?.page || 1,
-      pageSize: pagination?.pageSize || bouquetsWithTags.length,
+      pageSize: pagination?.pageSize || bouquetsWithTagsAndMedia.length,
       totalPages: pagination ? Math.ceil(total / pagination.pageSize) : 1
     };
   }

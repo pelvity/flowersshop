@@ -14,11 +14,24 @@ export const isValidUUID = (uuid: string): boolean => {
  * Otherwise creates a deterministic UUID-like string from the input
  */
 export const toUUID = (uuidString: string): string => {
+  // If it's already a valid UUID with dashes, return it as is
+  if (isValidUUID(uuidString)) {
+    return uuidString;
+  }
+  
   try {
+    // Try to parse it as a UUID without dashes
     const parsed = parse(uuidString);
-    return Buffer.from(parsed).toString('hex');
+    // Format it as a standard UUID with dashes
+    return [
+      parsed.slice(0, 8),
+      parsed.slice(8, 12),
+      parsed.slice(12, 16),
+      parsed.slice(16, 20),
+      parsed.slice(20)
+    ].join('-');
   } catch (e) {
-    // Return original string if parsing fails, assuming it might be in the correct format
+    // Return original string if parsing fails
     return uuidString;
   }
 };

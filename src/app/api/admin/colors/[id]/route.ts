@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getColorById, updateColor, deleteColor } from '@/lib/colors';
+import { ColorRepository } from '@/lib/repositories/color-repository';
+
+const colorRepository = new ColorRepository();
 
 // GET /api/admin/colors/[id] - Get a specific color
 export async function GET(
@@ -8,7 +10,7 @@ export async function GET(
 ) {
   // Demo mode: Skip authentication
   try {
-    const color = getColorById(params.id);
+    const color = await colorRepository.getById(params.id);
     
     if (!color) {
       return NextResponse.json(
@@ -32,15 +34,22 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // Demo mode: Skip authentication
   try {
+    const id = params.id;
     const body = await request.json();
     
+    // Validate input
+    if (!body.name || !body.hex) {
+      return NextResponse.json(
+        { success: false, message: 'Name and hex color code are required' },
+        { status: 400 }
+      );
+    }
+    
     // Update color
-    const updatedColor = updateColor(params.id, {
+    const updatedColor = await colorRepository.update(id, {
       name: body.name,
-      hex: body.hex,
-      isActive: body.isActive,
+      hex_code: body.hex,
     });
     
     if (!updatedColor) {
@@ -52,7 +61,7 @@ export async function PUT(
     
     return NextResponse.json({ success: true, data: updatedColor });
   } catch (error) {
-    console.error(`Failed to update color ${params.id}:`, error);
+    console.error('Failed to update color:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
@@ -65,20 +74,20 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // Demo mode: Skip authentication
   try {
-    const success = deleteColor(params.id);
+    const id = params.id;
+    const success = await colorRepository.delete(id);
     
     if (!success) {
       return NextResponse.json(
-        { success: false, message: 'Color not found' },
-        { status: 404 }
+        { success: false, message: 'Failed to delete color' },
+        { status: 500 }
       );
     }
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Failed to delete color ${params.id}:`, error);
+    console.error('Failed to delete color:', error);
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }
