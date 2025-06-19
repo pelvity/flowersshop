@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, Loader } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { FlowerRepository, Flower } from '@/lib/supabase';
 import { ColorRepository } from '@/lib/repositories/color-repository';
@@ -10,37 +11,41 @@ import { Color } from '@/lib/repositories/repository-types';
 import { createLoggingClient } from '@/utils/supabase-logger';
 import { ApiLogger } from '@/utils/api-logger';
 import { formatPrice } from '@/lib/functions';
+import { getValidImageUrlClient } from '@/utils/image-utils-client';
 
 // Create a logger for this component
 const logger = new ApiLogger('FlowersPage');
-
-// Define type for category
-type Category = {
-  id: string;
-  name: string;
-  description: string | null;
-};
 
 // Define type for color with translation
 type ColorWithTranslation = Color & {
   translated_name: string;
 };
 
+// Define type for flower media
+type FlowerMedia = {
+  id: string;
+  file_name: string;
+  file_path: string;
+  file_url?: string;
+  is_thumbnail: boolean;
+  media_type?: string;
+};
+
 // Extended flower type with optional properties
 interface ExtendedFlower extends Flower {
   category_id?: string;
   colors?: ColorWithTranslation[];
+  media?: FlowerMedia[];
 }
 
 export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
   const t = useTranslations('admin');
   const [flowers, setFlowers] = useState<ExtendedFlower[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Fetch flowers and categories on component mount
+  // Fetch flowers on component mount
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -50,15 +55,6 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
       try {
         // Fetch flowers using the repository
         const flowersData = await FlowerRepository.getAll();
-        
-        // Fetch categories for mapping category IDs to names
-        const supabase = createLoggingClient();
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*')
-          .order('name');
-        
-        if (categoriesError) throw categoriesError;
         
         // Initialize color repository
         const colorRepo = new ColorRepository();
@@ -79,17 +75,24 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
                 translated_name: color.name
               };
             });
+
+            // Fetch media for the flower
+            const supabase = createLoggingClient();
+            const { data: mediaData } = await supabase
+              .from('flower_media')
+              .select('*')
+              .eq('flower_id', flower.id);
             
             return {
               ...flower,
-              colors: translatedColors
+              colors: translatedColors,
+              media: mediaData || []
             };
           })
         );
         
         // Cast to extended flower type
         setFlowers(extendedFlowers);
-        setCategories(categoriesData || []);
         
         logger.response('GET', 'flowers', 200, startTime);
       } catch (err) {
@@ -104,17 +107,9 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
     fetchData();
   }, [locale]);
   
-  // Get category name by ID
-  const getCategoryName = (categoryId: string | null | undefined): string => {
-    if (!categoryId) return 'Uncategorized';
-    const category = categories.find(c => c.id === categoryId);
-    return category ? category.name : 'Uncategorized';
-  };
-  
   // Filter flowers based on search query
   const filteredFlowers = flowers.filter(flower => 
-    flower.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    getCategoryName(flower.category_id).toLowerCase().includes(searchQuery.toLowerCase())
+    flower.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Handle flower deletion
@@ -208,9 +203,6 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
                   {t('flowers.price')}
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('flowers.category')}
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('flowers.status')}
                 </th>
                 <th scope="col" className="relative px-6 py-3">
@@ -218,62 +210,92 @@ export default function ClientFlowersAdminPage({ locale }: { locale: string }) {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {filteredFlowers.map((flower) => (
-                <tr key={flower.id}>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{flower.name}</div>
-                    {/* Display color chips */}
-                    {flower.colors && flower.colors.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {flower.colors.map(color => (
-                          <div 
-                            key={color.id}
-                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
-                            style={{ 
-                              backgroundColor: `${color.hex_code}20`, 
-                              color: color.hex_code,
-                              borderColor: color.hex_code
-                            }}
-                          >
+                <React.Fragment key={flower.id}>
+                  <tr className="border-t border-gray-200 transition-colors hover:bg-pink-50/50">
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-gray-900">{flower.name}</div>
+                      {/* Display color chips */}
+                      {flower.colors && flower.colors.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {flower.colors.map(color => (
                             <div 
-                              className="w-2 h-2 mr-1 rounded-full" 
-                              style={{ backgroundColor: color.hex_code }}
-                            />
-                            {color.translated_name}
-                          </div>
-                        ))}
+                              key={color.id}
+                              className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium"
+                              style={{ 
+                                backgroundColor: `${color.hex_code}20`, 
+                                color: "#be185d",
+                                borderColor: color.hex_code
+                              }}
+                            >
+                              <div 
+                                className="w-2 h-2 mr-1 rounded-full" 
+                                style={{ backgroundColor: color.hex_code }}
+                              />
+                              <span style={{ color: "#be185d" }}>{color.translated_name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatPrice(flower.price, locale)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        flower.in_stock > 0
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {flower.in_stock > 0 ? t('flowers.inStock') : t('flowers.outOfStock')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <Link 
+                          href={`/${locale}/admin/flowers/${flower.id}/edit`}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          <Edit size={18} />
+                        </Link>
+                        <button 
+                          className="text-red-600 hover:text-red-900"
+                          onClick={() => handleDelete(flower.id, flower.name)}
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatPrice(flower.price, locale)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{getCategoryName(flower.category_id)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      flower.in_stock > 0
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {flower.in_stock > 0 ? t('flowers.inStock') : t('flowers.outOfStock')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <Link 
-                        href={`/${locale}/admin/flowers/${flower.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        <Edit size={18} />
-                      </Link>
-                      <button 
-                        className="text-red-600 hover:text-red-900"
-                        onClick={() => handleDelete(flower.id, flower.name)}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                  {/* Display media row */}
+                  {flower.media && flower.media.length > 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-3 bg-white/50">
+                        <div className="flex items-center space-x-3">
+                          {flower.media.map(mediaItem => (
+                            <div key={mediaItem.id} className="relative h-20 w-20 rounded-md overflow-hidden shadow">
+                              <Image
+                                src={getValidImageUrlClient(mediaItem)}
+                                alt={mediaItem.file_name}
+                                fill
+                                className="object-cover"
+                              />
+                              {mediaItem.media_type === 'video' && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="none">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                  </svg>
+                                </div>
+                              )}
+                              {mediaItem.is_thumbnail && (
+                                <div className="absolute top-1 right-1 bg-pink-600 rounded-full w-4 h-4"></div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

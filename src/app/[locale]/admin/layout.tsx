@@ -92,6 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: t('navigation.flowers'), href: `/${locale}/admin/flowers`, icon: Palette },
     { name: t('navigation.categories'), href: `/${locale}/admin/categories`, icon: Grid },
     { name: t('navigation.tags'), href: `/${locale}/admin/tags`, icon: Tag },
+    { name: t('navigation.colors'), href: `/${locale}/admin/colors`, icon: Palette },
   ];
   
   return (

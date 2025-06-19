@@ -10,6 +10,8 @@ import { ApiLogger } from '@/utils/api-logger';
 import { FlowerRepository, Flower } from '@/lib/supabase';
 import { ColorRepository } from '@/lib/repositories/color-repository';
 import { Color } from '@/lib/repositories/repository-types';
+import MediaUploader, { MediaItem } from '@/components/admin/shared/MediaUploader';
+import { getFileUrl } from '@/utils/cloudflare-worker';
 
 // Create a logger for this component
 const logger = new ApiLogger('EditFlowerPage');
@@ -59,6 +61,7 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
   const [categories, setCategories] = useState<Category[]>([]);
   const [availableColors, setAvailableColors] = useState<ColorWithTranslation[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,12 +101,29 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
         const flowerColors = await colorRepo.getColorsForFlower(id);
         const flowerColorIds = flowerColors.map(color => color.id);
         
+        // Fetch flower media
+        const { data: mediaData, error: mediaError } = await supabase
+          .from('flower_media')
+          .select('*')
+          .eq('flower_id', id)
+          .order('display_order');
+          
+        if (mediaError) throw mediaError;
+        
+        // Process media items to add URLs
+        const processedMedia = (mediaData || []).map((item: any) => ({
+          ...item,
+          file_url: item.file_url || (item.file_path ? getFileUrl(item.file_path) : null),
+          media_type: item.media_type || 'image'
+        }));
+        
         // Convert to our component's data format
         const adaptedFlower = adaptFlower(flowerData);
         setFlower(adaptedFlower);
         setSelectedColors(flowerColorIds);
         setCategories(categoriesData || []);
         setAvailableColors(colorsData);
+        setMedia(processedMedia);
         
         logger.response('GET', `flower/${id}`, 200, startTime);
       } catch (err) {
@@ -134,6 +154,25 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
         description: flower.description,
         in_stock: flower.in_stock ? 1 : 0, // Convert boolean back to number
       });
+      
+      // If we have a thumbnail, update the flower's thumbnail via separate API
+      if (flower.image_url || flower.image_path) {
+        try {
+          await fetch(`/api/admin/flowers/${id}/thumbnail`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              image_url: flower.image_url,
+              image_path: flower.image_path,
+            }),
+          });
+        } catch (thumbnailErr) {
+          console.error('Error updating flower thumbnail:', thumbnailErr);
+          // Continue anyway as this is non-critical
+        }
+      }
       
       // Update flower colors
       const colorRepo = new ColorRepository();
@@ -188,6 +227,47 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
 
   const handleRemoveColor = (colorId: string) => {
     setSelectedColors(selectedColors.filter(id => id !== colorId));
+  };
+  
+  // Handle media deletion
+  const handleDeleteMedia = async (mediaId: string) => {
+    try {
+      const response = await fetch(`/api/admin/flowers/media?id=${mediaId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete media: ${response.statusText}`);
+      }
+      
+      // Remove from state
+      setMedia(media.filter(item => item.id !== mediaId));
+    } catch (err) {
+      console.error('Error deleting media:', err);
+      setError('Failed to delete media. Please try again.');
+    }
+  };
+  
+  // Handle setting a thumbnail
+  const handleSetThumbnail = (mediaId: string) => {
+    // Update the media array
+    const updatedMedia = media.map(item => ({
+      ...item,
+      is_thumbnail: item.id === mediaId
+    }));
+    
+    // Get the thumbnail item
+    const thumbnailItem = updatedMedia.find(item => item.id === mediaId);
+    if (thumbnailItem && flower) {
+      // Update the flower with the new thumbnail
+      setFlower({
+        ...flower,
+        image_url: thumbnailItem.file_url || '',
+        image_path: thumbnailItem.file_path
+      });
+    }
+    
+    setMedia(updatedMedia);
   };
 
   if (loading) {
@@ -330,7 +410,7 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
                     className="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium"
                     style={{ 
                       backgroundColor: `${color.hex_code}20`, 
-                      color: color.hex_code,
+                      color: "#be185d",
                       borderColor: color.hex_code
                     }}
                   >
@@ -338,7 +418,7 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
                       className="w-3 h-3 mr-1 rounded-full" 
                       style={{ backgroundColor: color.hex_code }}
                     />
-                    {color.translated_name}
+                    <span style={{ color: "#be185d" }}>{color.translated_name}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveColor(colorId)}
@@ -380,6 +460,27 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
               rows={4}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
             ></textarea>
+          </div>
+          
+          {/* Media Uploader - Full width */}
+          <div className="md:col-span-2 mt-6 pt-6 border-t border-gray-200">
+            <MediaUploader
+              entityType="flowers"
+              entityId={id}
+              media={media}
+              onMediaChange={(newMedia) => setMedia(newMedia)}
+              onThumbnailChange={(thumbnailUrl, thumbnailPath) => {
+                if (flower) {
+                  setFlower({
+                    ...flower,
+                    image_url: thumbnailUrl,
+                    image_path: thumbnailPath
+                  });
+                }
+              }}
+              onDelete={handleDeleteMedia}
+              onSetThumbnail={handleSetThumbnail}
+            />
           </div>
         </div>
 
