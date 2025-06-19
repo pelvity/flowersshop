@@ -42,6 +42,9 @@ NEXT_PUBLIC_R2_ENDPOINT=https://your-r2-endpoint.com
 
 # Cloudflare Worker
 NEXT_PUBLIC_WORKER_URL=https://media.your-worker-domain.com
+
+# Google Maps API
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 ## Cloudflare Worker Setup
@@ -165,3 +168,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Google Maps Setup
+
+To enable the Google Maps functionality on the contact page:
+
+1. Create a `.env.local` file in the root directory if it doesn't already exist
+2. Add your Google Maps API key to the file:
+   ```
+   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+   ```
+3. Make sure to enable the following APIs in your Google Cloud Console:
+   - Maps JavaScript API
+   - Places API (if using places autocomplete)
+
+You can obtain a Google Maps API key from the [Google Cloud Console](https://console.cloud.google.com/).
