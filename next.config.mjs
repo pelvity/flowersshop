@@ -1,4 +1,5 @@
 import createNextIntlPlugin from 'next-intl/plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
@@ -16,10 +17,20 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
+    // Add the MiniCssExtractPlugin to fix CSS extraction issues
+    if (!isServer) {
+      config.plugins.push(new MiniCssExtractPlugin({
+        filename: 'static/css/[name].[contenthash].css',
+        chunkFilename: 'static/css/[name].[contenthash].css',
+      }));
+    }
+    
+    // Suppress the specific warnings from the Supabase Realtime client
     config.ignoreWarnings = [
       { module: /node_modules\/@supabase\/realtime-js/ }
     ];
+    
     return config;
   }
 };
