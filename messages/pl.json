@@ -85,7 +85,14 @@
     "contactDescription": "Masz pytania lub sugestie? Napisz do nas, a odpowiemy najszybciej jak to możliwe.",
     "contactInformation": "Informacje kontaktowe",
     "googleMap": "Mapa Google zostanie wyświetlona tutaj",
-    "mapApiNote": "Klucz API Google Maps jest wymagany do wyświetlenia mapy"
+    "mapApiNote": "Klucz API Google Maps jest wymagany do wyświetlenia mapy",
+    "preferredContactMethod": "Najlepszy sposób kontaktu",
+    "socialMediaContactInfo": "Najszybszą odpowiedź uzyskasz kontaktując się z nami przez media społecznościowe",
+    "fastestResponse": "Najszybsza odpowiedź na wiadomości w mediach społecznościowych",
+    "orderFormContact": "Możesz również skontaktować się z nami podczas składania zamówienia",
+    "alternateContactMethods": "Możesz też skorzystać z formularza poniżej lub zadzwonić do nas",
+    "preferredContactMethods": "Preferowane metody kontaktu",
+    "orderContactOption": "Możesz również zostawić wiadomość podczas składania zamówienia bukietu"
   },
   "product": {
     "details": "Szczegóły",

@@ -86,7 +86,14 @@
     "contactDescription": "Have questions or suggestions? Write to us and we'll get back to you as soon as possible.",
     "contactInformation": "Contact Information",
     "googleMap": "Google Map will display here",
-    "mapApiNote": "Google Maps API key is required to display the map"
+    "mapApiNote": "Google Maps API key is required to display the map",
+    "preferredContactMethod": "Preferred Contact Method",
+    "socialMediaContactInfo": "Get the fastest response by contacting us on social media",
+    "fastestResponse": "Fastest response to messages on social media",
+    "orderFormContact": "You can also contact us during the bouquet ordering process",
+    "alternateContactMethods": "You can also use the form below or call us",
+    "preferredContactMethods": "Preferred Contact Methods",
+    "orderContactOption": "You can also leave a message when ordering a bouquet"
   },
   "product": {
     "details": "Details",
