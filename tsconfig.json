@@ -21,6 +21,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/lib/auth": ["./src/lib/auth.ts"],
       "@config/*": ["./config/*"]
     }
   },

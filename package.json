@@ -8,6 +8,7 @@
     "db:schema:local": "node scripts/db-schema-local.js",
     "dev": "next dev",
     "build": "next build",
+    "build:skip-lint": "cross-env NEXT_DISABLE_ESLINT_DURING_BUILD=true next build",
     "start": "next start",
     "lint": "next lint",
     "debug": "cross-env NODE_OPTIONS=--inspect next dev",
