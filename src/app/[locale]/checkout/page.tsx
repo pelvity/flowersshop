@@ -1,21 +1,32 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Section, Container } from "@/components/ui";
 import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from "@/context/cart-context";
-import getRepositories from "@/lib/repositories";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import CheckoutItem from '@/components/checkout/checkout-item';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/supabase';
+import { Bouquet as BaseBouquet } from '@/lib/supabase';
+import { formatPrice } from '@/lib/functions';
+
+interface Bouquet extends BaseBouquet {
+  image_url?: string | null;
+  flowers?: Array<{ id: string; flower_id: string; name: string; quantity: number; }>;
+}
 
 export default function CheckoutPage() {
   const t = useTranslations('checkout');
   const currentLocale = useLocale();
-  const { items, totalPrice, clearCart } = useCart();
-  const repositories = useMemo(() => getRepositories(), []);
+  const { items, totalPrice: cartTotalPrice, clearCart } = useCart();
   const router = useRouter();
+  const supabase = createClientComponentClient<Database>();
+  const [products, setProducts] = useState<Bouquet[]>([]);
+  const [calculatedTotalPrice, setCalculatedTotalPrice] = useState(0);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +38,149 @@ export default function CheckoutPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Use the calculated price or fall back to cart price
+  const totalPrice = calculatedTotalPrice > 0 ? calculatedTotalPrice : cartTotalPrice;
+  
+  // Fetch products data including flowers
+  useEffect(() => {
+    async function fetchProducts() {
+      if (items.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      const productIds = items
+        .map(item => item.bouquetId)
+        .filter((id): id is string => id !== null && id !== undefined);
+
+      if (productIds.length > 0) {
+        try {
+          // First get the bouquet details
+          const { data: bouquetsData, error: bouquetsError } = await supabase
+            .from('bouquets')
+            .select('*')
+            .in('id', productIds);
+
+          if (bouquetsError) {
+            console.error('Error fetching products for checkout:', bouquetsError);
+            setProducts([]);
+            return;
+          }
+
+          // Get all bouquet media
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('bouquet_media')
+            .select('*')
+            .in('bouquet_id', productIds)
+            .eq('is_thumbnail', true);
+
+          if (mediaError) {
+            console.error('Error fetching bouquet media:', mediaError);
+          }
+          
+          // Get flowers for all bouquets
+          const { data: flowersData, error: flowersError } = await supabase
+            .from('bouquet_flowers')
+            .select(`
+              id,
+              bouquet_id,
+              flower_id,
+              quantity,
+              flower:flowers(id, name)
+            `)
+            .in('bouquet_id', productIds);
+            
+          if (flowersError) {
+            console.error('Error fetching bouquet flowers:', flowersError);
+          }
+          
+          // Group flowers by bouquet_id
+          const flowersByBouquetId: Record<string, any[]> = {};
+          if (flowersData && flowersData.length > 0) {
+            flowersData.forEach(item => {
+              if (!flowersByBouquetId[item.bouquet_id]) {
+                flowersByBouquetId[item.bouquet_id] = [];
+              }
+              
+              // Use safe type assertion
+              const flower = item.flower as any;
+              
+              flowersByBouquetId[item.bouquet_id].push({
+                id: item.id,
+                flower_id: item.flower_id,
+                name: flower ? flower.name : 'Unknown Flower',
+                quantity: item.quantity
+              });
+            });
+          }
+          
+          // Group media by bouquet_id
+          const mediaByBouquetId: Record<string, any> = {};
+          if (mediaData && mediaData.length > 0) {
+            mediaData.forEach(item => {
+              if (!mediaByBouquetId[item.bouquet_id]) {
+                mediaByBouquetId[item.bouquet_id] = item;
+              }
+            });
+          }
+          
+          // Enhance bouquet data with media and flowers
+          const enhancedProducts = bouquetsData?.map(bouquet => {
+            const media = mediaByBouquetId[bouquet.id];
+            const flowers = flowersByBouquetId[bouquet.id] || [];
+            
+            return {
+              ...bouquet,
+              image_url: media?.file_url || null,
+              flowers
+            };
+          }) || [];
+          
+          setProducts(enhancedProducts);
+          
+          // Calculate total price based on the actual bouquet prices from the database
+          let calculatedTotal = 0;
+          
+          items.forEach(item => {
+            if (item.bouquetId) {
+              const bouquet = enhancedProducts.find(p => p.id === item.bouquetId);
+              if (bouquet) {
+                const price = bouquet.discount_price || bouquet.price;
+                calculatedTotal += Number(price) * item.quantity;
+              } else {
+                calculatedTotal += item.price * item.quantity;
+              }
+            } else if (item.customBouquet) {
+              calculatedTotal += item.price * item.quantity;
+            }
+          });
+          
+          // Set the calculated total price
+          setCalculatedTotalPrice(calculatedTotal);
+          
+        } catch (e) {
+          console.error('Error processing bouquet data:', e);
+          setProducts([]);
+        }
+      } else {
+        setProducts([]);
+      }
+    }
+
+    fetchProducts();
+  }, [items, supabase]);
+  
+  // Add debug logs for price formatting
+  useEffect(() => {
+    console.log('Debug - Current Locale:', currentLocale);
+    console.log('Debug - Cart Total Price (raw):', cartTotalPrice);
+    console.log('Debug - Calculated Total Price (raw):', calculatedTotalPrice);
+    console.log('Debug - Final Total Price (raw):', totalPrice);
+    console.log('Debug - Formatted Price:', formatPrice(totalPrice, currentLocale));
+    console.log('Debug - Items:', items);
+    console.log('Debug - Products:', products);
+  }, [currentLocale, cartTotalPrice, calculatedTotalPrice, totalPrice, items, products]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -128,77 +282,23 @@ export default function CheckoutPage() {
               
               <div className="space-y-4 mb-6">
                 {items.map(item => {
-                  // Regular product
-                  if (item.bouquetId) {
-                    const product = repositories.products.getById(parseInt(item.bouquetId, 10));
-                    if (!product) return null;
-                    
-                    return (
-                      <div key={item.id} className="flex items-start border-b border-pink-50 pb-3">
-                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-pink-100">
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            width={56}
-                            height={56}
-                            className="h-full w-full object-cover object-center"
-                          />
-                        </div>
-                        
-                        <div className="ml-3 flex-1">
-                          <p className="text-sm font-medium text-pink-700">{product.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {t('quantity')}: {item.quantity}
-                          </p>
-                          <p className="text-sm font-medium text-amber-600">₴{item.price * item.quantity}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  // Custom bouquet
-                  if (item.customBouquet) {
-                    const { name } = item.customBouquet;
-                    
-                    return (
-                      <div key={item.id} className="flex items-start border-b border-pink-50 pb-3">
-                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 bg-pink-50 flex items-center justify-center">
-                          <Image
-                            src="/placeholder.svg"
-                            alt={name}
-                            width={56}
-                            height={56}
-                            className="h-full w-full object-cover object-center"
-                          />
-                        </div>
-                        
-                        <div className="ml-3 flex-1">
-                          <p className="text-sm font-medium text-pink-700">{name}</p>
-                          <p className="text-xs text-gray-500">
-                            {t('quantity')}: {item.quantity}
-                          </p>
-                          <p className="text-sm font-medium text-amber-600">₴{item.price * item.quantity}</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  return null;
+                  const product = item.bouquetId ? products.find(p => p.id === item.bouquetId) : undefined;
+                  return <CheckoutItem key={item.id} item={item} product={product} />;
                 })}
               </div>
               
               <div className="border-t border-pink-100 pt-4">
                 <div className="flex justify-between text-base font-medium text-gray-900 mb-2">
                   <p>{t('subtotal')}</p>
-                  <p className="text-amber-600">₴{totalPrice}</p>
+                  <p className="text-amber-600">{formatPrice(totalPrice, currentLocale)}</p>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <p>{t('shipping')}</p>
-                  <p>₴100</p>
+                  <p>{formatPrice(100, currentLocale)}</p>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 mt-4 pt-4 border-t border-pink-100">
                   <p>{t('total')}</p>
-                  <p className="text-amber-600">₴{totalPrice + 100}</p>
+                  <p className="text-amber-600">{formatPrice(totalPrice + 100, currentLocale)}</p>
                 </div>
               </div>
             </div>
