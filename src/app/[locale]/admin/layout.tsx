@@ -97,79 +97,99 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile menu button */}
+      {/* Mobile menu header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-2">
         <div className="flex justify-between items-center">
           <span className="font-semibold text-pink-600">{t('navigation.flowershop')}</span>
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="ml-2 p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none"
+            className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 focus:outline-none"
+            aria-controls="mobile-menu"
+            aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            <span className="sr-only">Open main menu</span>
+            {/* Icon when menu is closed */}
+            <svg
+              className={`${isMobileMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+            {/* Icon when menu is open */}
+            <svg
+              className={`${isMobileMenuOpen ? 'block' : 'hidden'} h-6 w-6`}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
       </div>
       
-      {/* Mobile sidebar */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setIsMobileMenuOpen(false)}></div>
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white">
-            <div className="pt-5 pb-4">
-              <div className="flex items-center justify-between px-4">
-                <div className="flex-shrink-0">
-                  <span className="text-xl font-bold text-pink-600">{t('navigation.flowershop')}</span>
-                </div>
-                <button
-                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <X size={24} className="text-gray-600" />
-                </button>
-              </div>
-              <div className="mt-5 px-2 space-y-1">
-                {navigation.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link 
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`group flex items-center px-4 py-2 text-base font-medium rounded-md ${
-                        isActive 
-                          ? 'bg-pink-50 text-pink-600' 
-                          : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
-                      }`}
-                    >
-                      <item.icon 
-                        className={`mr-3 h-6 w-6 ${
-                          isActive ? 'text-pink-600' : 'text-gray-400 group-hover:text-pink-600'
-                        }`} 
-                      />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-                <button
-                  onClick={handleLogout}
-                  className="group flex items-center w-full px-4 py-2 text-base font-medium text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded-md"
-                >
-                  <LogOut className="mr-3 h-6 w-6 text-gray-400 group-hover:text-pink-600" />
-                  {t('navigation.logout')}
-                </button>
-              </div>
-            </div>
-            <div className="pt-4 pb-3 border-t border-gray-200">
-              <div className="flex items-center px-4">
-                <div className="ml-3">
-                  <p className="text-base font-medium text-gray-700">{user?.name}</p>
-                  <p className="text-sm font-medium text-gray-500">{user?.role}</p>
-                </div>
+      {/* Mobile menu */}
+      <div 
+        className={`${isMobileMenuOpen ? 'block' : 'hidden'} lg:hidden fixed top-14 left-0 right-0 z-50 bg-white border-b border-gray-200 overflow-y-auto max-h-[calc(100vh-3.5rem)]`}
+        id="mobile-menu"
+      >
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link 
+                key={item.name}
+                href={item.href}
+                className={`group flex items-center px-4 py-2 text-base font-medium rounded-md ${
+                  isActive 
+                    ? 'bg-pink-50 text-pink-600' 
+                    : 'text-gray-600 hover:bg-pink-50 hover:text-pink-600'
+                }`}
+              >
+                <item.icon 
+                  className={`mr-3 h-6 w-6 ${
+                    isActive ? 'text-pink-600' : 'text-gray-400 group-hover:text-pink-600'
+                  }`} 
+                />
+                {item.name}
+              </Link>
+            );
+          })}
+          <button
+            onClick={handleLogout}
+            className="w-full group flex items-center px-4 py-2 text-base font-medium text-gray-600 hover:bg-pink-50 hover:text-pink-600 rounded-md"
+          >
+            <LogOut className="mr-3 h-6 w-6 text-gray-400 group-hover:text-pink-600" />
+            {t('navigation.logout')}
+          </button>
+          
+          <div className="pt-4 pb-3 border-t border-gray-200 mt-4">
+            <div className="flex items-center px-4">
+              <div>
+                <p className="text-base font-medium text-gray-700">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-500">{user?.role}</p>
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
       
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:border-r lg:border-gray-200 lg:bg-white">
@@ -222,7 +242,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       
       {/* Main content */}
       <div className="lg:pl-64 flex flex-col flex-1">
-        <main className="flex-1 pb-10 pt-8 lg:pt-0">
+        <main className="flex-1 pb-10 pt-16 lg:pt-0">
           <div className="mt-8 lg:mt-2 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-pink-700">
             {children}
           </div>
