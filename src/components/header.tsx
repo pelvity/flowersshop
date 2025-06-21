@@ -9,13 +9,10 @@ import { useParams } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Header() {
-  console.log('[HEADER] Rendering Header component');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  try {
   const t = useTranslations();
     const { locale } = useParams();
-    console.log('[HEADER] Successfully initialized translations');
     
     const getLocalePath = (path: string) => `/${locale}${path}`;
 
@@ -127,8 +124,4 @@ export default function Header() {
       </div>
     </header>
   );
-  } catch (error) {
-    console.error('[HEADER] Error rendering Header:', error);
-    return <div>Error loading header. See console for details.</div>;
-  }
 } 

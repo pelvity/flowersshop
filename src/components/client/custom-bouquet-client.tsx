@@ -137,8 +137,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   useEffect(() => {
     async function fetchTemplateBouquets() {
       if (initialTemplateBouquets.length > 0) {
-        console.log('Using initialTemplateBouquets:', initialTemplateBouquets.length);
-        console.log('First template bouquet media:', initialTemplateBouquets[0]?.media);
         setTemplateBouquets(initialTemplateBouquets);
         return;
       }
@@ -152,8 +150,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
           .order('name');
           
         if (error) throw error;
-        console.log('Fetched template bouquets from Supabase:', data?.length);
-        console.log('First template bouquet media from Supabase:', data?.[0]?.media);
         setTemplateBouquets(data || []);
       } catch (error) {
         console.error('Error fetching template bouquets:', error);
@@ -174,17 +170,12 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
 
   // Fetch bouquet details if bouquetId is provided
   useEffect(() => {
-    console.log('bouquetId changed:', bouquetId);
-    
     async function fetchBouquetDetails() {
       if (!bouquetId) return;
-      
-      console.log('Starting to fetch bouquet details for ID:', bouquetId);
       
       setLoading(true);
       try {
         // First get the bouquet
-        console.log('Fetching bouquet details for ID:', bouquetId);
         
         // Make sure we're using the correct UUID format with dashes
         let formattedUUID = bouquetId;
@@ -199,8 +190,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
           ].join('-');
         }
         
-        console.log('Formatted UUID:', formattedUUID);
-        
         const { data: bouquet, error: bouquetError } = await supabase
           .from('bouquets')
           .select('*')
@@ -211,8 +200,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
           console.error('Error fetching bouquet:', bouquetError);
           throw bouquetError;
         }
-        
-        console.log('Bouquet found:', bouquet);
         
         // Then get the bouquet flowers
         const { data: bouquetFlowers, error: flowersError } = await supabase
@@ -230,11 +217,7 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
           throw flowersError;
         }
         
-        console.log('Bouquet flowers found:', bouquetFlowers);
-        
         if (bouquetFlowers && bouquetFlowers.length > 0) {
-          console.log('Processing bouquet flowers...');
-          
           // Convert to FlowerQuantity[] format
           const flowersInBouquet: FlowerQuantity[] = bouquetFlowers.map(bf => {
             const flowerInfo = initialFlowers.find(f => f.id === bf.flower_id);
@@ -247,11 +230,9 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
             };
           });
           
-          console.log('Final flowersInBouquet:', flowersInBouquet);
           setSelectedFlowers(flowersInBouquet);
           setBouquetDetails(bouquet);
         } else {
-          console.log('No flowers found for this bouquet');
           setBouquetDetails(bouquet);
           // Even if no flowers found, we should still set the bouquet details
         }
@@ -282,7 +263,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   // Filter flowers based on search query
   const filteredFlowers = useMemo(() => {
     if (!searchQuery.trim()) {
-      console.log('All flowers:', initialFlowers.map(f => ({ id: f.id, name: f.name, colors: f.colors })));
       return initialFlowers;
     }
     
@@ -317,16 +297,12 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   
   // Helper function to add a flower with default color
   const addFlowerWithDefaultColor = (flower: Flower) => {
-    console.log('Adding flower with colors:', flower.colors);
-    
     // If the flower has colors, always show the color selection modal
     if (flower.colors && flower.colors.length > 0) {
-      console.log('Opening color selection modal for flower:', flower.name, 'with colors:', flower.colors);
       setSelectedFlowerForColor(flower);
       setColorModalOpen(true);
     } else {
       // If no colors defined for this flower, use 'mixed' as fallback
-      console.log('No colors found for flower, using mixed');
       addFlower(flower, 'mixed');
     }
   };
@@ -383,8 +359,6 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   
   // Function to select a template bouquet
   const selectTemplateBouquet = (bouquet: Bouquet) => {
-    console.log('Selected template bouquet:', bouquet.id, bouquet.name);
-    
     // Set step to customize immediately
     setStep('customize');
     

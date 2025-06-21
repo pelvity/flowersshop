@@ -5,33 +5,50 @@ import Image from "next/image";
 import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { getFileUrl } from "@/utils/cloudflare-worker";
+import { NextResponse } from 'next/server';
+import { createLoggingClient } from '@/utils/supabase-logger';
+import { ApiLogger } from '@/utils/api-logger';
+import { toUUID } from '@/utils/uuid';
+import { invalidateCacheKey, invalidateByPattern } from '@/lib/redis';
+
+// Create an API logger for bouquet detail endpoints
+const logger = new ApiLogger('BouquetDetailAPI');
+
+// Helper function to invalidate bouquet cache
+async function invalidateBouquetCache(bouquetId: string) {
+  try {
+    // Delete specific bouquet cache
+    await invalidateCacheKey(`bouquet:${bouquetId}`);
+    
+    // Delete list caches that might contain this bouquet
+    await invalidateByPattern('bouquets:*');
+    
+    // Delete featured bouquets cache if exists
+    await invalidateCacheKey('featured:bouquets');
+    
+    // Delete category bouquets cache if exists
+    await invalidateByPattern('category:*:bouquets');
+  } catch (error) {
+    logger.error('CACHE', `Failed to invalidate cache for bouquet: ${bouquetId}`, error);
+    // Don't throw error, just log it - we don't want cache issues to break the main flow
+  }
+}
 
 // Get a valid URL for the image
 export const getValidImageUrl = (mediaItem: BouquetMedia) => {
   if (!mediaItem) {
-    console.log('getValidImageUrl: mediaItem is undefined or null');
     return "";
   }
   
-  console.log('getValidImageUrl - mediaItem:', JSON.stringify({
-    id: mediaItem.id,
-    file_url: mediaItem.file_url,
-    file_path: mediaItem.file_path,
-    media_type: mediaItem.media_type
-  }));
-  
   if (mediaItem.file_url) {
-    console.log('Using file_url:', mediaItem.file_url);
     return mediaItem.file_url;
   }
   
   if (mediaItem.file_path) {
     const url = `/storage/bouquets/${mediaItem.file_path}`;
-    console.log('Using file_path:', url);
     return url;
   }
   
-  console.log('No valid image URL found');
   return "";
 };
 
@@ -135,11 +152,7 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  console.log('BouquetMediaGallery - media:', media ? JSON.stringify(media.map(m => ({id: m.id, file_path: m.file_path, file_url: m.file_url}))) : 'undefined');
-  console.log('BouquetMediaGallery - alt:', alt);
-  
   if (!media || media.length === 0) {
-    console.log('BouquetMediaGallery - No media found, showing placeholder');
     return (
       <div 
         className={`relative w-full ${height} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`} 

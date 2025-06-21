@@ -6,6 +6,7 @@ import { getMessages } from 'next-intl/server';
 import { CartProvider } from "@/context/cart-context";
 import CartDrawer from "@/components/cart/cart-drawer";
 import MainLayout from "@/components/layout/MainLayout";
+import { ApiCacheProvider } from "@/providers/api-cache-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,12 +44,14 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <CartProvider>
-            <MainLayout>
-              {children}
-            </MainLayout>
-            <CartDrawer />
-          </CartProvider>
+          <ApiCacheProvider>
+            <CartProvider>
+              <MainLayout>
+                {children}
+              </MainLayout>
+              <CartDrawer />
+            </CartProvider>
+          </ApiCacheProvider>
         </NextIntlClientProvider>
       </body>
     </html>

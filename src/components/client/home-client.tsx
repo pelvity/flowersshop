@@ -12,14 +12,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ locale, initialFeaturedBouquets }: HomeClientProps) {
-  // Debug featured bouquets
-  console.log('[HOME-CLIENT] Featured bouquets count:', initialFeaturedBouquets?.length || 0);
-  console.log('[HOME-CLIENT] First bouquet has media?', initialFeaturedBouquets?.[0]?.media ? 'Yes' : 'No');
-  if (initialFeaturedBouquets?.[0]?.media) {
-    console.log('[HOME-CLIENT] First bouquet media count:', initialFeaturedBouquets[0].media.length);
-    console.log('[HOME-CLIENT] First bouquet first media item:', initialFeaturedBouquets[0].media[0]);
-  }
-  
   // Extract media from featured bouquets for the hero carousel
   const heroCarouselMedia = useMemo(() => {
     // Collect all media from bouquets
@@ -33,12 +25,6 @@ export default function HomeClient({ locale, initialFeaturedBouquets }: HomeClie
         allMedia.push(...bouquetMedia);
       }
     });
-    
-    // Debug the collected media
-    console.log('[HOME-CLIENT] Total media items collected:', allMedia.length);
-    if (allMedia.length > 0) {
-      console.log('[HOME-CLIENT] First media item has valid URL?', allMedia[0]?.file_url ? 'Yes' : 'No');
-    }
     
     // Limit to 10 images total for performance
     return allMedia.slice(0, 10);
