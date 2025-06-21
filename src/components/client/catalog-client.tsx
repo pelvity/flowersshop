@@ -29,9 +29,10 @@ interface CatalogClientProps {
   initialBouquets: Bouquet[];
   initialCategories: Category[];
   initialTags: Tag[];
+  initialFlowers: any[]; // List of flowers for filtering
 }
 
-export default function CatalogClient({ initialBouquets, initialCategories, initialTags }: CatalogClientProps) {
+export default function CatalogClient({ initialBouquets, initialCategories, initialTags, initialFlowers }: CatalogClientProps) {
   const t = useTranslations('catalog');
   const { addProduct } = useCart();
   const router = useRouter();
@@ -43,10 +44,12 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
   
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam || null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredBouquets, setFilteredBouquets] = useState<Bouquet[]>(initialBouquets);
   const [bouquetTagsMap, setBouquetTagsMap] = useState<Record<string, Tag[]>>({});
   const [isLoadingTags, setIsLoadingTags] = useState(true);
+  const [showFlowerFilters, setShowFlowerFilters] = useState(false);
   
   // Add scrollbar styles once when component mounts
   useEffect(() => {
@@ -84,6 +87,17 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
         });
       }
       
+      // Filter by flowers if selected
+      if (selectedFlowers.length > 0) {
+        result = result.filter(bouquet => {
+          // Check if the bouquet contains any of the selected flowers
+          const bouquetFlowers = bouquet.flowers || [];
+          return selectedFlowers.some(selectedFlowerId => 
+            bouquetFlowers.some((flower: any) => flower.flower_id === selectedFlowerId)
+          );
+        });
+      }
+      
       // Filter by search query if provided
       if (searchQuery.trim() !== "") {
         const query = searchQuery.toLowerCase();
@@ -97,7 +111,7 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
     }
 
     applyFilters();
-  }, [selectedCategory, selectedTags, searchQuery, initialBouquets, bouquetTagsMap]);
+  }, [selectedCategory, selectedTags, selectedFlowers, searchQuery, initialBouquets, bouquetTagsMap]);
   
   // Load tags for all bouquets
   useEffect(() => {
@@ -130,6 +144,15 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
       prev.includes(tagId) 
         ? prev.filter(id => id !== tagId) 
         : [...prev, tagId]
+    );
+  };
+  
+  // Handle flower selection/deselection
+  const toggleFlower = (flowerId: string) => {
+    setSelectedFlowers(prev => 
+      prev.includes(flowerId) 
+        ? prev.filter(id => id !== flowerId) 
+        : [...prev, flowerId]
     );
   };
   
@@ -189,7 +212,7 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
                 </div>
               </div>
               
-              <div>
+              <div className="mb-6">
                 <h3 className="text-lg font-medium text-pink-600 mb-3 border-b border-pink-100 pb-2">{t('tags')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {initialTags.map(tag => (
@@ -206,6 +229,45 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
                     </div>
                   ))}
                 </div>
+              </div>
+              
+              {/* Flowers filter section */}
+              <div className="mb-6">
+                <div 
+                  className="flex items-center justify-between cursor-pointer mb-3 border-b border-pink-100 pb-2"
+                  onClick={() => setShowFlowerFilters(!showFlowerFilters)}
+                >
+                  <h3 className="text-lg font-medium text-pink-600">
+                    {t('flowers')}
+                  </h3>
+                  <span className={`transform transition-transform ${showFlowerFilters ? 'rotate-180' : ''}`}>
+                    ▼
+                  </span>
+                </div>
+                
+                {showFlowerFilters && (
+                  <div className="max-h-60 overflow-y-auto no-scrollbar">
+                    {initialFlowers.map(flower => (
+                      <div 
+                        key={flower.id}
+                        className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-md transition-colors ${
+                          selectedFlowers.includes(flower.id) 
+                            ? 'bg-pink-100 text-pink-700 font-medium'
+                            : 'hover:bg-pink-50 text-gray-700'
+                        }`}
+                        onClick={() => toggleFlower(flower.id)}
+                      >
+                        <input 
+                          type="checkbox" 
+                          checked={selectedFlowers.includes(flower.id)}
+                          onChange={() => {}} // Handled by parent div click
+                          className="accent-pink-500"
+                        />
+                        {flower.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
