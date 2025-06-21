@@ -17,6 +17,7 @@ export type Bouquet = DatabaseBouquet & {
   media?: BouquetMedia[];
   image?: string | null;  // URL of the thumbnail image
   thumbnail?: BouquetMedia | null;  // Full thumbnail media object
+  flowers?: any[];  // Flowers in the bouquet
 };
 
 // Type for flower in a custom bouquet with quantity and color
@@ -201,7 +202,7 @@ export const FlowerRepository = {
   }
 };
 
-// Repository functions for Bouquets with enhanced logging
+// Repository functions for Bouquets
 export const BouquetRepository = {
   async getAll(): Promise<Bouquet[]> {
     console.log('[SUPABASE LOG] Fetching all bouquets');
@@ -287,6 +288,74 @@ export const BouquetRepository = {
       return enhancedBouquets;
     } catch (error) {
       console.error('[SUPABASE ERROR] Failed to fetch bouquets:', error);
+      throw error;
+    }
+  },
+  
+  async getAllWithFlowers(): Promise<Bouquet[]> {
+    console.log('[SUPABASE LOG] Fetching all bouquets with flowers');
+    const startTime = performance.now();
+    
+    try {
+      // First get all bouquets with media
+      const bouquets = await this.getAll();
+      
+      if (!bouquets || bouquets.length === 0) {
+        return [];
+      }
+      
+      const supabase = await createServerLoggingClient();
+      
+      // Get all bouquet IDs
+      const bouquetIds = bouquets.map(b => b.id);
+      
+      // Fetch all bouquet-flower relationships with flower details in a single query
+      const { data: allBouquetFlowers, error: flowersError } = await supabase
+        .from('bouquet_flowers')
+        .select(`
+          id,
+          bouquet_id,
+          flower_id,
+          quantity,
+          flowers:flower_id(id, name)
+        `)
+        .in('bouquet_id', bouquetIds);
+        
+      if (flowersError) {
+        console.warn('[SUPABASE WARNING] Error fetching bouquet flowers:', flowersError);
+        // Continue execution even if flower fetch fails
+        return bouquets;
+      }
+      
+      // Group flowers by bouquet_id
+      const flowersByBouquetId: Record<string, any[]> = {};
+      if (allBouquetFlowers && allBouquetFlowers.length > 0) {
+        allBouquetFlowers.forEach(item => {
+          if (!flowersByBouquetId[item.bouquet_id]) {
+            flowersByBouquetId[item.bouquet_id] = [];
+          }
+          
+          flowersByBouquetId[item.bouquet_id].push({
+            id: item.id,
+            flower_id: item.flower_id,
+            name: item.flowers ? item.flowers.name : 'Unknown Flower',
+            quantity: item.quantity
+          });
+        });
+      }
+      
+      // Add flower information to each bouquet
+      const enhancedBouquets = bouquets.map(bouquet => ({
+        ...bouquet,
+        flowers: flowersByBouquetId[bouquet.id] || []
+      }));
+      
+      const endTime = performance.now();
+      console.log(`[SUPABASE LOG] Fetched ${enhancedBouquets.length} bouquets with flowers in ${(endTime - startTime).toFixed(2)}ms`);
+      
+      return enhancedBouquets;
+    } catch (error) {
+      console.error('[SUPABASE ERROR] Failed to fetch bouquets with flowers:', error);
       throw error;
     }
   },

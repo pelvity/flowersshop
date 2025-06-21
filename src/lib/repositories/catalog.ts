@@ -84,20 +84,50 @@ class SupabaseCatalogRepository implements CatalogRepository {
     // Find the thumbnail image
     const thumbnail = mediaItems?.find(item => item.is_thumbnail) || mediaItems?.[0] || null;
     
-    // Add media and thumbnail to the bouquet object
-    const bouquetWithMedia = {
+    // Get all flowers in this bouquet
+    const { data: bouquetFlowers } = await supabase
+      .from('bouquet_flowers')
+      .select('*, flower:flower_id(*)')
+      .eq('bouquet_id', data.id);
+    
+    // Get flower media for each flower
+    const flowers = await Promise.all(
+      bouquetFlowers?.map(async item => {
+        // Get flower media, especially thumbnail
+        const { data: flowerMedia } = await supabase
+          .from('flower_media')
+          .select('*')
+          .eq('flower_id', item.flower_id)
+          .order('is_thumbnail', { ascending: false })
+          .limit(1);
+          
+        return {
+          id: item.id,
+          flower_id: item.flower_id,
+          name: item.flower?.name || 'Unknown Flower',
+          description: item.flower?.description || '',
+          quantity: item.quantity,
+          image: flowerMedia?.[0]?.file_url || null,
+          media: flowerMedia || []
+        };
+      }) || []
+    );
+    
+    // Add media, thumbnail and flowers to the bouquet object
+    const bouquetWithMediaAndFlowers = {
       ...data,
       media: mediaItems || [],
       image: thumbnail?.file_url || null,
-      thumbnail
+      thumbnail,
+      flowers
     };
     
     // Apply translations if locale is not the default and data exists
     if (locale !== defaultLocale) {
-      return await TranslationsService.translateEntity(bouquetWithMedia, 'bouquets', locale);
+      return await TranslationsService.translateEntity(bouquetWithMediaAndFlowers, 'bouquets', locale);
     }
     
-    return bouquetWithMedia;
+    return bouquetWithMediaAndFlowers;
   }
 
   async getBouquetsByCategory(categoryId: string, locale: Locale = defaultLocale): Promise<Bouquet[]> {
