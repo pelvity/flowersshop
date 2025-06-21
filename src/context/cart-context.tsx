@@ -181,6 +181,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           ...prev,
           [bouquetId]: bouquet
         }));
+        
+        // Update any existing items with this bouquet ID to have the correct price
+        const existingItems = cartRepository.getItems();
+        const itemsToUpdate = existingItems.filter(item => item.bouquetId === bouquetId && item.price === 0);
+        
+        if (itemsToUpdate.length > 0) {
+          const price = bouquet.discount_price || bouquet.price;
+          
+          // Update each item with the correct price
+          for (const item of itemsToUpdate) {
+            cartRepository.updateItem(item.id, { price: Number(price) });
+          }
+          
+          // Reload items to reflect price updates
+          const updatedItems = cartRepository.getItems();
+          setItems(updatedItems);
+          calculateTotals(updatedItems);
+        }
       }
     } catch (error) {
       console.error(`Failed to fetch bouquet ${bouquetId}:`, error);
