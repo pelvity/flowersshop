@@ -30,6 +30,14 @@ export default function middleware(request: NextRequest) {
     locale => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
   
+  // Special handling for cart/checkout path
+  if (pathname.startsWith('/cart/checkout')) {
+    console.log(`[MIDDLEWARE] Fixing cart/checkout path`);
+    const url = new URL(`/${defaultLocale}/checkout`, request.url);
+    console.log(`[MIDDLEWARE] Redirecting to: ${url.toString()}`);
+    return NextResponse.redirect(url);
+  }
+  
   if (!pathnameHasLocale && pathname !== '/') {
     // This is a direct access to a route without locale, like /products
     console.log(`[MIDDLEWARE] Direct access to route without locale: ${pathname}`);
