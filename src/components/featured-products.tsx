@@ -90,18 +90,18 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
   }
   
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-8 sm:py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
             {tWithDefault('title', 'Featured Bouquets')}
           </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
+          <p className="mt-3 sm:mt-4 max-w-2xl mx-auto text-lg sm:text-xl text-gray-500">
             {tWithDefault('subtitle', 'Discover our most popular bouquets')}
           </p>
         </div>
 
-        <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 sm:mt-10 grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
           {products.length > 0 ? (
             products.map((product) => (
               <BouquetCard
@@ -111,7 +111,7 @@ export default function FeaturedProducts({ featuredBouquets = [] }: FeaturedProd
               />
             ))
           ) : (
-            <div className="col-span-full text-center py-12">
+            <div className="col-span-full text-center py-8 sm:py-12">
               <p className="text-gray-500">{tWithDefault('noProducts', 'No featured products available')}</p>
             </div>
           )}
