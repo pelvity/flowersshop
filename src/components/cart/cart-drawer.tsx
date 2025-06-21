@@ -33,7 +33,28 @@ export default function CartDrawer() {
   const [products, setProducts] = useState<Bouquet[]>([]);
   const [expandedBouquets, setExpandedBouquets] = useState<Record<string, boolean>>({});
   const placeholderImage = '/placeholder.svg';
+  const [productPrices, setProductPrices] = useState<Record<string, number>>({});
+  const [displayTotalPrice, setDisplayTotalPrice] = useState(totalPrice);
 
+  // Synchronize total price display
+  useEffect(() => {
+    setDisplayTotalPrice(totalPrice);
+  }, [totalPrice]);
+
+  // Initialize product prices from cart items
+  useEffect(() => {
+    const priceMap: Record<string, number> = {};
+    
+    items.forEach(item => {
+      if (item.bouquetId && item.price > 0) {
+        priceMap[item.bouquetId] = item.price;
+      }
+    });
+    
+    setProductPrices(prev => ({...prev, ...priceMap}));
+  }, [items]);
+
+  // Fetch product data when cart opens or items change
   useEffect(() => {
     async function fetchProducts() {
       if (items.length === 0) {
@@ -58,6 +79,15 @@ export default function CartDrawer() {
             setProducts([]);
             return;
           }
+
+          // Update product prices from the database
+          const newPriceMap: Record<string, number> = {};
+          bouquetsData?.forEach(bouquet => {
+            const price = bouquet.discount_price || bouquet.price;
+            newPriceMap[bouquet.id] = Number(price);
+          });
+          
+          setProductPrices(prev => ({...prev, ...newPriceMap}));
 
           // Get all bouquet media
           const { data: mediaData, error: mediaError } = await supabase
@@ -138,6 +168,7 @@ export default function CartDrawer() {
       }
     }
 
+    // Always fetch products when items change
     fetchProducts();
   }, [items, supabase]);
   
@@ -148,6 +179,42 @@ export default function CartDrawer() {
       [bouquetId]: !prev[bouquetId]
     }));
   };
+
+  // Get the most accurate price for an item
+  const getItemPrice = (item: any) => {
+    // For custom bouquets, use item price
+    if (item.customBouquet) {
+      return item.price * item.quantity;
+    }
+    
+    // For regular bouquets, use the most up-to-date price
+    if (item.bouquetId) {
+      // Use product price if available, otherwise use item price
+      const currentPrice = productPrices[item.bouquetId] || item.price;
+      return currentPrice * item.quantity;
+    }
+    
+    // Fallback
+    return item.price * item.quantity;
+  };
+
+  // Get individual item unit price (without quantity)
+  const getItemUnitPrice = (item: any) => {
+    if (item.bouquetId) {
+      return productPrices[item.bouquetId] || item.price;
+    }
+    return item.price;
+  };
+
+  // Calculate the real-time total price
+  const calculateRealTotalPrice = () => {
+    return items.reduce((total, item) => {
+      return total + getItemPrice(item);
+    }, 0);
+  };
+
+  // Real-time total price
+  const realTotalPrice = calculateRealTotalPrice();
   
   return (
     <>
@@ -191,15 +258,16 @@ export default function CartDrawer() {
                 // Regular product
                 if (item.bouquetId) {
                   const product = products.find(p => p.id === item.bouquetId);
-                  if (!product) return null; // Or show a loading state
+                  const itemPrice = getItemPrice(item);
+                  const unitPrice = getItemUnitPrice(item);
                   
                   return (
                     <li key={item.id} className="py-4">
                       <div className="flex items-start">
                         <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border border-pink-100 relative">
                           <Image
-                            src={product.image_url || placeholderImage}
-                            alt={product.name || "Product"}
+                            src={product?.image_url || placeholderImage}
+                            alt={product?.name || "Product"}
                             width={80}
                             height={80}
                             className="h-full w-full object-cover object-center"
@@ -208,13 +276,13 @@ export default function CartDrawer() {
                         
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between">
-                            <h3 className="text-base font-medium text-pink-700">{product.name}</h3>
-                            <p className="text-base font-medium text-amber-600">{formatPrice(product.price * item.quantity, locale)}</p>
+                            <h3 className="text-base font-medium text-pink-700">{product?.name || "Loading..."}</h3>
+                            <p className="text-base font-medium text-amber-600">{formatPrice(itemPrice, locale)}</p>
                           </div>
-                          <p className="mt-1 text-sm text-gray-500">{formatPrice(product.price, locale)} {t('each')}</p>
+                          <p className="mt-1 text-sm text-gray-500">{formatPrice(unitPrice, locale)} {t('each')}</p>
                           
                           {/* Bouquet flowers section */}
-                          {product.flowers && product.flowers.length > 0 && (
+                          {product?.flowers && product.flowers.length > 0 && (
                             <div className="mt-2 mb-2">
                               <button 
                                 onClick={() => toggleBouquetExpanded(product.id)}
@@ -294,7 +362,7 @@ export default function CartDrawer() {
                         <div className="ml-4 flex-1">
                           <div className="flex justify-between">
                             <h3 className="text-base font-medium text-pink-700">{name}</h3>
-                            <p className="text-base font-medium text-amber-600">{formatPrice(item.price * item.quantity, locale)}</p>
+                            <p className="text-base font-medium text-amber-600">{formatPrice(getItemPrice(item), locale)}</p>
                           </div>
                           <p className="mt-1 text-sm text-gray-500">{t('customBouquet')}</p>
                           
@@ -342,7 +410,7 @@ export default function CartDrawer() {
           <div className="border-t border-pink-100 p-4">
             <div className="flex justify-between text-base font-medium text-gray-900 mb-4">
               <p>{cartT('subtotal')}</p>
-              <p className="text-amber-600">{formatPrice(totalPrice, locale)}</p>
+              <p className="text-amber-600">{formatPrice(realTotalPrice, locale)}</p>
             </div>
             <div className="flex flex-col space-y-2">
               <Link 
