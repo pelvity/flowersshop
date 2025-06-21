@@ -2,41 +2,67 @@ import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
 import { ApiLogger } from '@/utils/api-logger';
 import { generateUUID, toUUID, isValidUUID } from '@/utils/uuid';
+import { getCachedData, setCachedData } from '@/lib/redis';
 
 // Create an API logger specifically for bouquets endpoints
 const logger = new ApiLogger('BouquetsAPI');
 
 export async function GET(request: Request) {
-  // Extract query parameters if needed
-  const url = new URL(request.url);
-  const featured = url.searchParams.get('featured') === 'true';
-  const limit = parseInt(url.searchParams.get('limit') || '100');
-  
-  // Log the request
-  const startTime = logger.request('GET', '/api/bouquets', { featured, limit });
+  const startTime = logger.request('GET', '/api/bouquets');
   
   try {
-    // Create Supabase client
+  const url = new URL(request.url);
+  const featured = url.searchParams.get('featured') === 'true';
+    const categoryId = url.searchParams.get('category');
+    const limit = url.searchParams.get('limit');
+  
+    // Create cache key based on query parameters
+    let cacheKey = 'bouquets:list';
+    if (featured) cacheKey = 'featured:bouquets';
+    if (categoryId) cacheKey = `category:${categoryId}:bouquets`;
+    if (limit) cacheKey += `:limit:${limit}`;
+    
+    console.log(`[API_BOUQUETS] 🔍 Checking cache for key: "${cacheKey}"`);
+  
+    // Try to get data from cache first
+    const cachedData = await getCachedData<any[]>(cacheKey);
+    if (cachedData) {
+      console.log(`[API_BOUQUETS] ⚡ Serving ${cachedData.length} bouquets from cache`);
+      logger.response('GET', '/api/bouquets', 200, startTime, cachedData);
+      return NextResponse.json(cachedData);
+    }
+    
+    // If not in cache, fetch from database
+    console.log(`[API_BOUQUETS] 🔄 Cache miss, fetching from database`);
     const supabase = await createClient();
     
-    // Build the query
     let query = supabase.from('bouquets').select('*');
     
-    // Apply filters if provided
+    // Apply filters
     if (featured) {
       query = query.eq('featured', true);
     }
     
-    // Apply limit
-    query = query.limit(limit);
+    if (categoryId) {
+      query = query.eq('category_id', categoryId);
+    }
     
-    // Execute the query
+    // Apply limit if specified
+    if (limit && !isNaN(parseInt(limit))) {
+      query = query.limit(parseInt(limit));
+    }
+    
+    // Execute query
     const { data, error } = await query;
     
     if (error) {
-      logger.error('GET', '/api/bouquets', error, { featured, limit });
+      logger.error('GET', '/api/bouquets', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    
+    // Store in cache for future requests (60 minutes TTL)
+    console.log(`[API_BOUQUETS] 💾 Storing ${data?.length || 0} bouquets in cache with key "${cacheKey}"`);
+    await setCachedData(cacheKey, data, 60 * 60);
     
     // Log the successful response
     logger.response('GET', '/api/bouquets', 200, startTime, data);
@@ -44,11 +70,8 @@ export async function GET(request: Request) {
     return NextResponse.json(data);
   } catch (error) {
     // Log any unexpected errors
-    logger.error('GET', '/api/bouquets', error, { featured, limit });
-    return NextResponse.json(
-      { error: 'Failed to fetch bouquets' }, 
-      { status: 500 }
-    );
+    logger.error('GET', '/api/bouquets', error);
+    return NextResponse.json({ error: 'Failed to fetch bouquets' }, { status: 500 });
   }
 }
 

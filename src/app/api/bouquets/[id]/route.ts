@@ -2,9 +2,38 @@ import { NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/utils/supabase/server';
 import { ApiLogger } from '@/utils/api-logger';
 import { toUUID } from '@/utils/uuid';
+import { invalidateCacheKey, invalidateByPattern, getCachedData, setCachedData } from '@/lib/redis';
 
 // Create an API logger for bouquet detail endpoints
 const logger = new ApiLogger('BouquetDetailAPI');
+
+// Helper function to invalidate bouquet cache
+async function invalidateBouquetCache(bouquetId: string) {
+  console.log(`[API_BOUQUET_DETAIL] 🧹 Starting cache invalidation for bouquet: ${bouquetId}`);
+  try {
+    // Delete specific bouquet cache
+    console.log(`[API_BOUQUET_DETAIL] Invalidating specific bouquet cache key: bouquet:${bouquetId}`);
+    await invalidateCacheKey(`bouquet:${bouquetId}`);
+    
+    // Delete list caches that might contain this bouquet
+    console.log(`[API_BOUQUET_DETAIL] Invalidating bouquets list cache with pattern: bouquets:*`);
+    await invalidateByPattern('bouquets:*');
+    
+    // Delete featured bouquets cache if exists
+    console.log(`[API_BOUQUET_DETAIL] Invalidating featured bouquets cache key: featured:bouquets`);
+    await invalidateCacheKey('featured:bouquets');
+    
+    // Delete category bouquets cache if exists
+    console.log(`[API_BOUQUET_DETAIL] Invalidating category bouquets cache with pattern: category:*:bouquets`);
+    await invalidateByPattern('category:*:bouquets');
+    
+    console.log(`[API_BOUQUET_DETAIL] ✅ Cache invalidation completed for bouquet: ${bouquetId}`);
+  } catch (error) {
+    console.error(`[API_BOUQUET_DETAIL] 🔴 Cache invalidation failed for bouquet: ${bouquetId}`, error);
+    logger.error('CACHE', `Failed to invalidate cache for bouquet: ${bouquetId}`, error);
+    // Don't throw error, just log it - we don't want cache issues to break the main flow
+  }
+}
 
 export async function GET(
   request: Request,
@@ -14,6 +43,20 @@ export async function GET(
   const startTime = logger.request('GET', `/api/bouquets/${bouquetId}`);
   
   try {
+    // Create cache key for this bouquet
+    const cacheKey = `bouquet:${bouquetId}`;
+    console.log(`[API_BOUQUET_DETAIL] 🔍 Checking cache for key: "${cacheKey}"`);
+    
+    // Try to get data from cache first
+    const cachedData = await getCachedData<any>(cacheKey);
+    if (cachedData) {
+      console.log(`[API_BOUQUET_DETAIL] ⚡ Serving bouquet from cache: ${bouquetId}`);
+      logger.response('GET', `/api/bouquets/${bouquetId}`, 200, startTime, cachedData);
+      return NextResponse.json(cachedData);
+    }
+    
+    // If not in cache, fetch from database
+    console.log(`[API_BOUQUET_DETAIL] 🔄 Cache miss, fetching bouquet from database: ${bouquetId}`);
     const supabase = await createClient();
     
     // Get bouquet with its details
@@ -35,6 +78,10 @@ export async function GET(
       logger.error('GET', `/api/bouquets/${bouquetId}`, error);
       return NextResponse.json({ error: error.message }, { status: error.code === 'PGRST116' ? 404 : 500 });
     }
+    
+    // Store in cache for future requests (30 minutes TTL)
+    console.log(`[API_BOUQUET_DETAIL] 💾 Storing bouquet in cache with key "${cacheKey}"`);
+    await setCachedData(cacheKey, data, 30 * 60);
     
     // Log the successful response
     logger.response('GET', `/api/bouquets/${bouquetId}`, 200, startTime, data);
@@ -158,6 +205,9 @@ export async function PUT(
       }
     }
     
+    // Invalidate cache for this bouquet
+    await invalidateBouquetCache(bouquetId);
+    
     // Log the successful response
     logger.response('PUT', `/api/bouquets/${bouquetId}`, 200, startTime, updatedBouquet);
     
@@ -211,6 +261,9 @@ export async function DELETE(
       logger.error('DELETE', `/api/bouquets/${bouquetId}`, error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    
+    // Invalidate cache for this bouquet
+    await invalidateBouquetCache(bouquetId);
     
     // Log the successful response
     logger.response('DELETE', `/api/bouquets/${bouquetId}`, 200, startTime);
