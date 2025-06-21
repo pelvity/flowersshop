@@ -51,17 +51,17 @@ export default function BouquetCard({
       
       <Card 
         key={bouquet.id} 
-        className="group flex cursor-pointer flex-col overflow-hidden rounded-lg border border-pink-100 bg-white shadow-sm transition-all duration-300 hover:shadow-lg"
+        className="group flex cursor-pointer flex-col overflow-hidden rounded-lg border border-pink-100 bg-white shadow-sm transition-all duration-300 hover:shadow-lg h-full"
         onClick={() => navigateToBouquet(bouquet.id)}
       >
-        <div className="relative">
+        <div className="relative aspect-[4/3] sm:aspect-square">
           <BouquetMediaGallery 
             media={bouquet.media || []}
             alt={bouquet.name} 
             onImageClick={handleImageClick}
           />
           {category && (
-            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-pink-600 text-xs font-medium px-3 py-1 rounded-full shadow-sm border border-pink-100">
+            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-pink-600 text-xs font-medium px-2 py-0.5 rounded-full shadow-sm border border-pink-100">
               {category?.name}
             </div>
           )}
@@ -71,13 +71,13 @@ export default function BouquetCard({
             </div>
           )}
         </div>
-        <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-1 flex-col p-3 sm:p-4">
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-pink-800 transition-colors group-hover:text-pink-600">
+            <h3 className="text-base sm:text-lg font-bold text-pink-800 transition-colors group-hover:text-pink-600 line-clamp-1">
               {bouquet.name}
             </h3>
             {bouquet.description && (
-              <p className="mt-2 text-sm text-gray-500 h-[40px] overflow-hidden">
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-gray-500 line-clamp-2 h-[32px] sm:h-[40px] overflow-hidden">
                 {bouquet.description}
               </p>
             )}
@@ -85,27 +85,27 @@ export default function BouquetCard({
           
           <div>
             {tags.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {tags.slice(0, 3).map(tag => (
-                  <span key={tag.id} className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1 rounded-full">
+              <div className="mb-2 sm:mb-4 flex flex-wrap gap-1 sm:gap-2">
+                {tags.slice(0, 2).map(tag => (
+                  <span key={tag.id} className="inline-block bg-pink-50 text-pink-700 text-[10px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full">
                     {tag.name}
                   </span>
                 ))}
-                {tags.length > 3 && (
-                  <span className="inline-block bg-pink-50 text-pink-700 text-xs font-medium px-2 py-1 rounded-full">
-                    +{tags.length - 3}
+                {tags.length > 2 && (
+                  <span className="inline-block bg-pink-50 text-pink-700 text-[10px] sm:text-xs font-medium px-1.5 py-0.5 rounded-full">
+                    +{tags.length - 2}
                   </span>
                 )}
               </div>
             )}
-            <div className="flex items-end justify-between mt-3">
-              <div className="flex flex-col mr-4">
+            <div className="flex items-end justify-between mt-2 sm:mt-3">
+              <div className="flex flex-col mr-2 sm:mr-4">
                 {bouquet.discount_price && (
-                  <span className="text-sm text-gray-400 line-through">
+                  <span className="text-xs sm:text-sm text-gray-400 line-through">
                     {formatPrice(bouquet.price, locale as string)}
                   </span>
                 )}
-                <span className="text-xl font-bold text-amber-600">
+                <span className="text-base sm:text-xl font-bold text-amber-600">
                   {formatPrice(bouquet.discount_price || bouquet.price, locale as string)}
                 </span>
               </div>
@@ -118,7 +118,7 @@ export default function BouquetCard({
                     onAddToCart(bouquet.id);
                   }
                 }}
-                className="z-10 bg-gradient-to-r from-pink-500 to-pink-400 text-white px-3 py-1.5 rounded-md text-sm font-semibold shadow-sm transition-all duration-200 hover:from-pink-600 hover:to-pink-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="z-10 bg-gradient-to-r from-pink-500 to-pink-400 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 hover:from-pink-600 hover:to-pink-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!bouquet.in_stock}
               >
                 {isTemplate ? t('customizeThis') : t('addToCart')}
