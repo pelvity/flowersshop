@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
-import { X, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { X, ShoppingCart, Plus, Minus, Trash2, Flower } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/functions';
 
 interface Bouquet extends BaseBouquet {
   image_url?: string | null;
+  flowers?: Array<{ id: string; flower_id: string; name: string; quantity: number; }>;
 }
 
 export default function CartDrawer() {
@@ -30,6 +31,7 @@ export default function CartDrawer() {
   const supabase = createClientComponentClient<Database>();
   const locale = useLocale();
   const [products, setProducts] = useState<Bouquet[]>([]);
+  const [expandedBouquets, setExpandedBouquets] = useState<Record<string, boolean>>({});
   const placeholderImage = '/placeholder.svg';
 
   useEffect(() => {
@@ -44,37 +46,92 @@ export default function CartDrawer() {
         .filter((id): id is string => id !== null && id !== undefined);
 
       if (productIds.length > 0) {
-        const { data, error } = await supabase
-          .from('bouquets')
-          .select('*')
-          .in('id', productIds);
+        try {
+          // First get the bouquet details
+          const { data: bouquetsData, error: bouquetsError } = await supabase
+            .from('bouquets')
+            .select('*')
+            .in('id', productIds);
 
-        if (error) {
-          console.error('Error fetching products for cart:', error);
-          setProducts([]);
-        } else {
-          // Enhance products with image URLs
-          const productsWithUrls = data?.map(product => {
-            let imageUrl = placeholderImage;
+          if (bouquetsError) {
+            console.error('Error fetching products for cart:', bouquetsError);
+            setProducts([]);
+            return;
+          }
+
+          // Get all bouquet media
+          const { data: mediaData, error: mediaError } = await supabase
+            .from('bouquet_media')
+            .select('*')
+            .in('bouquet_id', productIds)
+            .eq('is_thumbnail', true);
+
+          if (mediaError) {
+            console.error('Error fetching bouquet media:', mediaError);
+          }
+          
+          // Get flowers for all bouquets
+          const { data: flowersData, error: flowersError } = await supabase
+            .from('bouquet_flowers')
+            .select(`
+              id,
+              bouquet_id,
+              flower_id,
+              quantity,
+              flower:flowers(id, name)
+            `)
+            .in('bouquet_id', productIds);
             
-            if (product.image) {
-              try {
-                const { data: urlData } = supabase.storage.from('bouquets').getPublicUrl(product.image);
-                if (urlData?.publicUrl) {
-                  imageUrl = urlData.publicUrl;
-                }
-              } catch (e) {
-                console.error('Error generating image URL:', e);
+          if (flowersError) {
+            console.error('Error fetching bouquet flowers:', flowersError);
+          }
+          
+          // Group flowers by bouquet_id
+          const flowersByBouquetId: Record<string, any[]> = {};
+          if (flowersData && flowersData.length > 0) {
+            flowersData.forEach(item => {
+              if (!flowersByBouquetId[item.bouquet_id]) {
+                flowersByBouquetId[item.bouquet_id] = [];
               }
-            }
+              
+              // Use safe type assertion
+              const flower = item.flower as any;
+              
+              flowersByBouquetId[item.bouquet_id].push({
+                id: item.id,
+                flower_id: item.flower_id,
+                name: flower ? flower.name : 'Unknown Flower',
+                quantity: item.quantity
+              });
+            });
+          }
+          
+          // Group media by bouquet_id
+          const mediaByBouquetId: Record<string, any> = {};
+          if (mediaData && mediaData.length > 0) {
+            mediaData.forEach(item => {
+              if (!mediaByBouquetId[item.bouquet_id]) {
+                mediaByBouquetId[item.bouquet_id] = item;
+              }
+            });
+          }
+          
+          // Enhance bouquet data with media and flowers
+          const enhancedProducts = bouquetsData?.map(bouquet => {
+            const media = mediaByBouquetId[bouquet.id];
+            const flowers = flowersByBouquetId[bouquet.id] || [];
             
             return {
-              ...product,
-              image_url: imageUrl
+              ...bouquet,
+              image_url: media?.file_url || null,
+              flowers
             };
           }) || [];
           
-          setProducts(productsWithUrls);
+          setProducts(enhancedProducts);
+        } catch (e) {
+          console.error('Error processing bouquet data:', e);
+          setProducts([]);
         }
       } else {
         setProducts([]);
@@ -83,6 +140,14 @@ export default function CartDrawer() {
 
     fetchProducts();
   }, [items, supabase]);
+  
+  // Toggle expanded state for a bouquet
+  const toggleBouquetExpanded = (bouquetId: string) => {
+    setExpandedBouquets(prev => ({
+      ...prev,
+      [bouquetId]: !prev[bouquetId]
+    }));
+  };
   
   return (
     <>
@@ -147,6 +212,33 @@ export default function CartDrawer() {
                             <p className="text-base font-medium text-amber-600">{formatPrice(product.price * item.quantity, locale)}</p>
                           </div>
                           <p className="mt-1 text-sm text-gray-500">{formatPrice(product.price, locale)} {t('each')}</p>
+                          
+                          {/* Bouquet flowers section */}
+                          {product.flowers && product.flowers.length > 0 && (
+                            <div className="mt-2 mb-2">
+                              <button 
+                                onClick={() => toggleBouquetExpanded(product.id)}
+                                className="text-xs flex items-center text-pink-600 hover:text-pink-700"
+                              >
+                                <span className={`transform transition-transform mr-1 ${expandedBouquets[product.id] ? 'rotate-90' : ''}`}>
+                                  ▶
+                                </span>
+                                {product.flowers.length} {product.flowers.length === 1 ? t('flower') : t('flowers')}
+                              </button>
+                              
+                              {expandedBouquets[product.id] && (
+                                <ul className="mt-2 ml-2 space-y-1 border-l-2 border-pink-100 pl-3">
+                                  {product.flowers.map((flower) => (
+                                    <li key={flower.id} className="text-xs text-gray-600 flex items-center space-x-1">
+                                      <Flower size={12} className="text-pink-400" />
+                                      <span className="flex-1">{flower.name}</span>
+                                      <span className="font-medium text-pink-600">×{flower.quantity}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          )}
                           
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">

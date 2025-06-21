@@ -10,6 +10,7 @@ import { BouquetMediaGallery, Lightbox } from "@/components/bouquets/bouquet-med
 import { useState, useEffect } from "react";
 import { Bouquet } from "@/lib/supabase";
 import { useTranslations } from "next-intl";
+import { formatPrice } from "@/lib/functions";
 
 interface BouquetClientPageProps {
   initialBouquet?: Bouquet;
@@ -208,16 +209,33 @@ export default function BouquetClientPage({
                   {bouquet.flowers && bouquet.flowers.length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-sm font-medium text-gray-500 mb-2">{t('product.includes')}</h3>
-                      <ul className="list-disc pl-5 text-gray-700">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {bouquet.flowers.map((flower: any, index: number) => (
-                          <li key={index} className="flex items-center gap-2 mb-1">
-                            <FlowerIcon size={14} className="text-pink-500 flex-shrink-0" />
-                            <span>
-                              {flower.name} {flower.quantity > 1 && `(${flower.quantity})`}
-                            </span>
-                          </li>
+                          <div key={index} className="bg-white rounded-lg shadow-sm border border-pink-100 overflow-hidden flex flex-col">
+                            <div className="relative h-24 bg-gray-50">
+                              {flower.image ? (
+                                <img 
+                                  src={flower.image} 
+                                  alt={flower.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full">
+                                  <FlowerIcon size={24} className="text-gray-300" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3">
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium text-gray-700">{flower.name}</h4>
+                                <span className="inline-flex items-center justify-center bg-pink-50 text-pink-600 font-medium text-xs h-5 min-w-5 px-1.5 rounded-full">
+                                  {flower.quantity}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   )}
 
@@ -252,14 +270,14 @@ export default function BouquetClientPage({
                     <div className="flex items-center">
                       {bouquet.discount_price ? (
                         <>
-                          <span className="text-2xl font-bold text-amber-600">₴{bouquet.discount_price}</span>
-                          <span className="ml-2 text-lg text-gray-400 line-through">₴{bouquet.price}</span>
+                          <span className="text-2xl font-bold text-amber-600">{formatPrice(bouquet.discount_price, locale)}</span>
+                          <span className="ml-2 text-lg text-gray-400 line-through">{formatPrice(bouquet.price, locale)}</span>
                           <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                             {Math.round((1 - bouquet.discount_price / bouquet.price) * 100)}% {t('product.discount')}
                           </span>
                         </>
                       ) : (
-                        <span className="text-2xl font-bold text-amber-600">₴{bouquet.price}</span>
+                        <span className="text-2xl font-bold text-amber-600">{formatPrice(bouquet.price, locale)}</span>
                       )}
                     </div>
                   </div>
@@ -322,11 +340,11 @@ export default function BouquetClientPage({
                       <div className="mt-2 flex items-center">
                         {relatedBouquet.discount_price ? (
                           <>
-                            <span className="font-bold text-amber-600">₴{relatedBouquet.discount_price}</span>
-                            <span className="ml-2 text-sm text-gray-400 line-through">₴{relatedBouquet.price}</span>
+                            <span className="font-bold text-amber-600">{formatPrice(relatedBouquet.discount_price, locale)}</span>
+                            <span className="ml-2 text-sm text-gray-400 line-through">{formatPrice(relatedBouquet.price, locale)}</span>
                           </>
                         ) : (
-                          <span className="font-bold text-amber-600">₴{relatedBouquet.price}</span>
+                          <span className="font-bold text-amber-600">{formatPrice(relatedBouquet.price, locale)}</span>
                         )}
                       </div>
                     </div>
