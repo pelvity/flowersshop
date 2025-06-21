@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+use "git diff" to analyze changes in file or files
+
+your task is to analyze local changes and split it by blocks of changes

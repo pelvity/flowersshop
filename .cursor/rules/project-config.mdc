@@ -4,7 +4,6 @@ globs:
 alwaysApply: true
 ---
 use pnpm
-act as senior dev
 db: supabase
 use supabase mcp to manage db
 ask me if u need or want to make changes (optimization etc) of code that is not directly connected with my task but it would be best approach
@@ -13,5 +12,6 @@ os: windows
 don't try custom approaches.
 research web is some default solution that shoudl work but don't work
 if nothing help than just stop and tell me whats problem
-if its just question than answer short. 
+if its just question than answer short.
+modify just pl.json for now
 
