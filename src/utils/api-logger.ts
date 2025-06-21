@@ -69,4 +69,9 @@ export class ApiLogger {
       stack: error?.stack,
     });
   }
+  
+  info(category: string, message: string, data?: any) {
+    const timestamp = new Date().toISOString();
+    console.info(`[${timestamp}] [${this.context}] INFO [${category}] ${message}`, data || {});
+  }
 } 
