@@ -10,7 +10,7 @@ import { Bouquet, Category, Tag } from "@/lib/supabase";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Database } from "@/types/supabase";
 import BouquetCard from "../bouquets/bouquet-card";
-import { TagRepository } from "@/lib/repositories/tag-repository";
+import { fetchTagsForBouquet } from "@/lib/api-client";
 
 // Custom CSS for the scrollbar
 const scrollbarStyles = `
@@ -116,23 +116,31 @@ export default function CatalogClient({ initialBouquets, initialCategories, init
   // Load tags for all bouquets
   useEffect(() => {
     async function loadBouquetTags() {
-      setIsLoadingTags(true);
-      const tagRepository = new TagRepository();
-      const tagsMap: Record<string, Tag[]> = {};
-      
-      // Load tags for each bouquet
-      for (const bouquet of initialBouquets) {
-        try {
-          const bouquetTags = await tagRepository.getTagsForBouquet(bouquet.id);
-          tagsMap[bouquet.id] = bouquetTags;
-        } catch (error) {
-          console.error(`Error loading tags for bouquet ${bouquet.id}:`, error);
-          tagsMap[bouquet.id] = [];
-        }
+      if (!initialBouquets || initialBouquets.length === 0) {
+        setIsLoadingTags(false);
+        return;
       }
       
-      setBouquetTagsMap(tagsMap);
-      setIsLoadingTags(false);
+      setIsLoadingTags(true);
+      const tagsMap: Record<string, Tag[]> = {};
+      
+      try {
+        // Load tags for each bouquet
+        for (const bouquet of initialBouquets) {
+          try {
+            const bouquetTags = await fetchTagsForBouquet(bouquet.id);
+            tagsMap[bouquet.id] = bouquetTags;
+          } catch (error) {
+            console.error(`Error loading tags for bouquet ${bouquet.id}:`, error);
+            tagsMap[bouquet.id] = [];
+          }
+        }
+      } catch (error) {
+        console.error('Error loading bouquet tags:', error);
+      } finally {
+        setBouquetTagsMap(tagsMap);
+        setIsLoadingTags(false);
+      }
     }
     
     loadBouquetTags();
