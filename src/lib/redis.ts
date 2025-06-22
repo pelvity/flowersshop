@@ -1,14 +1,36 @@
 import { Redis } from '@upstash/redis';
 
-// Initialize Redis client from environment variables
-// Use REST API URL and token instead of Redis URL
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL || '',
-  token: process.env.KV_REST_API_TOKEN || '',
-});
+// Check if we're running on the server
+const isServer = typeof window === 'undefined';
 
-// Log Redis initialization
-console.log('[REDIS_INIT] Redis client initialized with REST API configuration');
+// Create a function to get the Redis client (lazy initialization)
+let redisClient: Redis | null = null;
+
+function getRedisClient(): Redis {
+  // Only initialize Redis on the server
+  if (isServer) {
+    if (!redisClient) {
+      redisClient = new Redis({
+        url: process.env.KV_REST_API_URL || '',
+        token: process.env.KV_REST_API_TOKEN || '',
+      });
+      
+      // Log Redis initialization (server-side only)
+      console.log('[REDIS_INIT] Redis client initialized with REST API configuration');
+    }
+    return redisClient;
+  }
+  
+  // Return a mock Redis client for the browser that logs operations but doesn't execute them
+  return new Proxy({} as Redis, {
+    get: (target, prop) => {
+      return (...args: any[]) => {
+        console.log(`[REDIS_BROWSER] Operation "${String(prop)}" ignored in browser environment`);
+        return Promise.resolve(null);
+      };
+    }
+  });
+}
 
 /**
  * Get a value from Redis cache
@@ -17,9 +39,16 @@ console.log('[REDIS_INIT] Redis client initialized with REST API configuration')
  * @returns Cached value or null if not found
  */
 export async function getCachedData<T>(key: string): Promise<T | null> {
+  // Skip actual Redis operations in the browser
+  if (!isServer) {
+    console.log(`[REDIS_GET] Skipped in browser: "${key}"`);
+    return null;
+  }
+  
   console.log(`[REDIS_GET] Attempting to get key: "${key}"`);
   try {
     const startTime = performance.now();
+    const redis = getRedisClient();
     const data = await redis.get(key);
     const endTime = performance.now();
     
@@ -48,9 +77,16 @@ export async function setCachedData<T>(
   data: T,
   ttlSeconds: number = 3600
 ): Promise<void> {
+  // Skip actual Redis operations in the browser
+  if (!isServer) {
+    console.log(`[REDIS_SET] Skipped in browser: "${key}"`);
+    return;
+  }
+  
   console.log(`[REDIS_SET] Attempting to set key: "${key}" with TTL: ${ttlSeconds}s`);
   try {
     const startTime = performance.now();
+    const redis = getRedisClient();
     await redis.set(key, data, { ex: ttlSeconds });
     const endTime = performance.now();
     
@@ -66,9 +102,16 @@ export async function setCachedData<T>(
  * @param key - Cache key to delete
  */
 export async function invalidateCacheKey(key: string): Promise<void> {
+  // Skip actual Redis operations in the browser
+  if (!isServer) {
+    console.log(`[REDIS_DEL] Skipped in browser: "${key}"`);
+    return;
+  }
+  
   console.log(`[REDIS_DEL] Attempting to delete key: "${key}"`);
   try {
     const startTime = performance.now();
+    const redis = getRedisClient();
     const result = await redis.del(key);
     const endTime = performance.now();
     
@@ -84,10 +127,17 @@ export async function invalidateCacheKey(key: string): Promise<void> {
  * @param keys - Array of cache keys to delete
  */
 export async function invalidateMultipleKeys(keys: string[]): Promise<void> {
+  // Skip actual Redis operations in the browser
+  if (!isServer) {
+    console.log(`[REDIS_DEL_MULTI] Skipped in browser: ${keys.length} keys`);
+    return;
+  }
+  
   console.log(`[REDIS_DEL_MULTI] Attempting to delete ${keys.length} keys`);
   try {
     if (keys.length > 0) {
       const startTime = performance.now();
+      const redis = getRedisClient();
       // Delete keys one by one since Upstash Redis doesn't support array for del
       const results = await Promise.all(keys.map(key => redis.del(key)));
       const endTime = performance.now();
@@ -106,9 +156,16 @@ export async function invalidateMultipleKeys(keys: string[]): Promise<void> {
  * @param pattern - Pattern to match keys (e.g., "bouquet:*")
  */
 export async function invalidateByPattern(pattern: string): Promise<void> {
+  // Skip actual Redis operations in the browser
+  if (!isServer) {
+    console.log(`[REDIS_DEL_PATTERN] Skipped in browser: "${pattern}"`);
+    return;
+  }
+  
   console.log(`[REDIS_DEL_PATTERN] Attempting to delete keys matching pattern: "${pattern}"`);
   try {
     const startTime = performance.now();
+    const redis = getRedisClient();
     const keys = await redis.keys(pattern);
     
     if (keys.length > 0) {
@@ -127,22 +184,25 @@ export async function invalidateByPattern(pattern: string): Promise<void> {
   }
 }
 
-// Try to verify Redis connection on module load
-(async () => {
-  try {
-    console.log('[REDIS_INIT] Testing connection with Redis...');
-    console.log(`[REDIS_INIT] REST URL: ${process.env.KV_REST_API_URL ? 'Set' : 'Not set'}`);
-    console.log(`[REDIS_INIT] Token: ${process.env.KV_REST_API_TOKEN ? 'Set' : 'Not set'}`);
-    
-    await redis.set('redis_connection_test', 'ok', { ex: 10 });
-    const testResult = await redis.get('redis_connection_test');
-    console.log(`[REDIS_INIT] ✅ Connection test successful: ${testResult === 'ok' ? 'PASSED' : 'FAILED'}`);
-  } catch (error) {
-    console.error('[REDIS_INIT] 🔴 Connection test failed:', error);
-  }
-})();
+// Try to verify Redis connection on module load - but only on the server
+if (isServer) {
+  (async () => {
+    try {
+      console.log('[REDIS_INIT] Testing connection with Redis...');
+      console.log(`[REDIS_INIT] REST URL: ${process.env.KV_REST_API_URL ? 'Set' : 'Not set'}`);
+      console.log(`[REDIS_INIT] Token: ${process.env.KV_REST_API_TOKEN ? 'Set' : 'Not set'}`);
+      
+      const redis = getRedisClient();
+      await redis.set('redis_connection_test', 'ok', { ex: 10 });
+      const testResult = await redis.get('redis_connection_test');
+      console.log(`[REDIS_INIT] ✅ Connection test successful: ${testResult === 'ok' ? 'PASSED' : 'FAILED'}`);
+    } catch (error) {
+      console.error('[REDIS_INIT] 🔴 Connection test failed:', error);
+    }
+  })();
+}
 
 /**
- * Export the Redis instance for direct access when needed
+ * Export the Redis instance getter for direct access when needed
  */
-export { redis }; 
+export { getRedisClient as redis }; 
