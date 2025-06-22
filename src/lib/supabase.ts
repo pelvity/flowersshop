@@ -17,7 +17,12 @@ export type Bouquet = DatabaseBouquet & {
   media?: BouquetMedia[];
   image?: string | null;  // URL of the thumbnail image
   thumbnail?: BouquetMedia | null;  // Full thumbnail media object
-  flowers?: any[];  // Flowers in the bouquet
+  flowers?: Array<{
+    id: string;
+    flower_id: string;
+    name: string;
+    quantity: number;
+  }>;  // Flowers in the bouquet
 };
 
 // Type for flower in a custom bouquet with quantity and color
@@ -209,6 +214,22 @@ export const BouquetRepository = {
     const startTime = performance.now();
     
     try {
+      // Check Redis cache first
+      const cacheKey = 'bouquets:all';
+      console.log(`[SUPABASE LOG] 🔍 Checking Redis cache for key: "${cacheKey}"`);
+      
+      // Import Redis functions
+      const { getCachedData, setCachedData } = await import('@/lib/redis');
+      
+      // Try to get data from cache
+      const cachedData = await getCachedData<Bouquet[]>(cacheKey);
+      if (cachedData) {
+        console.log(`[SUPABASE LOG] ⚡ Serving ${cachedData.length} bouquets from Redis cache`);
+        return cachedData;
+      }
+      
+      console.log(`[SUPABASE LOG] 🔄 Redis cache miss, fetching from database`);
+      
       const supabase = await createServerLoggingClient();
       
       // First, get all bouquets
@@ -282,6 +303,10 @@ export const BouquetRepository = {
         } as Bouquet;
       });
       
+      // Store in Redis cache (1 hour TTL)
+      console.log(`[SUPABASE LOG] 💾 Storing ${enhancedBouquets.length} bouquets in Redis cache`);
+      await setCachedData(cacheKey, enhancedBouquets, 60 * 60);
+      
       const endTime = performance.now();
       console.log(`[SUPABASE LOG] Fetched ${enhancedBouquets.length} bouquets with media in ${(endTime - startTime).toFixed(2)}ms`);
       
@@ -297,6 +322,23 @@ export const BouquetRepository = {
     const startTime = performance.now();
     
     try {
+      // Check Redis cache first
+      const cacheKey = 'bouquets:all:with-flowers';
+      console.log(`[SUPABASE LOG] 🔍 Checking Redis cache for key: "${cacheKey}"`);
+      
+      // Import Redis functions
+      const { getCachedData, setCachedData } = await import('@/lib/redis');
+      
+      // Try to get data from cache
+      const cachedData = await getCachedData<Bouquet[]>(cacheKey);
+      if (cachedData) {
+        console.log(`[SUPABASE LOG] ⚡ Serving ${cachedData.length} bouquets with flowers from Redis cache`);
+        return cachedData;
+      }
+      
+      console.log(`[SUPABASE LOG] 🔄 Redis cache miss, fetching from database`);
+      
+      // If not in cache, fetch from database
       // First get all bouquets with media
       const bouquets = await this.getAll();
       
@@ -350,6 +392,10 @@ export const BouquetRepository = {
         flowers: flowersByBouquetId[bouquet.id] || []
       }));
       
+      // Store in Redis cache (1 hour TTL)
+      console.log(`[SUPABASE LOG] 💾 Storing ${enhancedBouquets.length} bouquets with flowers in Redis cache`);
+      await setCachedData(cacheKey, enhancedBouquets, 60 * 60);
+      
       const endTime = performance.now();
       console.log(`[SUPABASE LOG] Fetched ${enhancedBouquets.length} bouquets with flowers in ${(endTime - startTime).toFixed(2)}ms`);
       
@@ -365,6 +411,22 @@ export const BouquetRepository = {
     const startTime = performance.now();
     
     try {
+      // Check Redis cache first
+      const cacheKey = `bouquet:${id}`;
+      console.log(`[SUPABASE LOG] 🔍 Checking Redis cache for key: "${cacheKey}"`);
+      
+      // Import Redis functions
+      const { getCachedData, setCachedData } = await import('@/lib/redis');
+      
+      // Try to get data from cache
+      const cachedData = await getCachedData<Bouquet | null>(cacheKey);
+      if (cachedData) {
+        console.log(`[SUPABASE LOG] ⚡ Serving bouquet from Redis cache: ${id}`);
+        return cachedData;
+      }
+      
+      console.log(`[SUPABASE LOG] 🔄 Redis cache miss, fetching bouquet from database: ${id}`);
+      
       const supabase = await createServerLoggingClient();
       const { data, error } = await supabase
         .from('bouquets')
@@ -373,6 +435,10 @@ export const BouquetRepository = {
         .single();
         
       if (error) throw error;
+      
+      // Store in Redis cache (30 minutes TTL)
+      console.log(`[SUPABASE LOG] 💾 Storing bouquet in Redis cache with key "${cacheKey}"`);
+      await setCachedData(cacheKey, data, 30 * 60);
       
       const endTime = performance.now();
       console.log(`[SUPABASE LOG] Bouquet fetch completed in ${(endTime - startTime).toFixed(2)}ms. Found: ${data ? 'Yes' : 'No'}`);
