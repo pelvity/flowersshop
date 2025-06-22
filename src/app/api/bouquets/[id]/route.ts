@@ -27,6 +27,11 @@ async function invalidateBouquetCache(bouquetId: string) {
     console.log(`[API_BOUQUET_DETAIL] Invalidating category bouquets cache with pattern: category:*:bouquets`);
     await invalidateByPattern('category:*:bouquets');
     
+    // Delete all caches with the new format
+    console.log(`[API_BOUQUET_DETAIL] Invalidating all bouquets list cache with new format`);
+    await invalidateByPattern('bouquets:list*');
+    await invalidateByPattern('featured:bouquets*');
+    
     console.log(`[API_BOUQUET_DETAIL] ✅ Cache invalidation completed for bouquet: ${bouquetId}`);
   } catch (error) {
     console.error(`[API_BOUQUET_DETAIL] 🔴 Cache invalidation failed for bouquet: ${bouquetId}`, error);
