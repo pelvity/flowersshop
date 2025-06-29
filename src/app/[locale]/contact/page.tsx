@@ -1,13 +1,11 @@
-import ContactClient from "@/components/client/contact-client";
+import Contact from '@/components/contact';
+import { Metadata } from 'next';
 
-export default async function ContactPage({ 
-  params 
-}: { 
-  params: { locale: string } 
-}) {
-  return (
-    <main>
-      <ContactClient />
-    </main>
-  );
+export const metadata: Metadata = {
+  title: 'Contact Us - Flower Paradise',
+  description: 'Get in touch with our team for any questions, concerns, or special orders.'
+};
+
+export default function ContactPage() {
+  return <Contact />;
 } 

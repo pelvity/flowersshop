@@ -7,9 +7,6 @@ import { useParams } from 'next/navigation';
 
 export default function ContactClient() {
   const t = useTranslations('contact');
-  const commonT = useTranslations('common');
-  const params = useParams();
-  const locale = params.locale as string;
   
   return (
     <>
