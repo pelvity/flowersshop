@@ -63,7 +63,7 @@ const translations: Record<string, EmailTranslations> = {
     regards: 'Best regards,',
     teamName: 'The Flower Shop Team',
     copyright: '© 2025 Flower Shop, All Rights Reserved',
-    contactUs: 'If you have questions, contact us at support@flowershop.com'
+    contactUs: 'If you have questions, contact us at info@lafleur-lublin.com'
   },
   uk: {
     orderConfirmation: 'Підтвердження замовлення',
@@ -87,7 +87,7 @@ const translations: Record<string, EmailTranslations> = {
     regards: 'З повагою,',
     teamName: 'Команда Квіткового Магазину',
     copyright: '© 2025 Квітковий Магазин, Всі права захищені',
-    contactUs: 'Якщо у вас є питання, зв\'яжіться з нами за адресою support@flowershop.com'
+    contactUs: 'Якщо у вас є питання, зв\'яжіться з нами за адресою info@lafleur-lublin.com'
   }
 };
 
@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
     // Send email
     try {
       const customerEmail = await resend.emails.send({
-        from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
+        from: 'info@lafleur-lublin.com',
         to: formData.email,
         subject: `${t.orderConfirmation} #${orderNumber}`,
         html: htmlContent,
@@ -223,8 +223,8 @@ export async function POST(request: NextRequest) {
     // Send notification to admin (separate try/catch to ensure it runs even if customer email fails)
     try {
       const adminEmail = await resend.emails.send({
-        from: process.env.FROM_EMAIL || 'onboarding@resend.dev',
-        to: process.env.ADMIN_EMAIL || 'admin@example.com',
+        from: 'info@lafleur-lublin.com',
+        to: process.env.ADMIN_EMAIL || 'admin@lafleur-lublin.com',
         subject: `${t.orderNumber}${orderNumber}`,
         html: htmlContent,
       });

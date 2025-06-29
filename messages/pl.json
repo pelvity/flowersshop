@@ -40,6 +40,7 @@
     "emailInvalid": "Proszę podać prawidłowy adres email",
     "messageRequired": "Wiadomość jest wymagana",
     "sending": "Wysyłanie...",
+    "send": "Wyślij",
     "sendMessage": "Wyślij wiadomość",
     "emailSent": "Wiadomość wysłana pomyślnie!",
     "emailError": "Błąd podczas wysyłania wiadomości. Spróbuj ponownie później.",
