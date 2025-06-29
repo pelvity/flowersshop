@@ -36,13 +36,13 @@ export default function HeroCarousel({ media = [] }: HeroCarouselProps) {
   // Auto-advance the carousel every 5 seconds
   useEffect(() => {
     if (displayMedia.length <= 1) {
-      console.log('Auto-advance disabled: only one image available');
+      // console.log('Auto-advance disabled: only one image available');
       return;
     }
     
     console.log('Setting up auto-advance timer');
     const interval = setInterval(() => {
-      console.log('Auto-advance timer triggered, calling goToNext()');
+      // console.log('Auto-advance timer triggered, calling goToNext()');
       goToNext();
     }, 5000);
     
@@ -53,10 +53,10 @@ export default function HeroCarousel({ media = [] }: HeroCarouselProps) {
   }, [currentIndex, displayMedia.length]);
 
   const goToNext = useCallback(() => {
-    console.log('goToNext called', { currentIndex, mediaLength: displayMedia.length, isTransitioning });
+    // console.log('goToNext called', { currentIndex, mediaLength: displayMedia.length, isTransitioning });
     
     if (isTransitioning || displayMedia.length <= 1) {
-      console.log('Cannot go to next: transitioning or only one image');
+      // console.log('Cannot go to next: transitioning or only one image');
       return;
     }
     
