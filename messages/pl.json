@@ -6,6 +6,7 @@
       "contact": "Kontakt",
       "cart": "Koszyk"
     },
+    "brandName": "La Fleur",
     "footer": {
       "rights": "Wszelkie prawa zastrzeżone",
       "privacy": "Polityka prywatności",
@@ -38,7 +39,9 @@
     "nameRequired": "Imię jest wymagane",
     "emailRequired": "Email jest wymagany",
     "emailInvalid": "Proszę podać prawidłowy adres email",
+    "phoneInvalid": "Proszę podać prawidłowy numer telefonu",
     "messageRequired": "Wiadomość jest wymagana",
+    "messageMinLength": "Wiadomość powinna mieć co najmniej 10 znaków",
     "sending": "Wysyłanie...",
     "send": "Wyślij",
     "sendMessage": "Wyślij wiadomość",
@@ -338,5 +341,22 @@
     "emailSent": "Email wysłany",
     "messageSent": "Wiadomość wysłana",
     "notificationPreference": "Wybierz metodę powiadomienia"
+  },
+  "emails": {
+    "contactForm": {
+      "preview": "Nowe zgłoszenie z formularza kontaktowego od {name}",
+      "heading": "Nowe zgłoszenie z formularza kontaktowego",
+      "introText": "Otrzymałeś nową wiadomość z formularza kontaktowego na swojej stronie.",
+      "contactDetails": "Szczegóły kontaktu",
+      "nameLabel": "Imię:",
+      "emailLabel": "Email:",
+      "phoneLabel": "Telefon:",
+      "dateLabel": "Data:",
+      "referenceLabel": "Numer referencyjny:",
+      "messageHeading": "Wiadomość",
+      "responseInstructions": "Aby odpowiedzieć na to zapytanie, po prostu odpowiedz na tego emaila.",
+      "copyright": "© 2025 Flower Shop, Wszelkie prawa zastrzeżone",
+      "automatedMessage": "To jest automatyczna wiadomość z formularza kontaktowego na Twojej stronie."
+    }
   }
 } 
