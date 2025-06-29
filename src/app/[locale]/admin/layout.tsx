@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Package, Grid, Tag, Palette, LogOut, Menu, X } from 'lucide-react';
+import { Home, Package, Grid, Tag, Palette, LogOut, Menu, X, Settings } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -93,6 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: t('navigation.categories'), href: `/${locale}/admin/categories`, icon: Grid },
     { name: t('navigation.tags'), href: `/${locale}/admin/tags`, icon: Tag },
     { name: t('navigation.colors'), href: `/${locale}/admin/colors`, icon: Palette },
+    { name: t('navigation.settings'), href: `/${locale}/admin/settings`, icon: Settings },
   ];
   
   return (
