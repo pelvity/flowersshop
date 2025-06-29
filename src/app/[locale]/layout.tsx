@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Dancing_Script } from "next/font/google";
 import "@/globals.css";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
@@ -9,6 +9,13 @@ import MainLayout from "@/components/layout/MainLayout";
 import { ApiCacheProvider } from "@/providers/api-cache-provider";
 
 const inter = Inter({ subsets: ["latin"] });
+
+// Initialize Dancing Script font
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-dancing",
+});
 
 export async function generateMetadata({ 
   params
@@ -41,7 +48,7 @@ export default async function LocaleLayout({
 
     console.log(`[LAYOUT] Rendering layout with locale: ${locale}`);
   return (
-    <html lang={locale}>
+    <html lang={locale} className={`${dancingScript.variable}`}>
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ApiCacheProvider>

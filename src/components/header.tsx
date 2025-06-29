@@ -7,6 +7,14 @@ import { useTranslations } from 'next-intl';
 import CartButton from "./cart/cart-button";
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { Dancing_Script } from 'next/font/google';
+
+// Initialize the Dancing Script font
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '700'],
+});
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,7 +35,7 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link href={getLocalePath("/")} className="flex items-center">
-                <span className="text-2xl font-bold text-pink-600">Flower Paradise</span>
+                <h1 className={`text-5xl text-amber-600 ${dancingScript.className}`}>{t('common.brandName')}</h1>
               </Link>
             </div>
           </div>
