@@ -1,14 +1,14 @@
 'use client';
 
-import { Button } from "../ui";
+import { useState } from "react";
 import { useTranslations } from 'next-intl';
-import { useState, useMemo } from "react";
-import { sendEmail } from "@/utils/send-email";
 import { User, Mail, Phone, MessageSquare, Send } from "lucide-react";
-import { FormButton, StatusMessage } from "../ui/form";
+import { FormButton } from "../ui/FormButton";
+import { StatusMessage } from "../ui/StatusMessage";
 import { SmartFormField } from "../ui/form/FormField";
 import { useForm } from "@/hooks/useForm";
-import { ValidationRule, sanitizePhoneInput, formatPhoneNumber } from "@/lib/form-utils";
+import { FIELD_CONFIGS, ValidationRule } from "@/lib/form-utils";
+import { sendEmail } from "@/utils/send-email";
 
 type FormData = {
   name: string;
@@ -17,8 +17,8 @@ type FormData = {
   message: string;
 };
 
-export default function ContactForm() {
-  const commonT = useTranslations('common');
+export default function ContactFormExample() {
+  const t = useTranslations('common');
   const [submitStatus, setSubmitStatus] = useState<{
     status: 'success' | 'error' | 'idle';
     message: string;
@@ -27,59 +27,73 @@ export default function ContactForm() {
     message: '',
   });
 
-  // Define form fields with configurations - memoize to prevent re-renders
-  const formFields = useMemo(() => [
+  // Define form fields with configurations
+  const formFields = [
     {
       name: 'name',
+      presetConfig: 'NAME',
       initialValue: '',
       validations: [
-        { type: 'required', message: commonT('nameRequired') },
-        { type: 'minLength', value: 2, message: commonT('nameRequired') }
-      ] as ValidationRule[]
+        { 
+          type: 'required', 
+          message: t('nameRequired') 
+        },
+        { 
+          type: 'minLength', 
+          value: 2, 
+          message: t('nameRequired') 
+        }
+      ] as ValidationRule[]pl
     },
     {
       name: 'email',
+      presetConfig: 'EMAIL',
       initialValue: '',
       validations: [
-        { type: 'required', message: commonT('emailRequired') },
-        { type: 'email', message: commonT('emailInvalid') }
+        { 
+          type: 'required', 
+          message: t('emailRequired') 
+        },
+        { 
+          type: 'email', 
+          message: t('emailInvalid') 
+        }
       ] as ValidationRule[]
     },
     {
       name: 'phone',
+      presetConfig: 'PHONE',
       initialValue: '',
-      formatOnChange: sanitizePhoneInput,
-      formatOnBlur: formatPhoneNumber,
       validations: [
         { 
           type: 'phone', 
-          message: commonT('phoneInvalid') 
+          message: t('phoneInvalid') 
         }
       ] as ValidationRule[]
     },
     {
       name: 'message',
+      presetConfig: 'MESSAGE',
       initialValue: '',
       validations: [
-        { type: 'required', message: commonT('messageRequired') },
+        { 
+          type: 'required', 
+          message: t('messageRequired') 
+        },
         { 
           type: 'minLength', 
           value: 10, 
-          message: commonT('messageMinLength') 
+          message: t('messageMinLength') 
         }
       ] as ValidationRule[]
     }
-  ], [commonT]); // Only depend on commonT
-  
-  // Handle successful submission separately to avoid referencing submitStatus in onSubmit
-  const handleSubmitSuccess = () => {
-    setTimeout(() => {
-      setSubmitStatus({ status: 'idle', message: '' });
-    }, 5000);
-  };
-  
+  ];
+
   // Use our form hook
   const { 
+    values, 
+    errors, 
+    touched,
     isSubmitting, 
     handleSubmit, 
     getFieldProps,
@@ -96,22 +110,28 @@ export default function ContactForm() {
         if (result.success) {
           setSubmitStatus({
             status: 'success',
-            message: commonT('emailSent')
+            message: t('emailSent')
           });
           resetForm();
-          handleSubmitSuccess();
         } else {
           setSubmitStatus({
             status: 'error',
-            message: result.error || commonT('emailError')
+            message: result.error || t('emailError')
           });
         }
       } catch (error) {
         setSubmitStatus({
           status: 'error',
-          message: commonT('emailError')
+          message: t('emailError')
         });
         console.error('Form submission error:', error);
+      }
+      
+      // Auto-clear success message after 5 seconds
+      if (submitStatus.status === 'success') {
+        setTimeout(() => {
+          setSubmitStatus({ status: 'idle', message: '' });
+        }, 5000);
       }
     }
   });
@@ -124,12 +144,13 @@ export default function ContactForm() {
         message={submitStatus.message}
       />
       
+      {/* Smart form fields using our new components */}
       <SmartFormField
         id="name"
         name="name"
-        label={commonT('name')}
+        label={t('name')}
         required
-        placeholder={commonT('yourName')}
+        placeholder={t('yourName')}
         icon={User}
         hookProps={getFieldProps('name')}
         autoComplete="name"
@@ -138,9 +159,9 @@ export default function ContactForm() {
       <SmartFormField
         id="email"
         name="email"
-        label={commonT('contactEmail')}
+        label={t('contactEmail')}
         required
-        placeholder={commonT('yourEmail')}
+        placeholder={t('yourEmail')}
         icon={Mail}
         hookProps={getFieldProps('email')}
         autoComplete="email"
@@ -149,8 +170,8 @@ export default function ContactForm() {
       <SmartFormField
         id="phone"
         name="phone"
-        label={commonT('phone')}
-        placeholder={commonT('yourPhone')}
+        label={t('phone')}
+        placeholder={t('yourPhone')}
         icon={Phone}
         hookProps={getFieldProps('phone')}
         autoComplete="tel"
@@ -160,9 +181,9 @@ export default function ContactForm() {
         id="message"
         name="message"
         type="textarea"
-        label={commonT('message')}
+        label={t('message')}
         required
-        placeholder={commonT('howCanWeHelp')}
+        placeholder={t('howCanWeHelp')}
         icon={MessageSquare}
         hookProps={getFieldProps('message')}
         rows={4}
@@ -173,10 +194,10 @@ export default function ContactForm() {
           type="submit"
           disabled={isSubmitting}
           isLoading={isSubmitting}
-          loadingText={commonT('sending')}
+          loadingText={t('sending')}
           icon={Send}
         >
-          {commonT('send')}
+          {t('send')}
         </FormButton>
       </div>
     </form>
