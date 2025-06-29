@@ -279,6 +279,18 @@
       "uploadPrompt": "Prześlij zdjęcia lub filmy, aby zaprezentować swój bukiet",
       "onlyPhotoThumbnail": "Tylko zdjęcia mogą być ustawione jako miniatury",
       "setAsThumbnail": "Ustaw jako miniaturę"
+    },
+    "settings": {
+      "title": "Ustawienia sklepu",
+      "storeInfo": "Informacje o sklepie",
+      "storeSettings": "Ustawienia sklepu",
+      "saveSuccess": "Ustawienia zostały zapisane pomyślnie",
+      "saveError": "Błąd podczas zapisywania ustawień",
+      "store_name": "Nazwa sklepu",
+      "store_address": "Adres sklepu",
+      "store_phone": "Telefon sklepu",
+      "store_email": "Email sklepu",
+      "store_telegram_username": "Nazwa użytkownika Telegram"
     }
   },
   "entities": {
@@ -292,7 +304,10 @@
     "title": "Przełącz na {locale, select, en {angielski} uk {ukraiński} pl {polski} ru {rosyjski} other {nieznany}}"
   },
   "checkout": {
-    "checkout": "Do kasy",
+    "checkout": "Zamówienie",
+    "emptyCart": "Twój koszyk jest pusty",
+    "cartEmptyCheckout": "Twój koszyk jest pusty. Dodaj produkty do koszyka przed zamówieniem.",
+    "backToCatalog": "Wróć do katalogu",
     "orderSummary": "Podsumowanie zamówienia",
     "subtotal": "Suma częściowa",
     "shipping": "Dostawa",
@@ -300,20 +315,28 @@
     "fullName": "Imię i nazwisko",
     "checkoutEmail": "Email",
     "phoneNumber": "Numer telefonu",
-    "address": "Adres",
-    "city": "Miasto",
+    "address": "Adres dostawy",
     "paymentMethod": "Metoda płatności",
     "cashOnDelivery": "Płatność przy odbiorze",
     "cardPayment": "Płatność kartą",
     "placeOrder": "Złóż zamówienie",
-    "processing": "Przetwarzanie...",
+    "nameRequired": "Imię i nazwisko jest wymagane",
+    "nameMinLength": "Imię i nazwisko musi mieć co najmniej 3 znaki",
+    "emailRequired": "Email jest wymagany",
+    "emailInvalid": "Proszę podać prawidłowy adres email",
+    "phoneRequired": "Numer telefonu jest wymagany",
+    "phoneInvalid": "Proszę podać prawidłowy numer telefonu",
+    "addressRequired": "Adres dostawy jest wymagany",
+    "addressMinLength": "Adres musi mieć co najmniej 5 znaków",
+    "orderProcessingError": "Wystąpił błąd podczas przetwarzania zamówienia. Spróbuj ponownie.",
     "orderSuccess": "Zamówienie złożone pomyślnie!",
-    "orderSuccessDescription": "Dziękujemy za zamówienie. Wysłaliśmy potwierdzenie na Twój adres email.",
+    "orderSuccessDescription": "Dziękujemy za zamówienie. Otrzymasz wiadomość email z potwierdzeniem.",
     "continueShopping": "Kontynuuj zakupy",
-    "emptyCart": "Twój koszyk jest pusty",
-    "cartEmptyCheckout": "Dodaj produkty do koszyka, aby złożyć zamówienie",
-    "backToCatalog": "Powrót do katalogu",
-    "quantity": "Ilość",
-    "orderProcessingError": "Wystąpił błąd podczas przetwarzania zamówienia. Spróbuj ponownie."
+    "processing": "Przetwarzanie...",
+    "emailNotification": "Powiadomienie e-mail",
+    "telegramNotification": "Powiadomienie Telegram",
+    "emailSent": "Email wysłany",
+    "messageSent": "Wiadomość wysłana",
+    "notificationPreference": "Wybierz metodę powiadomienia"
   }
 } 
