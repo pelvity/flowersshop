@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import OrderConfirmation from '../../../../emails/OrderConfirmation';
+import AdminOrderNotification from '../../../../emails/AdminOrderNotification';
+import * as React from 'react';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 interface CartItem {
   id: string;
   quantity: number;
   price: number;
+  bouquetId?: string;
   productName?: string;
   customBouquet?: {
     name: string;
@@ -91,13 +96,123 @@ const translations: Record<string, EmailTranslations> = {
   }
 };
 
+/**
+ * Send a message via Telegram bot
+ */
+async function sendTelegramNotification(
+  chatId: string, 
+  message: string
+): Promise<boolean> {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('Telegram bot token is not set');
+    return false;
+  }
+
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'HTML',
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!result.ok) {
+      console.error('Error sending Telegram notification:', result);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Exception sending Telegram notification:', error);
+    return false;
+  }
+}
+
+/**
+ * Format order details for Telegram message
+ */
+function formatOrderForTelegram(
+  orderNumber: string,
+  orderDate: string,
+  orderItems: any[],
+  subtotal: number,
+  shipping: number,
+  total: number,
+  customerName: string,
+  customerEmail: string,
+  customerPhone: string,
+  address: string,
+  paymentMethod: string,
+  locale: string
+): string {
+  // Get translations based on locale (default to English)
+  const t = translations[locale] || translations.en;
+  
+  // Format items
+  const itemsList = orderItems.map(item => 
+    `- ${item.name} x${item.quantity} - ${new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    }).format(item.price * item.quantity)}`
+  ).join('\n');
+  
+  // Format currency
+  const formatCurrency = (amount: number) => new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pl-PL', {
+    style: 'currency',
+    currency: 'PLN'
+  }).format(amount);
+  
+  // Build the message
+  return `
+<b>${t.orderConfirmation}</b>
+${t.orderNumber}${orderNumber}
+
+<b>${customerName}</b>,
+${t.thankYouMessage}
+
+<b>${t.orderDetails}</b>
+${t.orderDate}: ${orderDate}
+
+<b>${t.orderSummary}</b>
+${itemsList}
+
+${t.subtotal}: ${formatCurrency(subtotal)}
+${t.shipping}: ${formatCurrency(shipping)}
+<b>${t.total}: ${formatCurrency(total)}</b>
+
+<b>${t.shippingInfo}</b>
+${address}
+${customerPhone}
+${customerEmail}
+
+<b>${t.paymentMethod}</b>
+${paymentMethod === 'cash' ? t.cashOnDelivery : t.cardPayment}
+
+${t.questions}
+
+${t.regards}
+${t.teamName}
+`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { 
       formData, 
       items, 
+      orderId,
+      orderDate,
       totalPrice, 
-      locale 
+      shippingPrice = 100, 
+      orderTotal,
+      locale = 'pl' 
     } = await request.json();
 
     // Get translations based on locale (default to English)
@@ -111,137 +226,163 @@ export async function POST(request: NextRequest) {
       image: item.image || ''
     }));
 
-    // Generate unique order number
-    const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
-    const orderDate = new Date().toLocaleDateString(locale === 'uk' ? 'uk-UA' : 'en-US');
+    // Generate unique order number if not provided
+    const orderNumber = orderId || `ORD-${Date.now().toString().slice(-6)}`;
+    const formattedOrderDate = orderDate || new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'pl-PL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
-    // Create HTML for order items
-    const orderItemsHtml = orderItems.map((item: { name: string; quantity: number; price: number; image: string }) => `
-      <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.quantity}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">₴${item.price.toFixed(2)}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">₴${(item.price * item.quantity).toFixed(2)}</td>
-      </tr>
-    `).join('');
+    // Calculate totals if not provided
+    const calculatedSubtotal = totalPrice || items.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
+    const calculatedShipping = shippingPrice || 100;
+    const calculatedTotal = orderTotal || calculatedSubtotal + calculatedShipping;
 
-    // Create HTML email template
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #f8bbd0; padding: 20px; text-align: center; color: #880e4f; }
-          .content { padding: 20px; background: #fff; }
-          .footer { background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #6c757d; }
-          table { width: 100%; border-collapse: collapse; }
-          th { background-color: #f8bbd0; color: #880e4f; text-align: left; padding: 10px; }
-          .total-row { font-weight: bold; background-color: #fce4ec; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>${t.orderConfirmation}</h1>
-            <p>${t.orderNumber}${orderNumber}</p>
-          </div>
-          <div class="content">
-            <p>${t.greeting} ${formData.name},</p>
-            <p>${t.thankYouMessage}</p>
-            
-            <h2>${t.orderDetails}</h2>
-            <p><strong>${t.orderNumber}</strong> ${orderNumber}<br>
-            <strong>${t.orderDate}:</strong> ${orderDate}</p>
-            
-            <h2>${t.orderSummary}</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>${t.item}</th>
-                  <th>${t.quantity}</th>
-                  <th>${t.price}</th>
-                  <th>${t.total}</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${orderItemsHtml}
-                <tr class="total-row">
-                  <td colspan="3" style="padding: 10px; text-align: right;">${t.subtotal}:</td>
-                  <td style="padding: 10px;">₴${totalPrice.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td colspan="3" style="padding: 10px; text-align: right;">${t.shipping}:</td>
-                  <td style="padding: 10px;">₴100.00</td>
-                </tr>
-                <tr class="total-row">
-                  <td colspan="3" style="padding: 10px; text-align: right;">${t.total}:</td>
-                  <td style="padding: 10px;">₴${(totalPrice + 100).toFixed(2)}</td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <h2>${t.shippingInfo}</h2>
-            <p>${formData.address}, ${formData.city}</p>
-            
-            <h2>${t.paymentMethod}</h2>
-            <p>${formData.paymentMethod === 'cash' ? t.cashOnDelivery : t.cardPayment}</p>
-            
-            <p>${t.questions}</p>
-            
-            <p>${t.regards}<br>
-            ${t.teamName}</p>
-          </div>
-          <div class="footer">
-            <p>${t.copyright}</p>
-            <p>${t.contactUs}</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Handle customer notifications based on their preference
+    const notificationType = formData.notificationType || 'email';
+    
+    // Send email notification if selected
+    if (notificationType === 'email' || notificationType === 'both') {
+      try {
+        const customerEmailProps = {
+          customerName: formData.name,
+          orderNumber: orderNumber.toString(),
+          orderDate: formattedOrderDate,
+          orderItems,
+          subtotal: calculatedSubtotal,
+          shipping: calculatedShipping,
+          total: calculatedTotal,
+          address: formData.address,
+          paymentMethod: formData.paymentMethod === 'cash' ? 
+            (locale === 'en' ? 'Cash on Delivery' : 'Płatność przy odbiorze') : 
+            (locale === 'en' ? 'Card Payment' : 'Płatność kartą'),
+          locale
+        };
+        
+        const customerEmail = await resend.emails.send({
+          from: 'info@lafleur-lublin.com',
+          to: formData.email,
+          subject: locale === 'en' ? `Order Confirmation #${orderNumber}` : `Potwierdzenie zamówienia #${orderNumber}`,
+          react: React.createElement(OrderConfirmation, customerEmailProps)
+        });
 
-    // Send email
-    try {
-      const customerEmail = await resend.emails.send({
-        from: 'info@lafleur-lublin.com',
-        to: formData.email,
-        subject: `${t.orderConfirmation} #${orderNumber}`,
-        html: htmlContent,
-      });
-
-      if (customerEmail.error) {
-        console.error('Error sending customer email:', customerEmail.error);
-        // Continue to admin email even if customer email fails
+        if (customerEmail.error) {
+          console.error('Error sending customer email:', customerEmail.error);
+          // Continue to other notifications even if email fails
+        }
+      } catch (customerEmailError) {
+        console.error('Exception sending customer email:', customerEmailError);
+        // Continue to other notifications even if email fails
       }
-    } catch (customerEmailError) {
-      console.error('Exception sending customer email:', customerEmailError);
-      // Continue to admin email even if customer email fails
     }
 
-    // Send notification to admin (separate try/catch to ensure it runs even if customer email fails)
+    // Send Telegram notification to customer if selected
+    if ((notificationType === 'telegram' || notificationType === 'both') && formData.telegramId) {
+      try {
+        const customerTelegramMessage = formatOrderForTelegram(
+          orderNumber.toString(),
+          formattedOrderDate,
+          orderItems,
+          calculatedSubtotal,
+          calculatedShipping,
+          calculatedTotal,
+          formData.name,
+          formData.email,
+          formData.phone,
+          formData.address,
+          formData.paymentMethod === 'cash' ? 
+            (locale === 'en' ? 'Cash on Delivery' : 'Płatność przy odbiorze') : 
+            (locale === 'en' ? 'Card Payment' : 'Płatność kartą'),
+          locale
+        );
+        
+        const telegramSent = await sendTelegramNotification(
+          formData.telegramId,
+          customerTelegramMessage
+        );
+        
+        if (!telegramSent) {
+          console.error('Failed to send Telegram notification to customer');
+        }
+      } catch (telegramError) {
+        console.error('Error sending Telegram notification to customer:', telegramError);
+      }
+    }
+
+    // Send admin notifications - always send email to admin
     try {
+      const adminEmailProps = {
+        orderNumber: orderNumber.toString(),
+        orderDate: formattedOrderDate,
+        orderItems,
+        subtotal: calculatedSubtotal,
+        shipping: calculatedShipping,
+        total: calculatedTotal,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        address: formData.address,
+        paymentMethod: formData.paymentMethod === 'cash' ? 
+          (locale === 'en' ? 'Cash on Delivery' : 'Płatność przy odbiorze') : 
+          (locale === 'en' ? 'Card Payment' : 'Płatność kartą'),
+        locale
+      };
+      
       const adminEmail = await resend.emails.send({
         from: 'info@lafleur-lublin.com',
         to: process.env.ADMIN_EMAIL || 'admin@lafleur-lublin.com',
-        subject: `${t.orderNumber}${orderNumber}`,
-        html: htmlContent,
+        subject: locale === 'en' ? `New Order Notification #${orderNumber}` : `Nowe zamówienie #${orderNumber}`,
+        react: React.createElement(AdminOrderNotification, adminEmailProps)
       });
 
       if (adminEmail.error) {
         console.error('Error sending admin email:', adminEmail.error);
-        return NextResponse.json({ error: adminEmail.error.message }, { status: 500 });
+        // Don't return error here, try to send Telegram notification first
       }
     } catch (adminEmailError: any) {
       console.error('Exception sending admin email:', adminEmailError);
-      return NextResponse.json({ error: adminEmailError.message }, { status: 500 });
+      // Don't return error here, try to send Telegram notification first
+    }
+    
+    // Always send Telegram notification to shop owner if TELEGRAM_BOT_TOKEN is set
+    try {
+      const SHOP_OWNER_TELEGRAM_ID = '590002826'; // Hard-coded shop owner's Telegram ID
+      
+      const adminTelegramMessage = formatOrderForTelegram(
+        orderNumber.toString(),
+        formattedOrderDate,
+        orderItems,
+        calculatedSubtotal,
+        calculatedShipping,
+        calculatedTotal,
+        formData.name,
+        formData.email,
+        formData.phone,
+        formData.address,
+        formData.paymentMethod === 'cash' ? 
+          (locale === 'en' ? 'Cash on Delivery' : 'Płatność przy odbiorze') : 
+          (locale === 'en' ? 'Card Payment' : 'Płatność kartą'),
+        locale
+      );
+      
+      const telegramSent = await sendTelegramNotification(
+        SHOP_OWNER_TELEGRAM_ID,
+        adminTelegramMessage
+      );
+      
+      if (!telegramSent) {
+        console.error('Failed to send Telegram notification to shop owner');
+      }
+    } catch (ownerTelegramError) {
+      console.error('Error sending Telegram notification to shop owner:', ownerTelegramError);
     }
 
-    // If we made it here, at least the admin email was sent successfully
+    // If we made it here, at least one notification method worked
     return NextResponse.json({ 
       success: true, 
-      message: "Order received successfully"
+      message: "Order received successfully",
+      orderId: orderNumber
     });
   } catch (error: any) {
     console.error('Error processing order:', error);

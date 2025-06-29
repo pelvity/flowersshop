@@ -1,22 +1,47 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Section, Container } from "@/components/ui";
 import { useTranslations, useLocale } from 'next-intl';
 import { useCart } from "@/context/cart-context";
-import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, Mail, Send, AlertCircle, Phone, User, Home, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
 import CheckoutItem from '@/components/checkout/checkout-item';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
-import { Bouquet as BaseBouquet } from '@/lib/supabase';
+import { Bouquet as BaseBouquet, FlowerQuantity } from '@/lib/supabase';
 import { formatPrice } from '@/lib/functions';
+import { getStoreSetting } from '@/lib/store-settings';
+import { FormField, FormButton, StatusMessage } from '@/components/ui/form';
+import { validateEmail, validateMinLength, validatePhone, formatPhoneNumber as formatPhone, validateAddress, sanitizePhoneInput } from '@/utils/form-validation';
 
 interface Bouquet extends BaseBouquet {
   image_url?: string | null;
   flowers?: Array<{ id: string; flower_id: string; name: string; quantity: number; }>;
+}
+
+// Match the CartItem interface from cart-context.tsx
+interface CartItem {
+  id: string;
+  bouquetId?: string;
+  customBouquet?: {
+    flowers: FlowerQuantity[];
+    basedOn?: string;
+    name: string;
+  };
+  quantity: number;
+  price: number;
+  image?: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  paymentMethod?: string;
+  general?: string;
 }
 
 export default function CheckoutPage() {
@@ -27,20 +52,76 @@ export default function CheckoutPage() {
   const supabase = createClientComponentClient<Database>();
   const [products, setProducts] = useState<Bouquet[]>([]);
   const [calculatedTotalPrice, setCalculatedTotalPrice] = useState(0);
+  const [shopOwnerTelegramUsername, setShopOwnerTelegramUsername] = useState('vvrtem');
   
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     address: '',
-    city: '',
     paymentMethod: 'cash',
+    notificationType: 'email',
   });
+
+  const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
   
   // Use the calculated price or fall back to cart price
   const totalPrice = calculatedTotalPrice > 0 ? calculatedTotalPrice : cartTotalPrice;
+  
+  // Format order date for display
+  const orderDate = new Date().toLocaleDateString(currentLocale === 'en' ? 'en-US' : 'pl-PL', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
+  // Create telegram message with order details
+  const createTelegramMessage = () => {
+    const orderItems = items.map(item => {
+      const product = item.bouquetId ? products.find(p => p.id === item.bouquetId) : undefined;
+      const name = product?.name || (item.customBouquet?.name || 'Custom Bouquet');
+      return `${name} x${item.quantity} - ${formatPrice(item.price * item.quantity, currentLocale)}`;
+    }).join('\n');
+    
+    const message = `
+Nowe zamówienie
+
+Dane klienta:
+${formData.name}
+${formData.email}
+${formData.phone}
+${formData.address}
+
+Zamówienie:
+${orderItems}
+
+Suma częściowa: ${formatPrice(totalPrice, currentLocale)}
+Dostawa: ${formatPrice(100, currentLocale)}
+Razem: ${formatPrice(totalPrice + 100, currentLocale)}
+
+Data: ${orderDate}
+Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' : 'Płatność kartą'}
+`;
+    
+    return encodeURIComponent(message);
+  };
+  
+  // Fetch store settings
+  useEffect(() => {
+    const fetchStoreSettings = async () => {
+      try {
+        const telegramUsername = await getStoreSetting('store_telegram_username', 'vvrtem');
+        setShopOwnerTelegramUsername(telegramUsername);
+      } catch (error) {
+        console.error('Error fetching store settings:', error);
+      }
+    };
+    
+    fetchStoreSettings();
+  }, []);
   
   // Fetch products data including flowers
   useEffect(() => {
@@ -171,84 +252,135 @@ export default function CheckoutPage() {
     fetchProducts();
   }, [items, supabase]);
   
-  // Add debug logs for price formatting
-  useEffect(() => {
-    console.log('Debug - Current Locale:', currentLocale);
-    console.log('Debug - Cart Total Price (raw):', cartTotalPrice);
-    console.log('Debug - Calculated Total Price (raw):', calculatedTotalPrice);
-    console.log('Debug - Final Total Price (raw):', totalPrice);
-    console.log('Debug - Formatted Price:', formatPrice(totalPrice, currentLocale));
-    console.log('Debug - Items:', items);
-    console.log('Debug - Products:', products);
-  }, [currentLocale, cartTotalPrice, calculatedTotalPrice, totalPrice, items, products]);
-  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when field is edited
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    // First sanitize the input to allow only digits, +, -, spaces, and parentheses
+    const sanitized = sanitizePhoneInput(e.target.value);
+    // Then format it nicely
+    const formatted = formatPhone(sanitized);
+    setFormData(prev => ({ ...prev, phone: formatted }));
+    
+    // Clear error when field is edited
+    if (errors.phone) {
+      setErrors(prev => ({ ...prev, phone: undefined }));
+    }
+  };
+  
+  // Form validation
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    let isValid = true;
+    
+    // Name validation
+    if (!validateMinLength(formData.name, 3)) {
+      newErrors.name = formData.name.trim() ? t('nameMinLength') : t('nameRequired');
+      isValid = false;
+    }
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = t('emailRequired');
+      isValid = false;
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = t('emailInvalid');
+      isValid = false;
+    }
+    
+    // Phone validation
+    if (!formData.phone.trim()) {
+      newErrors.phone = t('phoneRequired');
+      isValid = false;
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = t('phoneInvalid');
+      isValid = false;
+    }
+    
+    // Address validation
+    if (!validateAddress(formData.address, 5)) {
+      newErrors.address = formData.address.trim() ? t('addressMinLength') : t('addressRequired');
+      isValid = false;
+    }
+    
+    setErrors(newErrors);
+    return isValid;
+  };
+  
+  const sendEmailNotification = async () => {
     try {
       // Send order confirmation email
-      const response = await fetch('/api/order', {
+      const emailResponse = await fetch('/api/order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          formData,
+          formData: { ...formData, notificationType: 'email' },
           items,
+          orderId: "EMAIL-" + Date.now(),
+          orderDate,
           totalPrice,
+          shippingPrice: 100,
+          orderTotal: totalPrice + 100,
           locale: currentLocale
         }),
       });
 
-      const result = await response.json();
+      const emailResult = await emailResponse.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send order confirmation');
+      if (!emailResponse.ok) {
+        throw new Error(emailResult.error || 'Failed to send order confirmation');
       }
+      
+      return true;
+    } catch (error) {
+      console.error('Error sending email notification:', error);
+      throw error;
+    }
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    if (!validateForm()) {
+      // Scroll to the first error
+      const firstErrorField = Object.keys(errors)[0];
+      const element = document.getElementById(firstErrorField);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.focus();
+      }
+      return;
+    }
+    
+    setIsSubmitting(true);
 
+    try {
+      // Send email notification
+      await sendEmailNotification();
+      
       setIsSuccess(true);
       clearCart();
 
-      // Redirect to success page after a delay
-      setTimeout(() => {
-        router.push(`/${currentLocale}`);
-      }, 3000);
+      // No longer redirecting to success page
+      // Instead, just show success state on the button
     } catch (error) {
       console.error('Error submitting order:', error);
-      // Show a more user-friendly message
-      alert(t('orderProcessingError'));
+      setErrors({ general: t('orderProcessingError') });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
   };
-  
-  if (isSuccess) {
-    return (
-      <Section className="bg-gradient-to-b from-pink-50 to-white py-12">
-        <Container>
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="rounded-full w-20 h-20 bg-green-100 flex items-center justify-center mx-auto mb-6">
-              <Check className="text-green-600" size={36} />
-            </div>
-            <h1 className="text-3xl font-bold text-pink-700 mb-4">{t('orderSuccess')}</h1>
-            <p className="text-gray-700 mb-8">{t('orderSuccessDescription')}</p>
-            <Link 
-              href={`/${currentLocale}`}
-              className="bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors inline-block"
-            >
-              {t('continueShopping')}
-            </Link>
-          </div>
-        </Container>
-      </Section>
-    );
-  }
   
   if (items.length === 0) {
     return (
@@ -273,6 +405,12 @@ export default function CheckoutPage() {
           <ChevronLeft size={20} />
           <span>{t('backToCatalog')}</span>
         </Link>
+        
+        <StatusMessage 
+          type={errors.general ? 'error' : isSuccess ? 'success' : 'idle'}
+          message={errors.general || (isSuccess ? t('orderSuccess') : '')}
+          className="mb-6"
+        />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Summary */}
@@ -312,106 +450,146 @@ export default function CheckoutPage() {
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('fullName')} *
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('checkoutEmail')} *
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('phoneNumber')} *
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      required
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('address')} *
-                    </label>
-                    <input
+                    <FormField
+                      id="name"
+                      name="name"
                       type="text"
-                      id="address"
-                      name="address"
+                      label={t('fullName')}
                       required
-                      value={formData.address}
+                      placeholder="Jan Kowalski"
+                      icon={User}
+                      value={formData.name}
                       onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                      errorMessage={errors.name}
+                      autoComplete="name"
+                    />
+                    
+                    <FormField
+                      id="email"
+                      name="email"
+                      type="email"
+                      label={t('checkoutEmail')}
+                      required
+                      placeholder="jan@example.com"
+                      icon={Mail}
+                      value={formData.email}
+                      onChange={handleChange}
+                      errorMessage={errors.email}
+                      autoComplete="email"
                     />
                   </div>
                   
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('city')} *
-                    </label>
-                    <input
-                      type="text"
-                      id="city"
-                      name="city"
-                      required
-                      value={formData.city}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                    />
-                  </div>
+                  <FormField
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    label={t('phoneNumber')}
+                    required
+                    placeholder="123 456 789"
+                    icon={Phone}
+                    value={formData.phone}
+                    onChange={handlePhoneChange}
+                    errorMessage={errors.phone}
+                    autoComplete="tel"
+                  />
+                  
+                  <FormField
+                    id="address"
+                    name="address"
+                    type="text"
+                    label={t('address')}
+                    required
+                    placeholder="ul. Kwiatowa 10, 00-001 Warszawa"
+                    icon={Home}
+                    value={formData.address}
+                    onChange={handleChange}
+                    errorMessage={errors.address}
+                    autoComplete="street-address"
+                  />
                   
                   <div>
                     <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
                       {t('paymentMethod')} *
                     </label>
-                    <select
-                      id="paymentMethod"
-                      name="paymentMethod"
-                      required
-                      value={formData.paymentMethod}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-400"
-                    >
-                      <option value="cash">{t('cashOnDelivery')}</option>
-                      <option value="card">{t('cardPayment')}</option>
-                    </select>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <CreditCard className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <select
+                        id="paymentMethod"
+                        name="paymentMethod"
+                        required
+                        value={formData.paymentMethod}
+                        onChange={handleChange}
+                        className="w-full border border-gray-300 rounded-md py-2 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-pink-400 appearance-none bg-white"
+                      >
+                        <option value="cash">{t('cashOnDelivery')}</option>
+                        <option value="card">{t('cardPayment')}</option>
+                      </select>
+                    </div>
                   </div>
                   
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white py-3 px-4 rounded-md font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 disabled:opacity-70"
-                    >
-                      {isSubmitting ? t('processing') : t('placeOrder')}
-                    </button>
+                  {/* Notification Options */}
+                  <div>
+                    <p className="block text-sm font-medium text-gray-700 mb-3">
+                      {t('notificationPreference')}
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {/* Email Button */}
+                      <FormButton
+                        type="submit"
+                        disabled={isSubmitting}
+                        isLoading={isSubmitting}
+                        loadingText={t('processing')}
+                        icon={isSuccess ? Check : Mail}
+                        fullWidth={false}
+                        className="flex-1"
+                      >
+                        {isSuccess ? t('emailSent') : t('emailNotification')}
+                      </FormButton>
+                      
+                      {/* Telegram Button */}
+                      <FormButton
+                        type="button"
+                        disabled={isSubmitting}
+                        icon={isSuccess ? Check : Send}
+                        variant="secondary"
+                        fullWidth={false}
+                        className="flex-1 bg-[#0088cc] hover:bg-[#0077b5] focus:ring-[#0088cc]"
+                        onClick={() => {
+                          // Validate form
+                          if (!validateForm()) {
+                            // Scroll to the first error
+                            const firstErrorField = Object.keys(errors)[0];
+                            const element = document.getElementById(firstErrorField);
+                            if (element) {
+                              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              element.focus();
+                            }
+                            return;
+                          }
+                          
+                          setIsSubmitting(true);
+                          try {
+                            // Open Telegram with predefined message
+                            window.open(`https://t.me/${shopOwnerTelegramUsername}?text=${createTelegramMessage()}`, '_blank');
+                            
+                            // Mark as success but don't redirect
+                            setIsSuccess(true);
+                            clearCart();
+                          } catch (error) {
+                            console.error('Error processing with Telegram:', error);
+                            setErrors({ general: t('orderProcessingError') });
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          } finally {
+                            setIsSubmitting(false);
+                          }
+                        }}
+                      >
+                        {isSuccess ? t('messageSent') : t('telegramNotification')}
+                      </FormButton>
+                    </div>
                   </div>
                 </div>
               </form>
