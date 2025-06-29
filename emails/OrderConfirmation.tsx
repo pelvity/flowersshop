@@ -32,6 +32,51 @@ type OrderConfirmationProps = {
   total: number;
   address: string;
   paymentMethod: string;
+  locale?: string;
+};
+
+// Default translations
+const translations = {
+  en: {
+    previewText: 'Your flower shop order confirmation',
+    orderConfirmation: 'Order Confirmation',
+    greeting: 'Hi',
+    thankYou: 'Thank you for your order! We\'ve received your purchase and are preparing your beautiful flowers with care.',
+    orderNumber: 'Order Number',
+    orderDate: 'Order Date',
+    orderSummary: 'Order Summary',
+    quantity: 'Quantity',
+    subtotal: 'Subtotal',
+    shipping: 'Shipping',
+    total: 'Total',
+    shippingInformation: 'Shipping Information',
+    paymentMethod: 'Payment Method',
+    questions: 'If you have any questions about your order, please contact our customer service.',
+    regards: 'Best regards,',
+    teamName: 'The Flower Shop Team',
+    copyright: '© 2025 Flower Shop, All Rights Reserved',
+    contactUs: 'If you have questions, contact us at'
+  },
+  pl: {
+    previewText: 'Potwierdzenie zamówienia w kwiaciarni',
+    orderConfirmation: 'Potwierdzenie zamówienia',
+    greeting: 'Witaj',
+    thankYou: 'Dziękujemy za Twoje zamówienie! Otrzymaliśmy Twoje zamówienie i przygotowujemy Twoje piękne kwiaty z troską.',
+    orderNumber: 'Numer zamówienia',
+    orderDate: 'Data zamówienia',
+    orderSummary: 'Podsumowanie zamówienia',
+    quantity: 'Ilość',
+    subtotal: 'Suma częściowa',
+    shipping: 'Dostawa',
+    total: 'Razem',
+    shippingInformation: 'Informacje o dostawie',
+    paymentMethod: 'Metoda płatności',
+    questions: 'Jeśli masz jakiekolwiek pytania dotyczące zamówienia, skontaktuj się z naszym działem obsługi klienta.',
+    regards: 'Z poważaniem,',
+    teamName: 'Zespół Kwiaciarni',
+    copyright: '© 2025 Kwiaciarnia, Wszelkie prawa zastrzeżone',
+    contactUs: 'Jeśli masz pytania, skontaktuj się z nami pod adresem'
+  }
 };
 
 export const OrderConfirmation: FC<OrderConfirmationProps> = ({
@@ -44,15 +89,19 @@ export const OrderConfirmation: FC<OrderConfirmationProps> = ({
   total,
   address,
   paymentMethod,
+  locale = 'pl', // Default to Polish
 }) => {
   const baseUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:3000';
 
+  // Use translations based on locale, defaulting to Polish if not specified
+  const t = translations[locale as keyof typeof translations] || translations.pl;
+
   return (
     <Html>
       <Head />
-      <Preview>Your flower shop order confirmation {orderNumber}</Preview>
+      <Preview>{t.previewText} {orderNumber}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
@@ -65,26 +114,29 @@ export const OrderConfirmation: FC<OrderConfirmationProps> = ({
             />
           </Section>
           <Section style={content}>
-            <Heading style={heading}>Order Confirmation</Heading>
+            <Heading style={heading}>{t.orderConfirmation}</Heading>
             <Text style={paragraph}>
-              Hi {customerName},
+              {t.greeting} {customerName},
             </Text>
             <Text style={paragraph}>
-              Thank you for your order! We've received your purchase and are preparing your beautiful flowers with care.
+              {t.thankYou}
             </Text>
-            <Text style={paragraph}>
-              <strong>Order Number:</strong> {orderNumber}<br />
-              <strong>Order Date:</strong> {orderDate}
-            </Text>
+            
+            <Section style={orderDetails}>
+              <Text style={paragraph}>
+                <strong>{t.orderNumber}:</strong> {orderNumber}<br />
+                <strong>{t.orderDate}:</strong> {orderDate}
+              </Text>
+            </Section>
 
             <Section style={orderSummary}>
-              <Heading as="h2" style={subheading}>Order Summary</Heading>
+              <Heading as="h2" style={subheading}>{t.orderSummary}</Heading>
 
               {orderItems.map((item, index) => (
                 <Row key={index} style={itemRow}>
                   <Column style={itemDetails}>
                     <Text style={itemName}>{item.name}</Text>
-                    <Text style={itemMeta}>Quantity: {item.quantity}</Text>
+                    <Text style={itemMeta}>{t.quantity}: {item.quantity}</Text>
                   </Column>
                   <Column style={itemPrice}>
                     <Text>₴{(item.price * item.quantity).toFixed(2)}</Text>
@@ -95,38 +147,38 @@ export const OrderConfirmation: FC<OrderConfirmationProps> = ({
               <Hr style={divider} />
 
               <Row style={subtotalRow}>
-                <Column><Text style={subtotalLabel}>Subtotal</Text></Column>
+                <Column><Text style={subtotalLabel}>{t.subtotal}</Text></Column>
                 <Column style={subtotalValue}><Text>₴{subtotal.toFixed(2)}</Text></Column>
               </Row>
 
               <Row style={subtotalRow}>
-                <Column><Text style={subtotalLabel}>Shipping</Text></Column>
+                <Column><Text style={subtotalLabel}>{t.shipping}</Text></Column>
                 <Column style={subtotalValue}><Text>₴{shipping.toFixed(2)}</Text></Column>
               </Row>
 
               <Row style={totalRow}>
-                <Column><Text style={totalLabel}>Total</Text></Column>
+                <Column><Text style={totalLabel}>{t.total}</Text></Column>
                 <Column style={totalValue}><Text>₴{total.toFixed(2)}</Text></Column>
               </Row>
             </Section>
 
-            <Section style={shippingInfo}>
-              <Heading as="h2" style={subheading}>Shipping Information</Heading>
+            <Section style={customerInfoSection}>
+              <Heading as="h2" style={subheading}>{t.shippingInformation}</Heading>
               <Text style={paragraph}>{address}</Text>
             </Section>
 
-            <Section style={paymentInfo}>
-              <Heading as="h2" style={subheading}>Payment Method</Heading>
+            <Section style={customerInfoSection}>
+              <Heading as="h2" style={subheading}>{t.paymentMethod}</Heading>
               <Text style={paragraph}>{paymentMethod}</Text>
             </Section>
 
             <Text style={paragraph}>
-              If you have any questions about your order, please contact our customer service.
+              {t.questions}
             </Text>
 
             <Text style={paragraph}>
-              Best regards,<br />
-              The Flower Shop Team
+              {t.regards}<br />
+              {t.teamName}
             </Text>
           </Section>
 
@@ -134,10 +186,10 @@ export const OrderConfirmation: FC<OrderConfirmationProps> = ({
 
           <Section style={footer}>
             <Text style={footerText}>
-              © 2025 Flower Shop, All Rights Reserved
+              {t.copyright}
             </Text>
             <Text style={footerText}>
-              If you have questions, contact us at <Link href="mailto:support@flowershop.com" style={link}>support@flowershop.com</Link>
+              {t.contactUs} <Link href="mailto:support@flowershop.com" style={link}>support@flowershop.com</Link>
             </Text>
           </Section>
         </Container>
@@ -150,7 +202,7 @@ export default OrderConfirmation;
 
 // Styles
 const main = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#f9f9f9',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
 };
 
@@ -179,9 +231,10 @@ const heading = {
   fontSize: '24px',
   letterSpacing: '-0.5px',
   lineHeight: '1.3',
-  fontWeight: '400',
-  color: '#484848',
+  fontWeight: '500',
+  color: '#ec4899', // Pink color to match theme
   padding: '17px 0 0',
+  textAlign: 'center' as const,
 };
 
 const paragraph = {
@@ -189,6 +242,13 @@ const paragraph = {
   fontSize: '15px',
   lineHeight: '1.4',
   color: '#3c4043',
+};
+
+const orderDetails = {
+  margin: '20px 0',
+  padding: '15px',
+  backgroundColor: '#f0f9ff', // Light blue background
+  borderRadius: '4px',
 };
 
 const orderSummary = {
@@ -264,12 +324,11 @@ const totalValue = {
   fontSize: '16px',
 };
 
-const shippingInfo = {
+const customerInfoSection = {
   margin: '20px 0',
-};
-
-const paymentInfo = {
-  margin: '20px 0',
+  padding: '15px',
+  backgroundColor: '#fff8f8', // Light pink background
+  borderRadius: '4px',
 };
 
 const subheading = {

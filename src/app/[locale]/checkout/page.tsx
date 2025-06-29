@@ -14,7 +14,8 @@ import { Bouquet as BaseBouquet, FlowerQuantity } from '@/lib/supabase';
 import { formatPrice } from '@/lib/functions';
 import { getStoreSetting } from '@/lib/store-settings';
 import { FormField, FormButton, StatusMessage } from '@/components/ui/form';
-import { validateEmail, validateMinLength, validatePhone, formatPhoneNumber as formatPhone, validateAddress, sanitizePhoneInput } from '@/utils/form-validation';
+import { formatPhoneNumber, sanitizePhoneInput, validatePhone, validateEmail } from '@/lib/form-utils';
+import { validateAddress } from '@/utils/form-validation';
 
 interface Bouquet extends BaseBouquet {
   image_url?: string | null;
@@ -262,11 +263,11 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
     }
   };
   
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    // First sanitize the input to allow only digits, +, -, spaces, and parentheses
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    // Sanitize the phone input to allow only digits, +, -, spaces, and parentheses
     const sanitized = sanitizePhoneInput(e.target.value);
     // Then format it nicely
-    const formatted = formatPhone(sanitized);
+    const formatted = formatPhoneNumber(sanitized);
     setFormData(prev => ({ ...prev, phone: formatted }));
     
     // Clear error when field is edited
@@ -275,13 +276,13 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
     }
   };
   
-  // Form validation
+  // Form validation - update phone validation to use our new utility
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     let isValid = true;
     
     // Name validation
-    if (!validateMinLength(formData.name, 3)) {
+    if (!formData.name.trim() || formData.name.trim().length < 3) {
       newErrors.name = formData.name.trim() ? t('nameMinLength') : t('nameRequired');
       isValid = false;
     }
@@ -371,8 +372,10 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
       setIsSuccess(true);
       clearCart();
 
-      // No longer redirecting to success page
-      // Instead, just show success state on the button
+      // Redirect to success page
+      setTimeout(() => {
+        router.push(`/${currentLocale}/order-success`);
+      }, 1000);
     } catch (error) {
       console.error('Error submitting order:', error);
       setErrors({ general: t('orderProcessingError') });
@@ -575,9 +578,14 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
                             // Open Telegram with predefined message
                             window.open(`https://t.me/${shopOwnerTelegramUsername}?text=${createTelegramMessage()}`, '_blank');
                             
-                            // Mark as success but don't redirect
+                            // Mark as success
                             setIsSuccess(true);
                             clearCart();
+                            
+                            // Redirect to success page
+                            setTimeout(() => {
+                              router.push(`/${currentLocale}/order-success`);
+                            }, 1000);
                           } catch (error) {
                             console.error('Error processing with Telegram:', error);
                             setErrors({ general: t('orderProcessingError') });
