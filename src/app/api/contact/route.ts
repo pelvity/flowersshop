@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate contact ID and date
+    // Generate contact ID and date.
     const contactId = `CONTACT-${Date.now().toString().slice(-6)}`;
     const contactDate = new Date().toLocaleDateString('pl-PL', {
       year: 'numeric',

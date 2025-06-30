@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
-import { Save, AlertCircle, Facebook, Instagram, Twitter, Youtube, Link } from 'lucide-react';
+import { Save, AlertCircle, Facebook, Instagram, Twitter, Youtube, Link, Info, MapPin } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 interface StoreSetting {
@@ -12,6 +12,14 @@ interface StoreSetting {
   key: string;
   value: string | null;
   description: string | null;
+}
+
+interface AddressComponents {
+  street: string;
+  building_number: string;
+  city: string;
+  postal_code: string;
+  country: string;
 }
 
 export default function StoreSettingsPage() {
@@ -28,6 +36,133 @@ export default function StoreSettingsPage() {
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
+  const [addressError, setAddressError] = useState<string | null>(null);
+  
+  // Address form state
+  const [addressComponents, setAddressComponents] = useState<AddressComponents>({
+    street: '',
+    building_number: '',
+    city: '',
+    postal_code: '',
+    country: ''
+  });
+  
+  // Field-specific errors
+  const [addressFieldErrors, setAddressFieldErrors] = useState<{
+    street?: string;
+    building_number?: string;
+    city?: string;
+    postal_code?: string;
+    country?: string;
+  }>({});
+
+  // Basic address validation function
+  const validateAddressComponents = (): boolean => {
+    const errors: typeof addressFieldErrors = {};
+    let isValid = true;
+    
+    if (!addressComponents.street.trim()) {
+      errors.street = t('settings.streetRequired');
+      isValid = false;
+    }
+    
+    if (!addressComponents.building_number.trim()) {
+      errors.building_number = t('settings.buildingNumberRequired');
+      isValid = false;
+    }
+    
+    if (!addressComponents.city.trim()) {
+      errors.city = t('settings.cityRequired');
+      isValid = false;
+    }
+    
+    if (!addressComponents.postal_code.trim()) {
+      errors.postal_code = t('settings.postalCodeRequired');
+      isValid = false;
+    }
+    
+    if (!addressComponents.country.trim()) {
+      errors.country = t('settings.countryRequired');
+      isValid = false;
+    }
+    
+    setAddressFieldErrors(errors);
+    return isValid;
+  };
+  
+  // Format address components into a properly formatted address string
+  const formatAddressFromComponents = (): string => {
+    const { street, building_number, city, postal_code, country } = addressComponents;
+    return `${street} ${building_number}, ${city}, ${postal_code}, ${country}`;
+  };
+  
+  // Parse address string into components
+  const parseAddressString = (addressString: string | null): AddressComponents => {
+    if (!addressString) {
+      return {
+        street: '',
+        building_number: '',
+        city: '',
+        postal_code: '',
+        country: ''
+      };
+    }
+    
+    try {
+      // Try to parse existing address in format "Street BuildingNumber, City, PostalCode, Country"
+      const parts = addressString.split(',').map(part => part.trim());
+      
+      let street = '';
+      let building_number = '';
+      let city = '';
+      let postal_code = '';
+      let country = '';
+      
+      // First part might contain street and building number
+      if (parts.length > 0) {
+        const streetParts = parts[0].split(' ');
+        // Assume the last part is the building number
+        if (streetParts.length > 1) {
+          building_number = streetParts.pop() || '';
+          street = streetParts.join(' ');
+        } else {
+          street = parts[0];
+        }
+      }
+      
+      // Second part is usually city
+      if (parts.length > 1) {
+        city = parts[1];
+      }
+      
+      // Third part is usually postal code
+      if (parts.length > 2) {
+        postal_code = parts[2];
+      }
+      
+      // Fourth part is usually country
+      if (parts.length > 3) {
+        country = parts[3];
+      }
+      
+      return {
+        street,
+        building_number,
+        city,
+        postal_code,
+        country
+      };
+    } catch (error) {
+      console.error('Error parsing address:', error);
+      return {
+        street: '',
+        building_number: '',
+        city: '',
+        postal_code: '',
+        country: ''
+      };
+    }
+  };
 
   // Fetch store settings
   useEffect(() => {
@@ -57,6 +192,12 @@ export default function StoreSettingsPage() {
         
         setSocialSettings(social);
         setGeneralSettings(general);
+        
+        // Parse the store address into components
+        const addressSetting = data?.find(s => s.key === 'store_address');
+        if (addressSetting) {
+          setAddressComponents(parseAddressString(addressSetting.value));
+        }
       } catch (error) {
         console.error('Error fetching store settings:', error);
       } finally {
@@ -68,6 +209,12 @@ export default function StoreSettingsPage() {
   }, [supabase, isAuthenticated, isAuthLoading]);
   
   const handleChange = (id: string, value: string) => {
+    // Update settings except for store_address which is handled separately
+    const setting = settings.find(s => s.id === id);
+    if (setting && setting.key === 'store_address') {
+      return;
+    }
+    
     // Update both the combined settings and the specific category
     setSettings(prev => prev.map(setting => 
       setting.id === id ? { ...setting, value } : setting
@@ -81,6 +228,40 @@ export default function StoreSettingsPage() {
     } else {
       setGeneralSettings(prev => prev.map(setting => 
         setting.id === id ? { ...setting, value } : setting
+      ));
+    }
+  };
+  
+  // Handle changes to address components
+  const handleAddressComponentChange = (field: keyof AddressComponents, value: string) => {
+    setAddressComponents(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    
+    // Clear field-specific error
+    if (addressFieldErrors[field]) {
+      setAddressFieldErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }));
+    }
+    
+    // Clear general address error
+    if (addressError) {
+      setAddressError(null);
+    }
+    
+    // Update the store_address setting with the formatted address
+    const addressSetting = settings.find(s => s.key === 'store_address');
+    if (addressSetting) {
+      const formattedAddress = formatAddressFromComponents();
+      setSettings(prev => prev.map(setting => 
+        setting.key === 'store_address' ? { ...setting, value: formattedAddress } : setting
+      ));
+      
+      setGeneralSettings(prev => prev.map(setting => 
+        setting.key === 'store_address' ? { ...setting, value: formattedAddress } : setting
       ));
     }
   };
@@ -111,6 +292,23 @@ export default function StoreSettingsPage() {
     try {
       setIsSaving(true);
       setSaveStatus({ type: null, message: '' });
+      
+      // Validate address components
+      if (!validateAddressComponents()) {
+        setIsSaving(false);
+        return;
+      }
+      
+      // Format address from components
+      const formattedAddress = formatAddressFromComponents();
+      
+      // Update the store_address setting with the formatted address
+      const addressSetting = settings.find(s => s.key === 'store_address');
+      if (addressSetting) {
+        setSettings(prev => prev.map(setting => 
+          setting.key === 'store_address' ? { ...setting, value: formattedAddress } : setting
+        ));
+      }
       
       console.log('Starting to save settings:', settings);
       
@@ -161,6 +359,35 @@ export default function StoreSettingsPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  // Render an address input field with label and error message
+  const renderAddressField = (
+    field: keyof AddressComponents,
+    label: string,
+    placeholder: string,
+    required: boolean = true
+  ) => {
+    return (
+      <div className="mb-3">
+        <label htmlFor={`address-${field}`} className="block text-sm font-medium text-gray-700">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <input
+          id={`address-${field}`}
+          type="text"
+          value={addressComponents[field]}
+          onChange={(e) => handleAddressComponentChange(field, e.target.value)}
+          placeholder={placeholder}
+          className={`w-full p-2 border ${
+            addressFieldErrors[field] ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-pink-500'
+          } rounded-md focus:outline-none focus:ring-2 mt-1`}
+        />
+        {addressFieldErrors[field] && (
+          <p className="mt-1 text-xs text-red-600">{addressFieldErrors[field]}</p>
+        )}
+      </div>
+    );
   };
   
   // If still checking auth or not authenticated, show loading or access denied
@@ -216,7 +443,9 @@ export default function StoreSettingsPage() {
           <div>
             <h2 className="text-xl font-medium text-gray-800 mb-4">General Information</h2>
             <div className="bg-white rounded-md shadow-sm border border-gray-200">
-              {generalSettings.map((setting) => (
+              {generalSettings
+                .filter(setting => setting.key !== 'store_address') // Filter out address setting as we handle it separately
+                .map((setting) => (
                 <div 
                   key={setting.id} 
                   className="p-4 border-b border-gray-100 last:border-b-0"
@@ -238,6 +467,35 @@ export default function StoreSettingsPage() {
                   />
                 </div>
               ))}
+              
+              {/* Store Address Section */}
+              <div className="p-4 border-b border-gray-100">
+                <div className="mb-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin size={18} className="text-pink-600" />
+                    <h3 className="text-lg font-medium text-gray-800">Store Address</h3>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Enter the store's physical address for the contact page map</p>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                  {renderAddressField('street', t('settings.street'), t('settings.streetPlaceholder'))}
+                  {renderAddressField('building_number', t('settings.buildingNumber'), t('settings.buildingNumberPlaceholder'))}
+                  {renderAddressField('city', t('settings.city'), t('settings.cityPlaceholder'))}
+                  {renderAddressField('postal_code', t('settings.postalCode'), t('settings.postalCodePlaceholder'))}
+                  {renderAddressField('country', t('settings.country'), t('settings.countryPlaceholder'))}
+                  
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('settings.formattedAddress')}
+                    </label>
+                    <div className="p-2 bg-gray-100 rounded text-gray-700 text-sm font-mono">
+                      {formatAddressFromComponents() || t('settings.addressPreview')}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{t('settings.addressFormatNote')}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

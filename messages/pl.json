@@ -99,7 +99,9 @@
     "orderFormContact": "Możesz również skontaktować się z nami podczas składania zamówienia",
     "alternateContactMethods": "Możesz też skorzystać z formularza poniżej lub zadzwonić do nas",
     "preferredContactMethods": "Preferowane metody kontaktu",
-    "orderContactOption": "Możesz również zostawić wiadomość podczas składania zamówienia bukietu"
+    "orderContactOption": "Możesz również zostawić wiadomość podczas składania zamówienia bukietu",
+    "mapLoadError": "Nie udało się załadować mapy z podanego adresu",
+    "addressNotFound": "Nie udało się znaleźć podanego adresu na mapie"
   },
   "product": {
     "details": "Szczegóły",
@@ -288,12 +290,33 @@
       "storeInfo": "Informacje o sklepie",
       "storeSettings": "Ustawienia sklepu",
       "saveSuccess": "Ustawienia zostały zapisane pomyślnie",
-      "saveError": "Błąd podczas zapisywania ustawień",
+      "saveError": "Błąd podczas zapisywania ustawień. Spróbuj ponownie.",
       "store_name": "Nazwa sklepu",
       "store_address": "Adres sklepu",
       "store_phone": "Telefon sklepu",
       "store_email": "Email sklepu",
-      "store_telegram_username": "Nazwa użytkownika Telegram"
+      "store_telegram_username": "Nazwa użytkownika Telegram",
+      "addressInvalid": "Adres musi być prawidłowy, aby mógł być wyświetlony na mapie",
+      "addressFormat": "Format: Ulica, Miasto, Kod pocztowy, Kraj",
+      "addressRequired": "Adres sklepu jest wymagany",
+      "street": "Ulica",
+      "streetRequired": "Nazwa ulicy jest wymagana",
+      "streetPlaceholder": "np. Kwiatowa",
+      "buildingNumber": "Numer budynku",
+      "buildingNumberRequired": "Numer budynku jest wymagany",
+      "buildingNumberPlaceholder": "np. 123",
+      "city": "Miasto",
+      "cityRequired": "Miasto jest wymagane",
+      "cityPlaceholder": "np. Warszawa",
+      "postalCode": "Kod pocztowy",
+      "postalCodeRequired": "Kod pocztowy jest wymagany",
+      "postalCodePlaceholder": "np. 00-001",
+      "country": "Kraj",
+      "countryRequired": "Kraj jest wymagany",
+      "countryPlaceholder": "np. Polska",
+      "formattedAddress": "Sformatowany adres",
+      "addressPreview": "Podgląd adresu pojawi się tutaj",
+      "addressFormatNote": "Ten adres będzie używany na stronie kontaktowej oraz w mapie Google"
     }
   },
   "entities": {

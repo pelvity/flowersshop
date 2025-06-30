@@ -17,7 +17,7 @@ const mapContainerStyle = {
   borderRadius: '0.5rem',
 };
 
-// Kyiv coordinates (matching the address in the footer)
+// Default center (fallback if geocoding fails)
 const defaultCenter = {
   lat: 50.450001,
   lng: 30.523333
@@ -30,6 +30,8 @@ export default function Contact() {
   const [storeAddress, setStoreAddress] = useState<string>(commonT('footer.address'));
   const [storePhone, setStorePhone] = useState<string>('');
   const [storeEmail, setStoreEmail] = useState<string>('');
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [mapError, setMapError] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -48,6 +50,40 @@ export default function Contact() {
   }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Geocode the address to get coordinates
+  const geocodeAddress = async (address: string): Promise<google.maps.LatLngLiteral | null> => {
+    if (!window.google || !window.google.maps) {
+      console.error('Google Maps API not loaded');
+      return null;
+    }
+    
+    try {
+      const geocoder = new google.maps.Geocoder();
+      const result = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+        geocoder.geocode({ address }, (results, status) => {
+          if (status === google.maps.GeocoderStatus.OK && results && results.length > 0) {
+            resolve(results);
+          } else {
+            reject(new Error(`Geocoding failed with status: ${status}`));
+          }
+        });
+      });
+      
+      if (result && result[0] && result[0].geometry && result[0].geometry.location) {
+        const location = result[0].geometry.location;
+        return {
+          lat: location.lat(),
+          lng: location.lng()
+        };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      return null;
+    }
+  };
   
   // Store the map instance when the map loads
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -79,6 +115,34 @@ export default function Contact() {
     
     fetchStoreSettings();
   }, []);
+  
+  // Geocode the address when it changes or when Google Maps script loads
+  useEffect(() => {
+    setMapError(null);
+    
+    // Wait for the Google Maps API to load
+    if (typeof google === 'undefined' || !storeAddress) return;
+    
+    const updateMapCoordinates = async () => {
+      try {
+        const coordinates = await geocodeAddress(storeAddress);
+        if (coordinates) {
+          setMapCenter(coordinates);
+          // If map is already loaded, we can pan to the new location
+          if (map) {
+            map.panTo(coordinates);
+          }
+        } else {
+          setMapError(contactT('addressNotFound'));
+        }
+      } catch (error) {
+        console.error('Error geocoding address:', error);
+        setMapError(contactT('mapLoadError'));
+      }
+    };
+    
+    updateMapCoordinates();
+  }, [storeAddress, map, contactT]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -317,15 +381,23 @@ export default function Contact() {
               <LoadScript googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}>
                 <GoogleMap
                   mapContainerStyle={mapContainerStyle}
-                  center={defaultCenter}
+                  center={mapCenter}
                   zoom={15}
                   onLoad={onLoad}
                   onUnmount={onUnmount}
                 >
-                  <Marker position={defaultCenter} title="Flower Paradise" />
+                  <Marker position={mapCenter} title="Flower Paradise" />
                 </GoogleMap>
               </LoadScript>
             </div>
+            
+            {/* Show map error if geocoding failed */}
+            {mapError && (
+              <div className="mt-2 p-2 bg-red-50 text-red-600 text-sm rounded border border-red-200">
+                <AlertCircle size={16} className="inline-block mr-1" />
+                {mapError}
+              </div>
+            )}
           </div>
         </div>
       </div>
