@@ -7,17 +7,19 @@ import { Bouquet, Category, Tag } from '@/lib/supabase';
 
 /**
  * Helper function to get the base URL for API requests
- * In the browser, we need to use the current origin
- * In server components, we can use relative URLs
+ * In the browser, we use the current origin
+ * In server components, we need the full URL including protocol and hostname
  */
-function getBaseUrl(): string {
+function getApiUrl(path: string): string {
+  // In the browser, we can use relative URLs
   if (typeof window !== 'undefined') {
-    // Browser environment - use current origin
-    return window.location.origin;
+    return path;
   }
   
-  // Server environment - use environment variable or default to localhost
-  return process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  // In server components, we need absolute URLs
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+                  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+  return `${baseUrl}${path}`;
 }
 
 /**
@@ -48,7 +50,7 @@ export async function fetchBouquets(options?: {
   }
   
   const queryString = params.toString() ? `?${params.toString()}` : '';
-  const url = `${getBaseUrl()}/api/bouquets${queryString}`;
+  const url = getApiUrl(`/api/bouquets${queryString}`);
   
   try {
     const response = await fetch(url, {
@@ -70,7 +72,7 @@ export async function fetchBouquets(options?: {
  * Fetch a single bouquet by ID
  */
 export async function fetchBouquet(id: string): Promise<Bouquet> {
-  const url = `${getBaseUrl()}/api/bouquets/${id}`;
+  const url = getApiUrl(`/api/bouquets/${id}`);
   
   try {
     const response = await fetch(url, {
@@ -92,7 +94,7 @@ export async function fetchBouquet(id: string): Promise<Bouquet> {
  * Fetch all categories
  */
 export async function fetchCategories(): Promise<Category[]> {
-  const url = `${getBaseUrl()}/api/categories`;
+  const url = getApiUrl('/api/categories');
   
   try {
     const response = await fetch(url, {
@@ -114,7 +116,7 @@ export async function fetchCategories(): Promise<Category[]> {
  * Fetch all tags
  */
 export async function fetchTags(): Promise<Tag[]> {
-  const url = `${getBaseUrl()}/api/tags`;
+  const url = getApiUrl('/api/tags');
   
   try {
     const response = await fetch(url, {
@@ -136,7 +138,7 @@ export async function fetchTags(): Promise<Tag[]> {
  * Fetch tags for a specific bouquet
  */
 export async function fetchTagsForBouquet(bouquetId: string): Promise<Tag[]> {
-  const url = `${getBaseUrl()}/api/tags/bouquet/${bouquetId}`;
+  const url = getApiUrl(`/api/tags/bouquet/${bouquetId}`);
   
   try {
     const response = await fetch(url, {
@@ -167,7 +169,7 @@ export async function fetchFlowers(options?: {
   }
   
   const queryString = params.toString() ? `?${params.toString()}` : '';
-  const url = `${getBaseUrl()}/api/flowers${queryString}`;
+  const url = getApiUrl(`/api/flowers${queryString}`);
   
   try {
     const response = await fetch(url, {

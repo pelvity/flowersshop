@@ -18,6 +18,19 @@
         "--profile",
         "key-hookworm-JyBkq3"
       ]
+    },
+    "vercel-api-mcp-fork": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@smithery/cli@latest",
+        "run",
+        "@ssdavidai/vercel-api-mcp-fork",
+        "--key",
+        "6c428eb2-248d-445e-83b5-ca2b3de1396f",
+        "--profile",
+        "key-hookworm-JyBkq3"
+      ]
     }
   }
 }
