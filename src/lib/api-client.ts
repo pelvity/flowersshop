@@ -16,9 +16,10 @@ function getApiUrl(path: string): string {
     return path;
   }
   
-  // In server components, we need absolute URLs
+  // In server components, use environment variables but ensure consistency
+  // NEXT_PUBLIC_SITE_URL should be set to your custom domain in production
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-                  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+                (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
   return `${baseUrl}${path}`;
 }
 
