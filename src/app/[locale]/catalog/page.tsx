@@ -9,7 +9,7 @@ export default async function CatalogPage() {
   const headers = {
     'Cookie': cookies().toString(),
   };
-
+  
   // Fetch data from API endpoints (which use Redis caching internally)
   const [bouquets, categories, tags, flowers] = await Promise.all([
     fetchBouquets({ withFlowers: true }, headers),

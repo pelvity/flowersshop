@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Container, Section, Card } from "../ui";
 import Image from "next/image";
 import { useTranslations, useLocale } from 'next-intl';
-import { Plus, Minus, X, ShoppingCart, PlusCircle } from "lucide-react";
+import { Plus, Minus, X, ShoppingCart, PlusCircle, CheckCircle } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCart } from "@/context/cart-context";
 import { Flower as FlowerType, FlowerQuantity, Bouquet } from "@/lib/supabase";
@@ -110,7 +110,7 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   const searchParams = useSearchParams();
   const bouquetId = searchParams.get('bouquetId');
   const locale = useLocale();
-  const { addCustomBouquet, addProduct } = useCart();
+  const { addCustomBouquet, addProduct, openCart } = useCart();
   
   // Create Supabase client
   const supabase = createClientComponentClient<Database>();
@@ -125,6 +125,9 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   
+  // Success notification state
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  
   // State for template bouquets
   const [templateBouquets, setTemplateBouquets] = useState<Bouquet[]>(initialTemplateBouquets);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -132,6 +135,28 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
   // State for color selection modal
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [selectedFlowerForColor, setSelectedFlowerForColor] = useState<Flower | null>(null);
+  
+  // Add CSS for animation when component mounts
+  useEffect(() => {
+    // Add animation styles to the document head if not already present
+    if (typeof document !== 'undefined') {
+      const styleId = 'custom-bouquet-animations';
+      if (!document.getElementById(styleId)) {
+        const styleTag = document.createElement('style');
+        styleTag.id = styleId;
+        styleTag.textContent = `
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+          }
+        `;
+        document.head.appendChild(styleTag);
+      }
+    }
+  }, []);
   
   // Fetch template bouquets when component mounts if none were provided
   useEffect(() => {
@@ -344,17 +369,49 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
     });
   };
   
-  // Add the custom bouquet to cart
+  // Add to cart with bouquetId as basedOn if we're customizing an existing bouquet
   const addToCart = () => {
+    // Show loading state
+    setLoading(true);
+    
+    // Add flower names to the selected flowers
+    const flowersWithNames = selectedFlowers.map(flower => {
+      const flowerInfo = initialFlowers.find(f => f.id === flower.flowerId);
+      return {
+        ...flower,
+        flowerName: flowerInfo?.name || 'Flower'
+      };
+    });
+    
     // Add to cart with bouquetId as basedOn if we're customizing an existing bouquet
     addCustomBouquet(
-      selectedFlowers,
+      flowersWithNames,
       bouquetId || undefined,
       bouquetDetails?.name ? `Custom ${bouquetDetails.name}` : t('title')
     );
     
-    // Go to cart page
-    router.push('/cart');
+    // Stop loading and show success feedback
+    setTimeout(() => {
+      setLoading(false);
+      
+      // Show success notification
+      setShowSuccessNotification(true);
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+        // Return to templates view after notification
+        setStep('template');
+        
+        // Clear selection if starting a new bouquet
+        if (!bouquetId) {
+          setSelectedFlowers([]);
+        }
+        
+        // Open cart drawer
+        openCart();
+      }, 1500);
+    }, 500);
   };
   
   // Function to select a template bouquet
@@ -563,7 +620,7 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
                         <div className="flex items-center mt-1">
                           <button onClick={() => removeFlower(index)} className="p-1 text-gray-500 hover:text-red-500"><Minus size={14} /></button>
                           <span className="mx-2 text-pink-600">{item.quantity}</span>
-                          <button onClick={() => addFlowerWithDefaultColor(flower)} className="p-1 text-gray-500 hover:text-green-500"><Plus size={14} /></button>
+                          <button onClick={() => addFlower(flower, item.color)} className="p-1 text-gray-500 hover:text-green-500"><Plus size={14} /></button>
                         </div>
                       </div>
                     </div>
@@ -696,10 +753,20 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
           <div className="mt-8 text-center">
             <button
               onClick={addToCart}
-              className="w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors flex items-center justify-center"
+              disabled={loading}
+              className={`w-full bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white px-6 py-3 rounded-md font-medium shadow-sm transition-colors flex items-center justify-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              <ShoppingCart size={20} className="mr-2" />
-              {t('addToCart')}
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  {t('addingToCart')}
+                </div>
+              ) : (
+                <>
+                  <ShoppingCart size={20} className="mr-2" />
+                  {t('addToCart')}
+                </>
+              )}
             </button>
           </div>
         </Card>
@@ -764,6 +831,14 @@ export default function CustomBouquetClient({ initialFlowers, initialTemplateBou
             }}
             getColorHex={getColorHex}
           />
+        )}
+        
+        {/* Success notification */}
+        {showSuccessNotification && (
+          <div className="fixed bottom-8 right-8 bg-green-100 border border-green-200 text-green-800 px-5 py-3 rounded-md shadow-lg flex items-center z-50 animate-fade-in">
+            <CheckCircle className="mr-2 text-green-600" size={20} />
+            <span className="font-medium">{t('addToCart')}</span>
+          </div>
         )}
       </Container>
     </Section>
