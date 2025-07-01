@@ -69,13 +69,13 @@ export default function CategoriesPage() {
         const categoriesData = await getCategories();
         setCategories(categoriesData);
       } catch (err) {
-        setError('Failed to load categories. Please try again later.');
+        setError(t('categories.loadError'));
       } finally {
         setIsLoading(false);
       }
     };
     fetchCategories();
-  }, []);
+  }, [t]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +87,7 @@ export default function CategoriesPage() {
       setNewCategoryName('');
       setNewCategoryDescription('');
     } catch (err) {
-      setError('Failed to create category.');
+      setError(t('categories.createError'));
     }
   };
 
@@ -99,17 +99,17 @@ export default function CategoriesPage() {
       setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
       setEditingCategory(null);
     } catch (err) {
-      setError('Failed to update category.');
+      setError(t('categories.updateError'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
+    if (window.confirm(t('categories.confirmDelete'))) {
       try {
         await deleteCategory(id);
         setCategories(categories.filter(c => c.id !== id));
       } catch (err) {
-        setError('Failed to delete category.');
+        setError(t('categories.deleteError'));
       }
     }
   };
@@ -123,9 +123,9 @@ export default function CategoriesPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Manage Categories</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('categories.manageCategories')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Create, edit, and delete categories for bouquets
+            {t('categories.description')}
           </p>
         </div>
       </div>
@@ -134,27 +134,27 @@ export default function CategoriesPage() {
         <form onSubmit={handleCreate} className="space-y-4">
           <div>
             <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
-              Category Name
+              {t('categories.name')}
             </label>
             <input
               id="categoryName"
               type="text"
               value={newCategoryName}
               onChange={e => setNewCategoryName(e.target.value)}
-              placeholder="Enter category name"
+              placeholder={t('categories.namePlaceholder')}
               className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
               required
             />
           </div>
           <div>
             <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700 mb-1">
-              Description (optional)
+              {t('categories.description')} ({t('common.optional')})
             </label>
             <textarea
               id="categoryDescription"
               value={newCategoryDescription}
               onChange={e => setNewCategoryDescription(e.target.value)}
-              placeholder="Enter category description"
+              placeholder={t('categories.descriptionPlaceholder')}
               className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
               rows={3}
             />
@@ -164,7 +164,7 @@ export default function CategoriesPage() {
             className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
           >
             <Plus className="h-5 w-5 mr-1" />
-            Add Category
+            {t('categories.createCategory')}
           </button>
         </form>
       </div>
@@ -176,7 +176,7 @@ export default function CategoriesPage() {
           </div>
           <input
             type="text"
-            placeholder="Search categories..."
+            placeholder={t('common.search')}
             className="pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -213,13 +213,13 @@ export default function CategoriesPage() {
                         onClick={() => handleUpdate(editingCategory)}
                         className="bg-pink-600 text-white px-3 py-1 rounded-md text-sm"
                       >
-                        Save
+                        {t('common.save')}
                       </button>
                       <button 
                         onClick={() => setEditingCategory(null)}
                         className="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm"
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </button>
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export default function CategoriesPage() {
               </li>
             ))}
             {filteredCategories.length === 0 && (
-              <li className="py-4 text-center text-gray-500">No categories found</li>
+              <li className="py-4 text-center text-gray-500">{t('common.noResults')}</li>
             )}
           </ul>
         )}

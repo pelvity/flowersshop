@@ -13,16 +13,10 @@ export default async function Dashboard({ params }: { params: { locale: string }
     CategoryRepository.getAll()
   ]);
   
-  // Calculate low stock flowers
-  const lowStock = flowers.filter(flower => 
-    flower.in_stock <= flower.low_stock_threshold
-  );
-  
   // Prepare initial stats
   const initialStats = {
     totalBouquets: bouquets.length,
     totalFlowers: flowers.length,
-    lowStockFlowers: lowStock.length,
     totalCategories: categories.length,
     totalFeaturedBouquets: bouquets.filter(b => b.featured).length,
     totalInStockBouquets: bouquets.filter(b => b.in_stock).length
@@ -31,16 +25,12 @@ export default async function Dashboard({ params }: { params: { locale: string }
   // Prepare featured bouquets
   const initialFeaturedBouquets = bouquets.filter(bouquet => bouquet.featured).slice(0, 5);
   
-  // Prepare low stock flowers
-  const initialLowStockFlowers = lowStock.slice(0, 5);
-  
   return (
     <Suspense fallback={<DashboardLoading />}>
       <DashboardClient 
         locale={locale}
         initialStats={initialStats}
         initialFeaturedBouquets={initialFeaturedBouquets}
-        initialLowStockFlowers={initialLowStockFlowers}
       />
     </Suspense>
   );

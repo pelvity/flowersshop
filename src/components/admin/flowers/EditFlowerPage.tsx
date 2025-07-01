@@ -272,239 +272,156 @@ export default function ClientFlowerEditPage({ id, locale }: { id: string; local
 
   if (loading) {
     return (
-      <div className="flex justify-center my-8">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="spinner border-t-4 border-pink-500 border-solid rounded-full w-12 h-12 animate-spin"></div>
-          <p className="mt-2 text-gray-600">{t('common.loading')}</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+          <p className="mt-4 text-pink-700">{t('common.loading')}</p>
         </div>
       </div>
     );
   }
 
-  if (error || !flower) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-        <p>Error: {error || 'Flower not found.'}</p>
-        <button
-          onClick={() => router.refresh()}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-        >
-          Retry
-        </button>
-      </div>
-    );
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
   }
 
+  if (!flower) {
+    return <div className="text-red-500">{t('flowers.loadError')}</div>;
+  }
+  
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex items-center mb-6">
-        <Link
-          href={`/${locale}/admin/flowers`}
-          className="mr-4 text-gray-500 hover:text-gray-700"
-        >
-          <ArrowLeft size={20} />
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <Link href={`/${locale}/admin/flowers`} className="flex items-center text-pink-600 hover:text-pink-800">
+          <ArrowLeft className="mr-2" />
+          <span>{t('flowers.backToList')}</span>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{t('flowers.edit')}</h1>
+        <h1 className="text-2xl font-bold text-pink-800">{t('flowers.editFlower')}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Basic Info Section */}
-          <div className="md:col-span-2">
-            <h2 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
-              {t('flowers.basicInfo')}
-            </h2>
-          </div>
-          
-          {/* Name */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('flowers.name')}
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={flower.name}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('flowers.price')}
-            </label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">$</span>
-              </div>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Basic Info */}
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-pink-700">{t('flowers.basicInfo')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('flowers.name')}</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={flower.name || ''}
+                onChange={handleChange}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="price" className="block text-sm font-medium text-gray-700">{t('flowers.price')}</label>
               <input
                 type="number"
-                step="0.01"
-                min="0"
                 id="price"
                 name="price"
-                value={flower.price}
+                value={flower.price || ''}
                 onChange={handleChange}
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
                 required
-                className="w-full pl-7 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
               />
             </div>
           </div>
-
-          {/* Category */}
-          <div>
-            <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('flowers.category')}
-            </label>
-            <select
-              id="category_id"
-              name="category_id"
-              value={flower.category_id || ''}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="">-- {t('common.select')} --</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Colors Dropdown */}
-          <div>
-            <label htmlFor="color_select" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('flowers.colors')}
-            </label>
-            <select
-              id="color_select"
-              name="color_select"
-              value=""
-              onChange={handleColorSelect}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            >
-              <option value="">-- {t('common.select')} --</option>
-              {availableColors.map(color => (
-                <option 
-                  key={color.id} 
-                  value={color.id}
-                  disabled={selectedColors.includes(color.id)}
-                >
-                  {color.translated_name}
-                </option>
-              ))}
-            </select>
-            
-            {/* Selected Colors */}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {selectedColors.map(colorId => {
-                const color = availableColors.find(c => c.id === colorId);
-                if (!color) return null;
-                
-                return (
-                  <div 
-                    key={colorId}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium"
-                    style={{ 
-                      backgroundColor: `${color.hex_code}20`, 
-                      color: "#be185d",
-                      borderColor: color.hex_code
-                    }}
-                  >
-                    <div 
-                      className="w-3 h-3 mr-1 rounded-full" 
-                      style={{ backgroundColor: color.hex_code }}
-                    />
-                    <span style={{ color: "#be185d" }}>{color.translated_name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveColor(colorId)}
-                      className="ml-1 hover:text-gray-900 transition-colors"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Status Checkbox */}
-          <div className="flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="is_available"
-              name="is_available"
-              checked={flower.in_stock}
-              onChange={handleChange}
-              className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-            />
-            <label htmlFor="is_available" className="ml-2 block text-sm text-gray-700">
-              {t('flowers.inStock')}
-            </label>
-          </div>
-
-          {/* Description - Full width */}
-          <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('flowers.description')}
-            </label>
+          <div className="mt-6">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('flowers.description')}</label>
             <textarea
               id="description"
               name="description"
               value={flower.description || ''}
               onChange={handleChange}
               rows={4}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
-            ></textarea>
-          </div>
-          
-          {/* Media Uploader - Full width */}
-          <div className="md:col-span-2 mt-6 pt-6 border-t border-gray-200">
-            <MediaUploader
-              entityType="flowers"
-              entityId={id}
-              media={media}
-              onMediaChange={(newMedia) => setMedia(newMedia)}
-              onThumbnailChange={(thumbnailUrl, thumbnailPath) => {
-                if (flower) {
-                  setFlower({
-                    ...flower,
-                    image_url: thumbnailUrl,
-                    image_path: thumbnailPath
-                  });
-                }
-              }}
-              onDelete={handleDeleteMedia}
-              onSetThumbnail={handleSetThumbnail}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
             />
+          </div>
+          <div className="mt-6 flex items-center">
+            <input
+              type="checkbox"
+              id="in_stock"
+              name="in_stock"
+              checked={flower.in_stock}
+              onChange={handleChange}
+              className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+            />
+            <label htmlFor="in_stock" className="ml-2 block text-sm text-gray-900">{t('flowers.inStock')}</label>
           </div>
         </div>
 
-        {/* Form buttons */}
-        <div className="flex justify-end mt-8 pt-6 border-t border-gray-200 space-x-3">
-          <Link
-            href={`/${locale}/admin/flowers`}
-            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
+        {/* Color Selection */}
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-pink-700">{t('flowers.colorSelection')}</h2>
+          <div className="flex items-center gap-4">
+            <select
+              onChange={handleColorSelect}
+              className="border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"
+              defaultValue=""
+            >
+              <option value="" disabled>{t('flowers.selectColor')}</option>
+              {availableColors.filter(c => !selectedColors.includes(c.id)).map(color => (
+                <option key={color.id} value={color.id}>
+                  {color.translated_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-4">
+            {selectedColors.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {selectedColors.map(colorId => {
+                  const color = availableColors.find(c => c.id === colorId);
+                  if (!color) return null;
+                  return (
+                    <div key={colorId} className="flex items-center bg-pink-100 text-pink-800 text-sm font-medium px-3 py-1 rounded-full">
+                      <span>{color.translated_name}</span>
+                      <button type="button" onClick={() => handleRemoveColor(colorId)} className="ml-2 text-pink-600 hover:text-pink-800">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500">{t('flowers.noColorsSelected')}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Media Uploader */}
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <MediaUploader
+            media={media}
+            onMediaChange={setMedia}
+            onDelete={handleDeleteMedia}
+            onSetThumbnail={handleSetThumbnail}
+            entityId={id}
+            entityType="flowers"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-4 mt-8">
+          <Link href={`/${locale}/admin/flowers`} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
             {t('common.cancel')}
           </Link>
           <button
             type="submit"
             disabled={submitting}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 disabled:bg-pink-300 flex items-center"
           >
             {submitting ? (
               <>
-                <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                 {t('common.saving')}
               </>
             ) : (
               <>
-                <Save size={16} className="mr-2" />
+                <Save className="mr-2" size={18} />
                 {t('common.save')}
               </>
             )}

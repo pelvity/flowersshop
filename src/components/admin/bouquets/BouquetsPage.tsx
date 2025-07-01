@@ -136,7 +136,7 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
   
   // Handle bouquet deletion
   const handleDelete = async (bouquetId: string, bouquetName: string) => {
-    if (window.confirm(`Are you sure you want to delete "${bouquetName}"? This action cannot be undone.`)) {
+    if (window.confirm(t('bouquets.confirmDelete', { name: bouquetName }))) {
       setDeletingId(bouquetId);
       const startTime = logger.request('DELETE', `bouquets/${bouquetId}`);
       
@@ -152,7 +152,7 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
       } catch (err) {
         logger.error('DELETE', `bouquets/${bouquetId}`, err);
         console.error('Error deleting bouquet:', err);
-        setError('Failed to delete bouquet. Please try again.');
+        setError(t('bouquets.deleteError'));
       } finally {
         setDeletingId(null);
       }
@@ -186,12 +186,12 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-        <p>Error: {error}</p>
+        <p>{t('common.error')}: {error}</p>
         <button 
           onClick={() => window.location.reload()}
           className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
         >
-          Retry
+          {t('common.retry')}
         </button>
       </div>
     );
@@ -228,7 +228,7 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
       
       {filteredBouquets.length === 0 ? (
         <div className="bg-white shadow p-6 text-center rounded-lg">
-          <p className="text-gray-500 mb-4">No bouquets found.</p>
+          <p className="text-gray-500 mb-4">{t('common.noResults')}</p>
           <Link
             href={`/${locale}/admin/bouquets/create`}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700"
