@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers';
 import CatalogClient from "@/components/client/catalog-client";
 import { Bouquet } from "@/lib/supabase";
 import { fetchBouquets, fetchCategories, fetchTags, fetchFlowers } from "@/lib/api-client";
@@ -5,12 +6,16 @@ import { fetchBouquets, fetchCategories, fetchTags, fetchFlowers } from "@/lib/a
 export default async function CatalogPage() {
   console.log(`[CATALOG] Fetching data for catalog page`);
   
+  const headers = {
+    'Cookie': cookies().toString(),
+  };
+
   // Fetch data from API endpoints (which use Redis caching internally)
   const [bouquets, categories, tags, flowers] = await Promise.all([
-    fetchBouquets({ withFlowers: true }),
-    fetchCategories(),
-    fetchTags(),
-    fetchFlowers({ includeColors: false })
+    fetchBouquets({ withFlowers: true }, headers),
+    fetchCategories(headers),
+    fetchTags(headers),
+    fetchFlowers({ includeColors: false }, headers)
   ]);
   
   console.log(`[CATALOG] Fetched ${bouquets.length} bouquets, ${categories.length} categories, ${tags.length} tags, and ${flowers.length} flowers`);

@@ -25,12 +25,15 @@ function getApiUrl(path: string): string {
 /**
  * Fetch all bouquets with optional filters
  */
-export async function fetchBouquets(options?: {
-  withFlowers?: boolean;
-  featured?: boolean;
-  categoryId?: string;
-  limit?: number;
-}): Promise<Bouquet[]> {
+export async function fetchBouquets(
+  options?: {
+    withFlowers?: boolean;
+    featured?: boolean;
+    categoryId?: string;
+    limit?: number;
+  },
+  headers?: HeadersInit
+): Promise<Bouquet[]> {
   const params = new URLSearchParams();
   
   if (options?.withFlowers) {
@@ -54,7 +57,8 @@ export async function fetchBouquets(options?: {
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store' // Don't cache in browser, rely on Redis cache
+      cache: 'no-store', // Don't cache in browser, rely on Redis cache
+      headers: headers,
     });
     
     if (!response.ok) {
@@ -71,12 +75,13 @@ export async function fetchBouquets(options?: {
 /**
  * Fetch a single bouquet by ID
  */
-export async function fetchBouquet(id: string): Promise<Bouquet> {
+export async function fetchBouquet(id: string, headers?: HeadersInit): Promise<Bouquet> {
   const url = getApiUrl(`/api/bouquets/${id}`);
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: headers,
     });
     
     if (!response.ok) {
@@ -93,12 +98,13 @@ export async function fetchBouquet(id: string): Promise<Bouquet> {
 /**
  * Fetch all categories
  */
-export async function fetchCategories(): Promise<Category[]> {
+export async function fetchCategories(headers?: HeadersInit): Promise<Category[]> {
   const url = getApiUrl('/api/categories');
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: headers,
     });
     
     if (!response.ok) {
@@ -115,12 +121,13 @@ export async function fetchCategories(): Promise<Category[]> {
 /**
  * Fetch all tags
  */
-export async function fetchTags(): Promise<Tag[]> {
+export async function fetchTags(headers?: HeadersInit): Promise<Tag[]> {
   const url = getApiUrl('/api/tags');
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: headers,
     });
     
     if (!response.ok) {
@@ -137,12 +144,16 @@ export async function fetchTags(): Promise<Tag[]> {
 /**
  * Fetch tags for a specific bouquet
  */
-export async function fetchTagsForBouquet(bouquetId: string): Promise<Tag[]> {
+export async function fetchTagsForBouquet(
+  bouquetId: string,
+  headers?: HeadersInit
+): Promise<Tag[]> {
   const url = getApiUrl(`/api/tags/bouquet/${bouquetId}`);
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: headers,
     });
     
     if (!response.ok) {
@@ -159,9 +170,12 @@ export async function fetchTagsForBouquet(bouquetId: string): Promise<Tag[]> {
 /**
  * Fetch all flowers
  */
-export async function fetchFlowers(options?: {
-  includeColors?: boolean;
-}): Promise<any[]> {
+export async function fetchFlowers(
+  options?: {
+    includeColors?: boolean;
+  },
+  headers?: HeadersInit
+): Promise<any[]> {
   const params = new URLSearchParams();
   
   if (options?.includeColors) {
@@ -173,7 +187,8 @@ export async function fetchFlowers(options?: {
   
   try {
     const response = await fetch(url, {
-      cache: 'no-store'
+      cache: 'no-store',
+      headers: headers,
     });
     
     if (!response.ok) {

@@ -9,8 +9,10 @@ const logger = new ApiLogger('TagsAPI');
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  // Await the params object before accessing properties
+  const params = await context.params;
   const bouquetId = toUUID(params.id);
   const startTime = logger.request('GET', `/api/tags/bouquet/${bouquetId}`);
   
