@@ -60,25 +60,25 @@ export default function ClientCreateBouquetPage({ locale }: CreateBouquetPagePro
       } catch (err) {
         logger.error('GET', 'form-data', err);
         console.error('Error fetching form data:', err);
-        setError('Failed to load form data. Please try again.');
+        setError(t('bouquets.loadError'));
       } finally {
         setLoading(false);
       }
     }
     
     fetchData();
-  }, []);
+  }, [t]);
   
   if (error) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
-          <p>Error: {error}</p>
+      <div className="container mx-auto py-4 sm:py-8">
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mx-4 sm:mx-0">
+          <p>{t('common.error')}: {error}</p>
           <button 
             onClick={() => window.location.reload()}
             className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
           >
-            Retry
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -86,12 +86,12 @@ export default function ClientCreateBouquetPage({ locale }: CreateBouquetPagePro
   }
   
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center mb-6">
+    <div className="container mx-auto py-4 sm:py-8">
+      <div className="flex items-center mb-6 px-4 sm:px-0">
         <Link href={`/${locale}/admin/bouquets`} className="mr-4 text-gray-500 hover:text-gray-700">
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{t('bouquets.create')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t('bouquets.create')}</h1>
       </div>
       
       {loading ? (
@@ -102,12 +102,14 @@ export default function ClientCreateBouquetPage({ locale }: CreateBouquetPagePro
           </div>
         </div>
       ) : (
-        <BouquetForm 
-          isEdit={false} 
-          categories={categories}
-          tags={tags}
-          availableFlowers={flowers}
-        />
+        <div className="px-4 sm:px-0">
+          <BouquetForm 
+            isEdit={false} 
+            categories={categories}
+            tags={tags}
+            availableFlowers={flowers}
+          />
+        </div>
       )}
     </div>
   );

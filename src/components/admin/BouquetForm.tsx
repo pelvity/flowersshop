@@ -260,322 +260,116 @@ export default function BouquetForm({ bouquet, isEdit = false, categories: initi
   }
 
   return (
-    <div>
-      <div className="md:grid md:grid-cols-3 md:gap-6">
-        <div className="md:col-span-1">
-          <div className="px-4 sm:px-0">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              {isEdit ? t('bouquets.edit') : t('bouquets.create')}
-            </h3>
-            <p className="mt-1 text-sm text-gray-600">
-              {isEdit 
-                ? t('bouquets.editDescription') 
-                : t('bouquets.createDescription')}
-            </p>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Bouquet Details */}
+      <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.basicInfo')}</h3>
+        <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+          <div className="col-span-1 sm:col-span-4">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('common.name')}</label>
+            <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} required className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" />
+          </div>
+          <div className="col-span-1 sm:col-span-6">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700">{t('common.description')}</label>
+            <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={3} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"></textarea>
+          </div>
+          <div className="col-span-1 sm:col-span-3">
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700">{t('common.price')} ({currencyCode})</label>
+            <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} required min="0" step="0.01" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" />
+          </div>
+          <div className="col-span-1 sm:col-span-3">
+            <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700">{t('common.discountPrice')} ({currencyCode})</label>
+            <input type="number" name="discount_price" id="discount_price" value={formData.discount_price || ''} onChange={handleChange} min="0" step="0.01" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" />
+          </div>
+          <div className="col-span-1 sm:col-span-3">
+            <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">{t('common.category')}</label>
+            <select name="category_id" id="category_id" value={formData.category_id} onChange={handleChange} className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+              <option value="">{t('common.selectCategory')}</option>
+              {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+            </select>
+          </div>
+          <div className="col-span-1 sm:col-span-3 flex items-center justify-start space-x-4 pt-5">
+            <div className="flex items-center">
+              <input type="checkbox" name="in_stock" id="in_stock" checked={formData.in_stock} onChange={handleChange} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+              <label htmlFor="in_stock" className="ml-2 block text-sm text-gray-900">{t('common.inStock')}</label>
+            </div>
+            <div className="flex items-center">
+              <input type="checkbox" name="featured" id="featured" checked={formData.featured} onChange={handleChange} className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded" />
+              <label htmlFor="featured" className="ml-2 block text-sm text-gray-900">{t('common.featured')}</label>
+            </div>
           </div>
         </div>
-        <div className="mt-5 md:mt-0 md:col-span-2">
-          <form onSubmit={handleSubmit}>
-            <div className="shadow overflow-hidden sm:rounded-md">
-              <div className="px-4 py-5 bg-white sm:p-6">
-                {error && (
-                  <div className="rounded-md bg-red-50 p-4 mb-6">
-                    <div className="flex">
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
-                        <div className="mt-2 text-sm text-red-700">
-                          <p>{error}</p>
-                        </div>
-                      </div>
-                    </div>
+      </div>
+      
+      {/* Flower Selection */}
+      <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.flowerSelection')}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
+          <div className="sm:col-span-6">
+            <label htmlFor="flower" className="block text-sm font-medium text-gray-700">{t('bouquets.flower')}</label>
+            <select id="flower" value={selectedFlowerId} onChange={(e) => setSelectedFlowerId(e.target.value)} className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+              <option value="">{t('bouquets.selectFlower')}</option>
+              {flowers.map(flower => <option key={flower.id} value={flower.id}>{flower.name} ({formatPrice(flower.price, locale)})</option>)}
+            </select>
+          </div>
+          <div className="sm:col-span-3">
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">{t('bouquets.quantity')}</label>
+            <input type="number" id="quantity" value={selectedQuantity} onChange={(e) => setSelectedQuantity(parseInt(e.target.value))} min="1" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm" />
+          </div>
+          <div className="sm:col-span-3">
+            <button type="button" onClick={handleAddFlower} className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+              <Plus className="h-5 w-5 mr-2" />
+              {t('bouquets.add')}
+            </button>
+          </div>
+        </div>
+        
+        {/* Selected Flowers List */}
+        <div className="mt-6">
+          <h4 className="text-md font-medium text-gray-800">{t('bouquets.selectedFlowers')}</h4>
+          {bouquetFlowers.length === 0 ? (
+            <p className="mt-2 text-sm text-gray-500">{t('bouquets.noFlowersSelected')}</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-gray-200">
+              {bouquetFlowers.map(flower => (
+                <li key={flower.id} className="py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex-grow">
+                    <p className="font-medium">{flower.name}</p>
+                    <p className="text-sm text-gray-500">{formatPrice(flower.price, locale)} x {flower.quantity} = {formatPrice(flower.price * flower.quantity, locale)}</p>
                   </div>
-                )}
-                
-                <div className="grid grid-cols-6 gap-6">
-                  <div className="col-span-6 sm:col-span-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      {t('common.name')} *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      id="name"
-                      required
-                      className="mt-1 focus:ring-pink-500 focus:border-pink-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      value={formData.name}
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                    />
+                  <div className="flex items-center gap-2">
+                    <input type="number" value={flower.quantity} onChange={(e) => updateFlowerQuantity(flower.id, parseInt(e.target.value))} min="1" className="w-20 border-gray-300 rounded-md shadow-sm sm:text-sm" />
+                    <button type="button" onClick={() => handleRemoveFlower(flower.id)} className="text-red-500 hover:text-red-700 p-1">
+                      <X className="h-5 w-5" />
+                    </button>
                   </div>
-                  
-                  <div className="col-span-6">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      {t('common.description')}
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={3}
-                      className="mt-1 focus:ring-pink-500 focus:border-pink-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      placeholder={t('bouquets.descriptionPlaceholder')}
-                      value={formData.description || ''}
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  
-                  {/* Flower selection section */}
-                  <div className="col-span-6 border-t border-gray-200 pt-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.flowers')}</h3>
-                    
-                    <div className="grid grid-cols-6 gap-3">
-                      <div className="col-span-6 sm:col-span-3">
-                        <label htmlFor="flower" className="block text-sm font-medium text-gray-700">
-                          {t('bouquets.flower')}
-                        </label>
-                        <select
-                          id="flower"
-                          className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                          value={selectedFlowerId}
-                          onChange={(e) => setSelectedFlowerId(e.target.value)}
-                          disabled={isSubmitting}
-                        >
-                          <option value="">{t('bouquets.selectFlower')}</option>
-                          {flowers.map((flower) => (
-                            <option key={flower.id} value={flower.id}>
-                              {flower.name} - {formatPrice(flower.price, locale)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div className="col-span-6 sm:col-span-2">
-                        <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
-                          {t('bouquets.quantity')}
-                        </label>
-                        <input
-                          type="number"
-                          id="quantity"
-                          min="1"
-                          className="mt-1 focus:ring-pink-500 focus:border-pink-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                          value={selectedQuantity}
-                          onChange={(e) => setSelectedQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                      
-                      <div className="col-span-6 sm:col-span-1">
-                        <label className="invisible block text-sm font-medium text-gray-700">
-                          {t('bouquets.add')}
-                        </label>
-                        <button
-                          type="button"
-                          className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-                          onClick={handleAddFlower}
-                          disabled={!selectedFlowerId || isSubmitting}
-                        >
-                          <Plus className="-ml-0.5 mr-2 h-4 w-4" />
-                          {t('bouquets.add')}
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Selected flowers list */}
-                    <div className="mt-6">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">{t('bouquets.selectedFlowers')}</h4>
-                      
-                      {bouquetFlowers.length === 0 ? (
-                        <p className="text-sm text-gray-500">{t('bouquets.noFlowersSelected')}</p>
-                      ) : (
-                        <ul className="divide-y divide-gray-200 border rounded-md">
-                          {bouquetFlowers.map((flower) => (
-                            <li key={flower.id} className="py-3 px-4 flex items-center justify-between">
-                              <div className="flex items-center">
-                                <Flower2 className="h-5 w-5 text-pink-500 mr-2" />
-                                <span className="text-sm font-medium text-gray-900">{flower.name}</span>
-                              </div>
-                              
-                              <div className="flex items-center">
-                                <div className="flex items-center mr-4">
-                                  <label htmlFor={`qty-${flower.id}`} className="sr-only">{t('bouquets.quantity')}</label>
-                                  <input
-                                    type="number"
-                                    id={`qty-${flower.id}`}
-                                    className="w-16 border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                                    value={flower.quantity}
-                                    min="1"
-                                    onChange={(e) => updateFlowerQuantity(flower.id, Math.max(1, parseInt(e.target.value) || 1))}
-                                    disabled={isSubmitting}
-                                  />
-                                </div>
-                                
-                                <span className="text-sm text-gray-500 mr-4">
-                                  {formatPrice(flower.price * flower.quantity, locale)}
-                                </span>
-                                
-                                <button
-                                  type="button"
-                                  className="text-red-500 hover:text-red-700"
-                                  onClick={() => handleRemoveFlower(flower.id)}
-                                  disabled={isSubmitting}
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </li>
-                          ))}
-                          
-                          <li className="py-3 px-4 flex justify-between bg-gray-50">
-                            <span className="text-sm font-medium text-gray-700">{t('bouquets.totalFlowersCost')}:</span>
-                            <span className="text-sm font-medium text-gray-900">
-                              {formatPrice(calculateTotalPrice(), locale)}
-                            </span>
-                          </li>
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-                      {t('common.price')} *
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm font-medium">{currencyCode}</span>
-                      </div>
-                      <input
-                        type="number"
-                        name="price"
-                        id="price"
-                        required
-                        min="0"
-                        step="0.01"
-                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
-                        placeholder="0.00"
-                        value={formData.price}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      {t('bouquets.suggestedPrice')}: {formatPrice(calculateTotalPrice(), locale)}
-                    </p>
-                  </div>
-                  
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700">
-                      {t('common.discountPrice')}
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm font-medium">{currencyCode}</span>
-                      </div>
-                      <input
-                        type="number"
-                        name="discount_price"
-                        id="discount_price"
-                        min="0"
-                        step="0.01"
-                        className="focus:ring-pink-500 focus:border-pink-500 block w-full pl-14 pr-12 sm:text-sm border-gray-300 rounded-md"
-                        placeholder="0.00"
-                        value={formData.discount_price || ''}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-6 sm:col-span-3">
-                    <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">
-                      {t('common.category')}
-                    </label>
-                    <select
-                      id="category_id"
-                      name="category_id"
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm"
-                      value={formData.category_id || ''}
-                      onChange={handleChange}
-                      disabled={isSubmitting}
-                    >
-                      <option value="">{t('common.selectCategory')}</option>
-                      {categories?.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className="col-span-6">
-                    <fieldset>
-                      <legend className="text-sm font-medium text-gray-700">{t('tags.title')}</legend>
-                      <div className="mt-2">
-                        <BouquetTagsManager 
-                          bouquetId={bouquet?.id || ''} 
-                          initialTags={selectedTags} 
-                          onTagsChange={handleTagsChange}
-                        />
-                      </div>
-                    </fieldset>
-                  </div>
-                  
-                  <div className="col-span-6 sm:col-span-3">
-                    <div className="flex items-center">
-                      <input
-                        id="featured"
-                        name="featured"
-                        type="checkbox"
-                        className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                        checked={formData.featured}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                      />
-                      <label htmlFor="featured" className="ml-2 block text-sm text-gray-700">
-                        {t('common.featured')}
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-6 sm:col-span-3">
-                    <div className="flex items-center">
-                      <input
-                        id="in_stock"
-                        name="in_stock"
-                        type="checkbox"
-                        className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
-                        checked={formData.in_stock}
-                        onChange={handleChange}
-                        disabled={isSubmitting}
-                      />
-                      <label htmlFor="in_stock" className="ml-2 block text-sm text-gray-700">
-                        {t('common.inStock')}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-                <button
-                  type="button"
-                  className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 mr-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-                  onClick={() => router.push(`/${locale}/admin/bouquets`)}
-                  disabled={isSubmitting}
-                >
-                  {t('common.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? t('common.saving') : isEdit ? t('bouquets.update') : t('bouquets.create')}
-                </button>
-              </div>
-            </div>
-          </form>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Total Price Suggestion */}
+        <div className="mt-6 border-t pt-4">
+          <p className="text-md font-medium">{t('bouquets.totalFlowersCost')}: <span className="text-pink-600 font-bold">{formatPrice(calculateTotalPrice(), locale)}</span></p>
+          <p className="text-sm text-gray-500">{t('bouquets.suggestedPrice')}</p>
         </div>
       </div>
-    </div>
+      
+      {/* Tags */}
+      {isEdit && bouquet && (
+        <div className="bg-white shadow-md rounded-lg p-4 sm:p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('tags.manageTags')}</h3>
+          <BouquetTagsManager bouquetId={bouquet.id} initialTags={selectedTags} onTagsChange={handleTagsChange} />
+        </div>
+      )}
+      
+      {/* Submit Button */}
+      <div className="flex justify-end pt-4">
+        <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+          {isSubmitting ? t('common.saving') : isEdit ? t('bouquets.update') : t('bouquets.create')}
+        </button>
+      </div>
+    </form>
   );
 } 

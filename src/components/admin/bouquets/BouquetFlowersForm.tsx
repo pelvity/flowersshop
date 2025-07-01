@@ -48,7 +48,7 @@ export default function BouquetFlowersForm({
   );
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow rounded-lg p-4 sm:p-6">
       <h2 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.flowers')}</h2>
       
       <div className="mb-6">
@@ -99,15 +99,15 @@ export default function BouquetFlowersForm({
         ) : (
           <ul className="divide-y divide-gray-200">
             {flowers.map((flower) => (
-              <li key={flower.id} className="py-4 flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="ml-3">
+              <li key={flower.id} className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center w-full">
+                  <div className="ml-3 flex-grow">
                     <p className="text-sm font-medium text-gray-900">{flower.name}</p>
                     <p className="text-sm text-gray-500">{formatPrice(flower.price, locale)} {t('common.each')}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-center">
+                <div className="flex items-center justify-between w-full sm:w-auto">
                   <div className="flex items-center border rounded-md">
                     <button
                       type="button"

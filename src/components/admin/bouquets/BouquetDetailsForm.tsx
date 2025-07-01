@@ -33,11 +33,11 @@ export default function BouquetDetailsForm({
   const currencyDisplay = currencyCode;
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow rounded-lg p-4 sm:p-6">
       <h2 className="text-lg font-medium text-gray-900 mb-4">{t('bouquets.details')}</h2>
       
       <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-        <div className="sm:col-span-4">
+        <div className="col-span-1 sm:col-span-4">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
             {t('common.name')} *
           </label>
@@ -55,7 +55,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-6">
+        <div className="col-span-1 sm:col-span-6">
           <label htmlFor="description" className="block text-sm font-medium text-gray-700">
             {t('common.description')}
           </label>
@@ -72,7 +72,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <label htmlFor="price" className="block text-sm font-medium text-gray-700">
             {t('common.price')} *
           </label>
@@ -95,7 +95,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <label htmlFor="discount_price" className="block text-sm font-medium text-gray-700">
             {t('common.discountPrice')}
           </label>
@@ -117,7 +117,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-2">
+        <div className="col-span-1 sm:col-span-2">
           <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">
             {t('common.category')}
           </label>
@@ -140,7 +140,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-3">
+        <div className="col-span-1 sm:col-span-3">
           <div className="flex items-start">
             <div className="flex items-center h-5">
               <input
@@ -161,7 +161,7 @@ export default function BouquetDetailsForm({
           </div>
         </div>
         
-        <div className="sm:col-span-3">
+        <div className="col-span-1 sm:col-span-3">
           <div className="flex items-start">
             <div className="flex items-center h-5">
               <input
