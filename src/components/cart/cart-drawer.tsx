@@ -366,6 +366,39 @@ export default function CartDrawer() {
                           </div>
                           <p className="mt-1 text-sm text-gray-500">{t('customBouquet')}</p>
                           
+                          {/* Custom bouquet flowers section */}
+                          {item.customBouquet.flowers && item.customBouquet.flowers.length > 0 && (
+                            <div className="mt-2 mb-2">
+                              <button 
+                                onClick={() => toggleBouquetExpanded(item.id)}
+                                className="text-xs flex items-center text-pink-600 hover:text-pink-700"
+                              >
+                                <span className={`transform transition-transform mr-1 ${expandedBouquets[item.id] ? 'rotate-90' : ''}`}>
+                                  ▶
+                                </span>
+                                {item.customBouquet.flowers.length} {item.customBouquet.flowers.length === 1 ? t('flower') : t('flowers')}
+                              </button>
+                              
+                              {expandedBouquets[item.id] && (
+                                <ul className="mt-2 ml-2 space-y-1 border-l-2 border-pink-100 pl-3">
+                                  {item.customBouquet.flowers.map((flowerItem: any, idx: number) => {
+                                    const flower = products.find(p => p.id === flowerItem.flowerId);
+                                    return (
+                                      <li key={`${item.id}-flower-${idx}`} className="text-xs text-gray-600 flex items-center space-x-1">
+                                        <Flower size={12} className="text-pink-400" />
+                                        <span className="flex-1">{flowerItem.flowerName || "Flower"}</span>
+                                        <span className="font-medium text-pink-600">×{flowerItem.quantity}</span>
+                                        {flowerItem.color && (
+                                          <span className="text-xs text-gray-500 italic">({flowerItem.color})</span>
+                                        )}
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
+                            </div>
+                          )}
+                          
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center border border-gray-200 rounded">
                               <button 

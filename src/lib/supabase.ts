@@ -30,6 +30,7 @@ export interface FlowerQuantity {
   flowerId: string;
   quantity: number;
   color: string;
+  flowerName?: string; // Optional name for display purposes
 }
 
 // Define a repository for Supabase operations

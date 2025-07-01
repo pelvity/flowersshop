@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Card } from "../ui";
 import { BouquetMediaGallery, Lightbox } from "@/components/bouquets/bouquet-media-gallery";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { formatPrice } from '@/lib/functions';
+import { ShoppingCart, CheckCircle } from 'lucide-react';
+import { useCart } from "@/context/cart-context";
 
 interface BouquetCardProps {
   bouquet: Bouquet;
@@ -29,7 +31,10 @@ export default function BouquetCard({
   const t = useTranslations('catalog');
   const router = useRouter();
   const { locale } = useParams();
+  const { openCart } = useCart();
   const [showLightbox, setShowLightbox] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
 
   const navigateToBouquet = (bouquetId: string) => {
     router.push(`/${locale}/bouquet/${bouquetId}`);
@@ -38,6 +43,32 @@ export default function BouquetCard({
   const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     setShowLightbox(true);
+  };
+  
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    
+    if (isTemplate && onCustomize) {
+      onCustomize(bouquet);
+    } else {
+      // Show adding state
+      setIsAddingToCart(true);
+      
+      // Add to cart
+      onAddToCart(bouquet.id);
+      
+      // Show success state
+      setTimeout(() => {
+        setIsAddingToCart(false);
+        setIsAddedToCart(true);
+        
+        // Reset after a delay and open cart
+        setTimeout(() => {
+          setIsAddedToCart(false);
+          openCart();
+        }, 1000);
+      }, 500);
+    }
   };
 
   return (
@@ -110,18 +141,30 @@ export default function BouquetCard({
                 </span>
               </div>
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (isTemplate && onCustomize) {
-                    onCustomize(bouquet);
-                  } else {
-                    onAddToCart(bouquet.id);
-                  }
-                }}
-                className="z-10 bg-gradient-to-r from-pink-500 to-pink-400 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 hover:from-pink-600 hover:to-pink-500 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!bouquet.in_stock}
+                onClick={handleAddToCart}
+                className={`z-10 flex items-center justify-center min-w-[70px] sm:min-w-[90px] px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-semibold shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isAddedToCart 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gradient-to-r from-pink-500 to-pink-400 hover:from-pink-600 hover:to-pink-500 text-white hover:shadow-md'
+                }`}
+                disabled={!bouquet.in_stock || isAddingToCart || isAddedToCart}
               >
-                {isTemplate ? t('customizeThis') : t('addToCart')}
+                {isAddingToCart ? (
+                  <span className="flex items-center">
+                    <span className="w-4 h-4 border-2 border-white border-b-transparent rounded-full animate-spin mr-1"></span>
+                    ...
+                  </span>
+                ) : isAddedToCart ? (
+                  <span className="flex items-center">
+                    <CheckCircle size={14} className="mr-1" />
+                    {t('added')}
+                  </span>
+                ) : (
+                  <span className="flex items-center">
+                    {!isTemplate && <ShoppingCart size={14} className="mr-1" />}
+                    {isTemplate ? t('customizeThis') : t('addToCart')}
+                  </span>
+                )}
               </button>
             </div>
           </div>
