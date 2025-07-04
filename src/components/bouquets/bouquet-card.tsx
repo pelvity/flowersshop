@@ -89,6 +89,7 @@ export default function BouquetCard({
           <BouquetMediaGallery 
             media={bouquet.media || []}
             alt={bouquet.name} 
+            aspectRatio="aspect-[4/3] sm:aspect-square"
             onImageClick={handleImageClick}
           />
           {category && (

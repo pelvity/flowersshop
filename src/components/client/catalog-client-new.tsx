@@ -165,6 +165,7 @@ export default function CatalogClientNew({ initialBouquets, initialCategories, i
             <BouquetMediaGallery 
               media={bouquet.media || []}
               alt={bouquet.name} 
+              aspectRatio="aspect-[1/1]"
               onImageClick={(e) => {
                 e.stopPropagation();
                 openLightbox(bouquet);
@@ -242,6 +243,7 @@ export default function CatalogClientNew({ initialBouquets, initialCategories, i
             <BouquetMediaGallery 
               media={bouquet.media || []}
               alt={bouquet.name} 
+              aspectRatio="aspect-[4/3]"
               onImageClick={(e) => {
                 e.stopPropagation();
                 openLightbox(bouquet);
