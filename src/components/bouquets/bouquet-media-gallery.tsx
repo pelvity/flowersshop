@@ -146,16 +146,23 @@ interface BouquetMediaGalleryProps {
   alt: string;
   onImageClick: (event: React.MouseEvent<HTMLDivElement>) => void;
   height?: string; // Optional height prop
+  aspectRatio?: string; // Added aspect ratio option
 }
 
-export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" }: BouquetMediaGalleryProps) {
+export function BouquetMediaGallery({ 
+  media, 
+  alt, 
+  onImageClick, 
+  height = "h-48",
+  aspectRatio = "aspect-[4/3]" 
+}: BouquetMediaGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   if (!media || media.length === 0) {
     return (
       <div 
-        className={`relative w-full ${height} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`} 
+        className={`relative w-full ${aspectRatio} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`} 
         onClick={onImageClick}
       >
         <div className="w-full h-full transition-transform duration-300 group-hover:scale-105">
@@ -169,13 +176,16 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
     const isVideo = media[0].media_type === 'video';
     
     return (
-      <div className={`relative w-full ${height} overflow-hidden group cursor-pointer`} onClick={onImageClick}>
+      <div 
+        className={`relative w-full ${aspectRatio} overflow-hidden group cursor-pointer`} 
+        onClick={onImageClick}
+      >
         <div className="relative w-full h-full transition-transform duration-300 group-hover:scale-105">
           <Image 
             src={isVideo ? getVideoPoster(media[0]) : getValidImageUrl(media[0])}
             alt={alt || media[0].file_name || "Bouquet image"}
             fill
-            className="object-cover"
+            className="object-contain md:object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={true}
           />
@@ -198,7 +208,7 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
   }
   
   return (
-    <div className={`relative w-full ${height} overflow-hidden group`}>
+    <div className={`relative w-full ${aspectRatio} overflow-hidden group`}>
       <div 
         className="relative w-full h-full cursor-pointer transition-transform duration-300 group-hover:scale-105" 
         onClick={onImageClick}
@@ -210,7 +220,7 @@ export function BouquetMediaGallery({ media, alt, onImageClick, height = "h-48" 
               : getValidImageUrl(media[currentIndex])}
             alt={alt || media[currentIndex].file_name || "Bouquet image"}
             fill
-            className="object-cover"
+            className="object-contain md:object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={true}
           />
