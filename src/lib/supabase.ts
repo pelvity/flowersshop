@@ -10,6 +10,14 @@ export type Flower = Database['public']['Tables']['flowers']['Row'];
 export type Tag = Database['public']['Tables']['tags']['Row'];
 export type BouquetFlower = Database['public']['Tables']['bouquet_flowers']['Row'];
 export type BouquetMedia = Database['public']['Tables']['bouquet_media']['Row'];
+export type CategoryMedia = Database['public']['Tables']['category_media']['Row'];
+
+// Extended Category type that includes media
+export type CategoryWithMedia = Category & {
+  media?: CategoryMedia[];
+  thumbnail?: CategoryMedia | null;
+  thumbnail_url?: string | null;
+};
 
 // Extended Bouquet type that includes media-related fields
 export type Bouquet = DatabaseBouquet & {

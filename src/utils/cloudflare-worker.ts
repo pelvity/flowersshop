@@ -19,7 +19,12 @@ export function getWorkerUrl(path?: string): string {
   
   // Use direct worker URL if available, otherwise use API proxy
   if (workerUrl) {
+    // Ensure no double slashes when joining URLs
+    if (workerUrl.endsWith('/')) {
+      return `${workerUrl}${cleanPath}`;
+    } else {
     return `${workerUrl}/${cleanPath}`;
+    }
   } else {
     return `/api/r2-upload/${cleanPath}`;
   }
@@ -28,7 +33,7 @@ export function getWorkerUrl(path?: string): string {
 /**
  * Uploads a file to R2 storage via the Cloudflare Worker
  * @param file - The file to upload
- * @param folder - The folder to store the file in
+ * @param folder - The folder to store the file in ('bouquets', 'flowers', 'categories')
  * @param entityId - Optional entity ID to associate with the file
  * @returns The upload response with URL, path, etc.
  */
@@ -47,9 +52,13 @@ export async function uploadToWorker(
   code?: string;
   details?: any;
 }> {
+  // Normalize folder name to ensure it's a valid path
+  const validFolders = ['bouquets', 'flowers', 'categories', 'uploads'];
+  const normalizedFolder = validFolders.includes(folder) ? folder : 'uploads';
+
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('folder', folder);
+  formData.append('folder', normalizedFolder);
   
   if (entityId) {
     formData.append('entityId', entityId);
@@ -98,7 +107,14 @@ export async function deleteFromWorker(filePath: string): Promise<{
   details?: any;
 }> {
   try {
-    const response = await fetch(getWorkerUrl(filePath), {
+    // Clean the file path to ensure it's properly formatted
+    const cleanFilePath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+    const deleteUrl = getWorkerUrl(cleanFilePath);
+    
+    console.log(`Deleting file from worker: ${cleanFilePath}`);
+    console.log(`Delete URL: ${deleteUrl}`);
+    
+    const response = await fetch(deleteUrl, {
       method: 'DELETE',
     });
     
