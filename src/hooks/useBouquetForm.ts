@@ -79,10 +79,11 @@ export function useBouquetForm(
   };
   
   // Handle media operations
-  const handleMediaChange = (updatedMedia: BouquetMedia[]) => {
+  const handleMediaChange = (updatedMedia: BouquetMedia[] | any[]) => {
+    // Cast to BouquetMedia[] to maintain compatibility with existing code
     setBouquet(prev => ({
       ...prev,
-      media: updatedMedia
+      media: updatedMedia as BouquetMedia[]
     }));
   };
   

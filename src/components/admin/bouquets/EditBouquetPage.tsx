@@ -8,6 +8,7 @@ import { useBouquetForm } from '@/hooks/useBouquetForm';
 import BouquetDetailsForm from './BouquetDetailsForm';
 import BouquetFlowersForm from './BouquetFlowersForm';
 import BouquetMediaUploader from './BouquetMediaUploader';
+import MediaUploader from '../shared/MediaUploader';
 import BouquetTagsManager from './BouquetTagsManager';
 
 export default function ClientBouquetEditPage({ id, locale }: { id: string; locale: string }) {
@@ -95,8 +96,9 @@ export default function ClientBouquetEditPage({ id, locale }: { id: string; loca
         
         {/* Media Section */}
         <div className="bg-white shadow rounded-lg p-4 sm:p-6 mx-4 sm:mx-0">
-          <BouquetMediaUploader 
-            bouquetId={id}
+          <MediaUploader 
+            entityType="bouquets"
+            entityId={id}
             media={bouquet.media}
             onMediaChange={handleMediaChange}
             onThumbnailChange={handleThumbnailChange}

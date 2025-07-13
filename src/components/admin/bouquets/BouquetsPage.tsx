@@ -12,6 +12,7 @@ import { getFileUrl } from '@/utils/cloudflare-worker';
 import { formatPrice } from '@/lib/functions';
 import { BouquetMediaGallery, Lightbox } from "@/components/bouquets/bouquet-media-gallery";
 import { Bouquet as SupabaseBouquet } from "@/lib/supabase";
+import React from 'react'; // Added missing import for React
 
 // Create a logger for this component
 const logger = new ApiLogger('BouquetsPage');
@@ -425,7 +426,8 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
               </thead>
               <tbody>
                 {filteredBouquets.map((bouquet) => (
-                  <tr key={bouquet.id} className="border-t border-gray-200 transition-colors hover:bg-pink-50/50">
+                  <React.Fragment key={bouquet.id}>
+                    <tr className="border-t border-gray-200 transition-colors hover:bg-pink-50/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="font-medium text-gray-900">{bouquet.name}</div>
                       {bouquet.featured && (
@@ -486,11 +488,10 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
                       </div>
                     </td>
                   </tr>
-                ))}
-                {/* Display media separately for desktop view */}
-                {filteredBouquets.map((bouquet) => (
-                  bouquet.media && bouquet.media.length > 0 && (
-                    <tr key={`media-${bouquet.id}`} className="bg-white/50">
+                    
+                    {/* Display media row for this bouquet */}
+                    {bouquet.media && bouquet.media.length > 0 && (
+                      <tr className="bg-white/50">
                       <td colSpan={5} className="px-6 py-3">
                         <div className="flex items-center space-x-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent">
                           {bouquet.media.map(mediaItem => (
@@ -506,12 +507,23 @@ export default function ClientBouquetsAdminPage({ locale }: { locale: string }) 
                                 sizes="6rem"
                                 className="object-cover"
                               />
+                                {mediaItem.media_type === 'video' && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="none">
+                                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                  </div>
+                                )}
+                                {mediaItem.is_thumbnail && (
+                                  <div className="absolute top-1 right-1 bg-pink-600 rounded-full w-4 h-4"></div>
+                                )}
                             </div>
                           ))}
                         </div>
                       </td>
                     </tr>
-                  )
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
