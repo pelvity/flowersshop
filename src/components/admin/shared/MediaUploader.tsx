@@ -221,8 +221,9 @@ const MediaItem = ({ item, index, isThumbnail, moveItem, onDelete, onSetThumbnai
   );
 };
 
+// Update the MediaUploaderProps interface to include 'categories' as a valid entityType
 type MediaUploaderProps = {
-  entityType: 'bouquets' | 'flowers';
+  entityType: 'bouquets' | 'flowers' | 'categories';
   entityId: string;
   media: MediaItem[];
   onMediaChange: (media: MediaItem[]) => void;
@@ -293,7 +294,10 @@ export default function MediaUploader({
           ));
         
         // Create the entity ID field key based on entityType
-        const entityIdField = `${entityType.slice(0, -1)}_id`; // 'bouquets' -> 'bouquet_id', 'flowers' -> 'flower_id'
+        // 'bouquets' -> 'bouquet_id', 'flowers' -> 'flower_id', 'categories' -> 'category_id'
+        const entityIdField = entityType === 'categories' 
+          ? 'category_id' 
+          : `${entityType.slice(0, -1)}_id`;
         
         // Add to local state for immediate preview
         const tempMedia: MediaItem = {
@@ -342,11 +346,20 @@ export default function MediaUploader({
               is_thumbnail: shouldBeThumbnail
             };
             
-            // Add the entity ID field
+            // Add the entity ID field using the dynamic key
             apiPayload[entityIdField] = entityId;
 
+            console.log(`Sending media payload for ${entityType}:`, apiPayload);
+
             // After successful upload, save to database via our server API
-            const response = await fetch(`/api/admin/${entityType}/media`, {
+            // Use the specific endpoint for categories, but the generic media endpoint for bouquets and flowers
+            const endpoint = entityType === 'categories' 
+              ? `/api/admin/${entityType}/media` 
+              : '/api/admin/media';
+            
+            console.log(`Using API endpoint for ${entityType}: ${endpoint}`);
+            
+            const response = await fetch(endpoint, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -357,10 +370,11 @@ export default function MediaUploader({
             if (!response.ok) {
               const errorData = await response.json();
               console.error(`Error saving ${entityType} media to database:`, errorData);
-              throw new Error(`Failed to save ${entityType} media to database`);
+              throw new Error(`Failed to save ${entityType} media to database: ${JSON.stringify(errorData)}`);
             }
 
             const dbMedia = await response.json();
+            console.log(`Successfully saved ${entityType} media:`, dbMedia);
 
             return { 
               success: true, 
@@ -458,7 +472,14 @@ export default function MediaUploader({
       // Delete from database if it's a real DB entry (not a temp ID)
       if (mediaId && !mediaId.startsWith('temp-') && !mediaId.startsWith('new-')) {
         // Delete using our API endpoint
-        const response = await fetch(`/api/admin/${entityType}/media?id=${mediaId}`, {
+        // Use the specific endpoint for categories, but the generic media endpoint for bouquets and flowers
+        const endpoint = entityType === 'categories' 
+          ? `/api/admin/${entityType}/media?id=${mediaId}` 
+          : `/api/admin/media?id=${mediaId}`;
+        
+        console.log(`Deleting ${entityType} media with ID ${mediaId} using endpoint: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
           method: 'DELETE',
         });
 
@@ -494,7 +515,14 @@ export default function MediaUploader({
         // Also delete from R2 storage using worker if we have a file path
         if (mediaToDelete?.file_path) {
           try {
-            const deleteResult = await deleteFromWorker(mediaToDelete.file_path);
+            // Fix: Ensure file_path doesn't have double slashes when passed to deleteFromWorker
+            // The logs show a double slash in the URL: '//' which causes the 404
+            const cleanFilePath = mediaToDelete.file_path.startsWith('/') 
+              ? mediaToDelete.file_path.substring(1) 
+              : mediaToDelete.file_path;
+              
+            console.log(`Attempting to delete file from storage: ${cleanFilePath}`);
+            const deleteResult = await deleteFromWorker(cleanFilePath);
 
             if (!deleteResult.success) {
               console.warn(`Failed to delete file from storage:`, deleteResult.error);
@@ -525,6 +553,7 @@ export default function MediaUploader({
     }
 
     // Otherwise handle setting thumbnail internally
+    console.log(`Setting media ID ${mediaId} as thumbnail for ${entityType}`);
     const updatedMedia = media.map(item => ({
       ...item,
       is_thumbnail: item.id === mediaId
@@ -533,7 +562,9 @@ export default function MediaUploader({
     // Call onThumbnailChange if provided
     const thumbnailMedia = updatedMedia.find(item => item.is_thumbnail);
     if (thumbnailMedia && onThumbnailChange) {
-      onThumbnailChange(thumbnailMedia.file_url || thumbnailMedia.url || '', thumbnailMedia.file_path);
+      const thumbnailUrl = thumbnailMedia.file_url || thumbnailMedia.url || '';
+      console.log(`Setting thumbnail URL for ${entityType}: ${thumbnailUrl}`);
+      onThumbnailChange(thumbnailUrl, thumbnailMedia.file_path);
     }
     
     onMediaChange(updatedMedia);
@@ -557,32 +588,25 @@ export default function MediaUploader({
   };
 
   // Entity-specific title
-  const entityTitle = entityType === 'bouquets' ? t('media.bouquetMedia') : t('media.flowerMedia');
+  const getEntityTitle = () => {
+    switch(entityType) {
+      case 'bouquets':
+        return t('media.bouquetMedia');
+      case 'flowers':
+        return t('media.flowerMedia');
+      case 'categories':
+        return t('media.categoryMedia');
+      default:
+        return t('media.title');
+    }
+  };
+  
+  const entityTitle = getEntityTitle();
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium text-gray-900">{entityTitle}</h3>
-        <div>
-          <input
-            type="file"
-            multiple
-            accept="image/*, video/*"
-            onChange={handleFileChange}
-            className="hidden"
-            ref={fileInputRef}
-            disabled={uploading}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {t('media.uploadButton')}
-          </button>
-        </div>
       </div>
       
       {/* Simplified instructions */}
@@ -636,20 +660,34 @@ export default function MediaUploader({
               <div className="text-center">
                 <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-1 text-sm text-gray-500">{t('media.noMedia')}</p>
-                <p className="mt-1 text-xs text-gray-400 mb-4">{t('media.uploadPrompt')}</p>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700"
-                >
-                  <Upload className="mr-1 h-4 w-4" />
-                  {t('media.uploadButton')}
-                </button>
+                <p className="mt-1 text-xs text-gray-400">{t('media.uploadPrompt')}</p>
               </div>
             </div>
           )}
         </div>
       </DndProvider>
+      
+      {/* Upload button at the bottom */}
+      <div className="mt-6 flex justify-center">
+        <input
+          type="file"
+          multiple
+          accept="image/*, video/*"
+          onChange={handleFileChange}
+          className="hidden"
+          ref={fileInputRef}
+          disabled={uploading}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          {t('media.uploadButton')}
+        </button>
+      </div>
     </div>
   );
 } 

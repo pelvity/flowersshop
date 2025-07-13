@@ -162,11 +162,17 @@ export function BouquetMediaGallery({
   if (!media || media.length === 0) {
     return (
       <div 
-        className={`relative w-full ${aspectRatio} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`} 
+        className={`relative w-full ${aspectRatio} overflow-hidden group cursor-pointer bg-gray-100 flex items-center justify-center`}
         onClick={onImageClick}
       >
-        <div className="w-full h-full transition-transform duration-300 group-hover:scale-105">
-           {/* No image component here, just a placeholder background */}
+        <div className="w-full h-full transition-transform duration-300 group-hover:scale-105 flex items-center justify-center">
+          <Image 
+            src="/placeholder.svg"
+            alt="Placeholder image"
+            width={80}
+            height={80}
+            className="text-gray-500 opacity-50"
+          />
         </div>
       </div>
     );
