@@ -10,6 +10,8 @@ import {
   FlowerQuantity
 } from './types';
 import { categories, tags, products, flowers } from './data';
+import { FlowerMediaRepository } from './flower-media-repository';
+import { CategoryMediaRepository } from './category-media-repository';
 
 // Implementation of category repository
 class CategoryRepositoryImpl implements CategoryRepository {
@@ -115,6 +117,12 @@ export const getRepositories = () => {
     products: new ProductRepositoryImpl(),
     flowers: new FlowerRepositoryImpl(),
   };
+};
+
+// Export repositories
+export {
+  FlowerMediaRepository,
+  CategoryMediaRepository
 };
 
 // Default export

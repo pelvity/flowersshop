@@ -444,7 +444,7 @@ export default function StoreSettingsPage() {
             <h2 className="text-xl font-medium text-gray-800 mb-4">General Information</h2>
             <div className="bg-white rounded-md shadow-sm border border-gray-200">
               {generalSettings
-                .filter(setting => setting.key !== 'store_address') // Filter out address setting as we handle it separately
+                .filter(setting => setting.key !== 'store_address' && setting.key !== 'delivery_price') // Filter out address and delivery price settings as we handle them separately
                 .map((setting) => (
                 <div 
                   key={setting.id} 
@@ -467,6 +467,42 @@ export default function StoreSettingsPage() {
                   />
                 </div>
               ))}
+              
+              {/* Delivery Price Field */}
+              {generalSettings.find(s => s.key === 'delivery_price') && (
+                <div className="p-4 border-b border-gray-100">
+                  <div className="mb-1">
+                    {(() => {
+                      const setting = generalSettings.find(s => s.key === 'delivery_price');
+                      return (
+                        <>
+                          <label htmlFor={`setting-${setting?.id}`} className="block text-sm font-medium text-gray-700">
+                            {t('settings.deliveryPrice')}
+                          </label>
+                          {setting?.description && (
+                            <p className="text-xs text-gray-500 mb-1">{setting.description}</p>
+                          )}
+                          <div className="mt-1 relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 sm:text-sm">$</span>
+                            </div>
+                            <input
+                              id={`setting-${setting?.id}`}
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={setting?.value || '0'}
+                              onChange={(e) => handleChange(setting?.id || '', e.target.value)}
+                              className="p-2 pl-7 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 block w-full"
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
               
               {/* Store Address Section */}
               <div className="p-4 border-b border-gray-100">
