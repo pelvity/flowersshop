@@ -63,7 +63,9 @@
     "increaseQuantity": "Zwiększ ilość",
     "loading": "Ładowanie...",
     "error": "Błąd",
-    "note": "Uwaga"
+    "note": "Uwaga",
+    "back": "Powrót",
+    "optional": "opcjonalnie"
   },
   "cart": {
     "cart": "Koszyk",
@@ -118,6 +120,7 @@
   "catalog": {
     "ourCollection": "Nasza kolekcja",
     "browseSelection": "Przeglądaj naszą piękną kolekcję kwiatów i bukietów",
+    "backToCategories": "Powrót do kategorii",
     "searchPlaceholder": "Szukaj kwiatów...",
     "categories": "Kategorie",
     "allCategories": "Wszystkie kategorie",
@@ -128,7 +131,15 @@
     "outOfStock": "Niedostępny",
     "inStock": "Dostępny",
     "customize": "Dostosuj",
-    "customizeThis": "Dostosuj ten"
+    "customizeThis": "Dostosuj ten",
+    "added": "Dodano!",
+    "categoryView": {
+      "selectCategory": "Wybierz kategorię",
+      "clickToView": "Kliknij, aby zobaczyć bukiety",
+      "backToCategories": "Powrót do kategorii",
+      "showMore": "Pokaż więcej",
+      "showLess": "Pokaż mniej"
+    }
   },
   "customBouquet": {
     "title": "Własny bukiet",
@@ -192,6 +203,39 @@
       "logout": "Wyloguj",
       "flowershop": "Panel Kwiaciarni",
       "translations": "Tłumaczenia"
+    },
+    "categories": {
+      "title": "Kategorie",
+      "name": "Nazwa kategorii",
+      "description": "Opis kategorii",
+      "descriptionPlaceholder": "Wprowadź opis kategorii...",
+      "createNew": "Utwórz nową kategorię",
+      "edit": "Edytuj kategorię",
+      "delete": "Usuń kategorię",
+      "confirmDelete": "Czy na pewno chcesz usunąć tę kategorię?",
+      "createSuccess": "Kategoria została utworzona pomyślnie",
+      "updateSuccess": "Kategoria została zaktualizowana pomyślnie",
+      "deleteSuccess": "Kategoria została usunięta pomyślnie",
+      "errorCreating": "Błąd podczas tworzenia kategorii",
+      "errorUpdating": "Błąd podczas aktualizacji kategorii",
+      "errorDeleting": "Błąd podczas usuwania kategorii",
+      "errorFetching": "Błąd podczas pobierania kategorii",
+      "errorSaving": "Błąd podczas zapisywania kategorii",
+      "notFound": "Nie znaleziono kategorii",
+      "createDescription": "Wypełnij szczegóły, aby utworzyć nową kategorię",
+      "editDescription": "Zaktualizuj szczegóły kategorii",
+      "create": "Utwórz kategorię",
+      "update": "Aktualizuj kategorię",
+      "categoryCreated": "Utworzono kategorię",
+      "addMediaPrompt": "Teraz możesz dodać zdjęcia do tej kategorii. Po zakończeniu kliknij przycisk poniżej.",
+      "finishAndReturn": "Zakończ i wróć do listy",
+      "namePlaceholder": "Wprowadź nazwę kategorii",
+      "loadError": "Nie udało się załadować kategorii. Spróbuj ponownie.",
+      "createError": "Nie udało się utworzyć kategorii.",
+      "updateError": "Nie udało się zaktualizować kategorii.",
+      "deleteError": "Nie udało się usunąć kategorii.",
+      "collapse": "Zwiń",
+      "expand": "Rozwiń"
     },
     "tags": {
       "title": "Tagi",
@@ -294,7 +338,10 @@
       "noMedia": "Brak mediów dodanych do tego bukietu",
       "uploadPrompt": "Prześlij zdjęcia lub filmy, aby zaprezentować swój bukiet",
       "onlyPhotoThumbnail": "Tylko zdjęcia mogą być ustawione jako miniatury",
-      "setAsThumbnail": "Ustaw jako miniaturę"
+      "setAsThumbnail": "Ustaw jako miniaturę",
+      "bouquetMedia": "Media bukietu",
+      "flowerMedia": "Media kwiatka",
+      "categoryMedia": "Media kategorii"
     },
     "settings": {
       "title": "Ustawienia sklepu",
@@ -307,6 +354,7 @@
       "store_phone": "Telefon sklepu",
       "store_email": "Email sklepu",
       "store_telegram_username": "Nazwa użytkownika Telegram",
+      "deliveryPrice": "Cena dostawy",
       "addressInvalid": "Adres musi być prawidłowy, aby mógł być wyświetlony na mapie",
       "addressFormat": "Format: Ulica, Miasto, Kod pocztowy, Kraj",
       "addressRequired": "Adres sklepu jest wymagany",
