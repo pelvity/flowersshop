@@ -1,16 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { Category } from '@/lib/supabase';
+import { useTranslations } from 'next-intl';
 
 interface CategoryFormProps {
   category?: Category;
   isEdit?: boolean;
+  onSubmit?: (formData: { name: string; description: string }) => Promise<void>;
 }
 
-export default function CategoryForm({ category, isEdit = false }: CategoryFormProps) {
+export default function CategoryForm({ category, isEdit = false, onSubmit }: CategoryFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname.split('/')[1]; // Extract locale from URL path
+  const t = useTranslations('admin');
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -18,6 +25,16 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
     name: category?.name || '',
     description: category?.description || '',
   });
+
+  // Update form data when category prop changes
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        name: category.name,
+        description: category.description || '',
+      });
+    }
+  }, [category]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -30,21 +47,46 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
     setError(null);
 
     try {
-      // For simplicity in this demo, we'll just alert and redirect
-      // In a real implementation, you would call an API endpoint to save the data
-      
-      if (isEdit) {
-        alert(`Category "${formData.name}" updated successfully! (This is a demo, no actual API call is made)`);
-      } else {
-        alert(`Category "${formData.name}" created successfully! (This is a demo, no actual API call is made)`);
+      // If onSubmit prop is provided, use it
+      if (onSubmit) {
+        await onSubmit(formData);
+        return;
       }
       
-      // Navigate back to the categories list
-      router.push('/admin/categories');
+      // Otherwise handle the submission internally
+      const supabase = createClient();
+      
+      if (isEdit && category) {
+        // Update existing category
+        const { error: updateError } = await supabase
+          .from('categories')
+          .update({
+            name: formData.name,
+            description: formData.description,
+          })
+          .eq('id', category.id);
+        
+        if (updateError) throw updateError;
+      } else {
+        // Create new category
+        const { error: createError } = await supabase
+          .from('categories')
+          .insert([
+            {
+              name: formData.name,
+              description: formData.description,
+            },
+          ]);
+        
+        if (createError) throw createError;
+      }
+      
+      // Navigate back to the categories list with locale
+      router.push(`/${locale}/admin/categories`);
       router.refresh();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving category:', err);
-      setError('Failed to save category. Please try again.');
+      setError(err.message || t('categories.errorSaving'));
     } finally {
       setIsSubmitting(false);
     }
@@ -56,12 +98,12 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
         <div className="md:col-span-1">
           <div className="px-4 sm:px-0">
             <h3 className="text-lg font-medium leading-6 text-gray-900">
-              {isEdit ? 'Edit Category' : 'New Category'}
+              {isEdit ? t('categories.edit') : t('categories.createNew')}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               {isEdit 
-                ? 'Update the details of this category.' 
-                : 'Create a new category for bouquets.'}
+                ? t('categories.editDescription') 
+                : t('categories.createDescription')}
             </p>
           </div>
         </div>
@@ -73,7 +115,7 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
                   <div className="rounded-md bg-red-50 p-4">
                     <div className="flex">
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">Error</h3>
+                        <h3 className="text-sm font-medium text-red-800">{t('common.error')}</h3>
                         <div className="mt-2 text-sm text-red-700">
                           <p>{error}</p>
                         </div>
@@ -84,7 +126,7 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
                 
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Name *
+                    {t('categories.name')} *
                   </label>
                   <input
                     type="text"
@@ -100,14 +142,14 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
                 
                 <div>
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description
+                    {t('categories.description')}
                   </label>
                   <textarea
                     id="description"
                     name="description"
                     rows={3}
                     className="mt-1 focus:ring-pink-500 focus:border-pink-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Category description"
+                    placeholder={t('categories.descriptionPlaceholder')}
                     value={formData.description || ''}
                     onChange={handleChange}
                     disabled={isSubmitting}
@@ -119,17 +161,21 @@ export default function CategoryForm({ category, isEdit = false }: CategoryFormP
                 <button
                   type="button"
                   className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 mr-3 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
-                  onClick={() => router.back()}
+                  onClick={() => router.push(`/${locale}/admin/categories`)}
                   disabled={isSubmitting}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'Saving...' : isEdit ? 'Update Category' : 'Create Category'}
+                  {isSubmitting 
+                    ? t('common.saving') 
+                    : isEdit 
+                      ? t('categories.update') 
+                      : t('categories.create')}
                 </button>
               </div>
             </div>

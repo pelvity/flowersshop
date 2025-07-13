@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
-import CatalogClient from "@/components/client/catalog-client";
-import { Bouquet } from "@/lib/supabase";
 import { fetchBouquets, fetchCategories, fetchTags, fetchFlowers } from "@/lib/api-client";
+import CatalogClient from "@/components/client/catalog-client";
 
 export default async function CatalogPage() {
   console.log(`[CATALOG] Fetching data for catalog page`);
@@ -26,6 +25,7 @@ export default async function CatalogPage() {
       initialCategories={categories} 
       initialTags={tags}
       initialFlowers={flowers}
+      showCategoriesAsCards={true} // New prop to display categories as cards
     />
   );
 } 

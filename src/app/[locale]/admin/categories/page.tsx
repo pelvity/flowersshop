@@ -1,13 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Grid, Plus, Edit, Trash2, Search, Loader2 } from 'lucide-react';
+import { Grid, Plus, Edit, Trash2, Search, Loader2, Image as ImageIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import MediaUploader, { MediaItem } from '@/components/admin/shared/MediaUploader';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/supabase';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import React from 'react';
+import Image from 'next/image';
+import { getFileUrl } from '@/utils/cloudflare-worker';
+import { Lightbox, Category as LightboxCategory } from '@/components/categories/category-media-gallery';
 
 interface Category {
   id: string;
   name: string;
   description?: string;
+  media?: MediaItem[];
+  thumbnail_url?: string;
 }
 
 // API functions
@@ -52,8 +63,26 @@ async function deleteCategory(id: string): Promise<void> {
   }
 }
 
+async function getCategoryMedia(categoryId: string): Promise<MediaItem[]> {
+  const response = await fetch(`/api/admin/categories/media?categoryId=${categoryId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch category media');
+  }
+  return response.json();
+}
+
+// Helper function to get a valid image URL
+const getValidImageUrl = (mediaItem: MediaItem | null) => {
+  if (!mediaItem) return "/placeholder.jpg";
+  if (mediaItem.file_url) return mediaItem.file_url;
+  if (mediaItem.file_path) return getFileUrl(mediaItem.file_path);
+  return "/placeholder.jpg";
+};
+
 export default function CategoriesPage() {
   const t = useTranslations('admin');
+  const pathname = usePathname();
+  const locale = pathname.split('/')[1]; // Extract locale from URL path
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,13 +90,44 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<LightboxCategory | null>(null);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setIsLoading(true);
         const categoriesData = await getCategories();
-        setCategories(categoriesData);
+        
+        // Initialize each category with empty media array
+        const categoriesWithMedia = categoriesData.map(category => ({
+          ...category,
+          media: [] as MediaItem[]
+        }));
+        
+        setCategories(categoriesWithMedia);
+        
+        // Load media for all categories at once
+        for (const category of categoriesWithMedia) {
+          try {
+            const mediaItems = await getCategoryMedia(category.id);
+            setCategories(prevCategories => 
+              prevCategories.map(c => 
+                c.id === category.id 
+                  ? { 
+                      ...c, 
+                      media: mediaItems,
+                      thumbnail_url: mediaItems.find(m => m.is_thumbnail)?.file_url || undefined
+                    }
+                  : c
+              )
+            );
+          } catch (err) {
+            console.error(`Failed to load media for category ${category.id}:`, err);
+          }
+        }
       } catch (err) {
         setError(t('categories.loadError'));
       } finally {
@@ -77,13 +137,15 @@ export default function CategoriesPage() {
     fetchCategories();
   }, [t]);
 
+  // Remove the useEffect for loading media when a category is expanded since we're loading all media upfront
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
 
     try {
       const newCategory = await createCategory(newCategoryName.trim(), newCategoryDescription.trim() || undefined);
-      setCategories([...categories, newCategory]);
+      setCategories([...categories, { ...newCategory, media: [] }]);
       setNewCategoryName('');
       setNewCategoryDescription('');
     } catch (err) {
@@ -96,7 +158,11 @@ export default function CategoriesPage() {
 
     try {
       const updatedCategory = await updateCategory(category.id, category.name.trim(), category.description);
-      setCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+      setCategories(categories.map(c => 
+        c.id === updatedCategory.id 
+          ? { ...updatedCategory, media: c.media, thumbnail_url: c.thumbnail_url } 
+          : c
+      ));
       setEditingCategory(null);
     } catch (err) {
       setError(t('categories.updateError'));
@@ -108,10 +174,41 @@ export default function CategoriesPage() {
       try {
         await deleteCategory(id);
         setCategories(categories.filter(c => c.id !== id));
+        if (expandedCategory === id) {
+          setExpandedCategory(null);
+        }
       } catch (err) {
         setError(t('categories.deleteError'));
       }
     }
+  };
+  
+  const handleMediaChange = (categoryId: string, media: MediaItem[]) => {
+    setCategories(prevCategories => 
+      prevCategories.map(category => 
+        category.id === categoryId 
+          ? { 
+              ...category, 
+              media,
+              thumbnail_url: media.find(m => m.is_thumbnail)?.file_url || category.thumbnail_url
+            }
+          : category
+      )
+    );
+  };
+
+  const handleThumbnailChange = (categoryId: string, thumbnailUrl: string) => {
+    setCategories(prevCategories => 
+      prevCategories.map(category => 
+        category.id === categoryId 
+          ? { ...category, thumbnail_url: thumbnailUrl }
+          : category
+      )
+    );
+  };
+
+  const handleToggleExpand = (categoryId: string) => {
+    setExpandedCategory(expandedCategory === categoryId ? null : categoryId);
   };
   
   const filteredCategories = categories.filter(category =>
@@ -119,54 +216,42 @@ export default function CategoriesPage() {
     (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Handle opening lightbox
+  const handleOpenLightbox = (e: React.MouseEvent, category: Category) => {
+    e.stopPropagation();
+    setSelectedCategory({
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      media: category.media,
+      thumbnail_url: category.thumbnail_url
+    });
+    setShowLightbox(true);
+  };
+
   return (
     <div>
+      {showLightbox && selectedCategory && (
+        <Lightbox 
+          category={selectedCategory} 
+          onClose={() => setShowLightbox(false)} 
+        />
+      )}
+      
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">{t('categories.manageCategories')}</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">{t('categories.title')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {t('categories.description')}
+            {t('categories.pageDescription')}
           </p>
         </div>
-      </div>
-
-      <div className="bg-white p-4 shadow rounded-lg mb-6">
-        <form onSubmit={handleCreate} className="space-y-4">
-          <div>
-            <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('categories.name')}
-            </label>
-            <input
-              id="categoryName"
-              type="text"
-              value={newCategoryName}
-              onChange={e => setNewCategoryName(e.target.value)}
-              placeholder={t('categories.namePlaceholder')}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="categoryDescription" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('categories.description')} ({t('common.optional')})
-            </label>
-            <textarea
-              id="categoryDescription"
-              value={newCategoryDescription}
-              onChange={e => setNewCategoryDescription(e.target.value)}
-              placeholder={t('categories.descriptionPlaceholder')}
-              className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-              rows={3}
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
-          >
-            <Plus className="h-5 w-5 mr-1" />
-            {t('categories.createCategory')}
-          </button>
-        </form>
+        <Link 
+          href={`/${locale}/admin/categories/create`}
+          className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center"
+        >
+          <Plus className="h-5 w-5 mr-1" />
+          {t('categories.createNew')}
+        </Link>
       </div>
 
       <div className="bg-white p-4 shadow rounded-lg">
@@ -190,66 +275,124 @@ export default function CategoriesPage() {
         ) : error ? (
           <div className="text-red-600 bg-red-50 p-4 rounded-md">{error}</div>
         ) : (
-          <ul className="divide-y divide-gray-200">
+          <div className="overflow-hidden border border-gray-200 sm:rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('categories.name')}
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('categories.description')}
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">{t('common.actions')}</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
             {filteredCategories.map(category => (
-              <li key={category.id} className="py-4">
-                {editingCategory?.id === category.id ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={editingCategory.name}
-                      onChange={e => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                      className="border border-gray-300 rounded-md py-1 px-2 w-full"
-                      autoFocus
-                    />
-                    <textarea
-                      value={editingCategory.description || ''}
-                      onChange={e => setEditingCategory({ ...editingCategory, description: e.target.value })}
-                      className="border border-gray-300 rounded-md py-1 px-2 w-full"
-                      rows={2}
-                    />
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleUpdate(editingCategory)}
-                        className="bg-pink-600 text-white px-3 py-1 rounded-md text-sm"
-                      >
-                        {t('common.save')}
-                      </button>
-                      <button 
-                        onClick={() => setEditingCategory(null)}
-                        className="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm"
-                      >
-                        {t('common.cancel')}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center font-medium">
-                        <Grid className="h-4 w-4 mr-2 text-gray-500" />
-                        {category.name}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setEditingCategory(category)} className="text-gray-500 hover:text-pink-600">
-                          <Edit className="h-5 w-5" />
-                        </button>
-                        <button onClick={() => handleDelete(category.id)} className="text-gray-500 hover:text-red-600">
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                  <React.Fragment key={category.id}>
+                    <tr className="hover:bg-pink-50/50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                      {category.thumbnail_url && (
+                            <div className="h-10 w-10 rounded-md overflow-hidden border border-gray-200 flex-shrink-0 mr-3">
+                          <img 
+                            src={category.thumbnail_url} 
+                            alt={category.name}
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      )}
+                          <div className="font-medium text-gray-900">{category.name}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-gray-500 truncate max-w-xs">
+                          {category.description || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end items-center space-x-2">
+                            <Link 
+                              href={`/${locale}/admin/categories/${category.id}/edit`}
+                            className="text-indigo-600 hover:text-indigo-900 p-1"
+                              title={t('common.edit')}
+                            >
+                              <Edit className="h-5 w-5" />
+                            </Link>
+                            <button 
+                              onClick={() => handleDelete(category.id)} 
+                            className="text-red-600 hover:text-red-900 p-1"
+                              title={t('common.delete')}
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Display media row */}
+                    {category.media && category.media.length > 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-3 bg-gray-50/50">
+                          <div className="flex items-center space-x-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-pink-200 scrollbar-track-transparent">
+                            {category.media.map(mediaItem => (
+                              <div 
+                                key={mediaItem.id} 
+                                className="relative h-20 w-20 rounded-md overflow-hidden shadow flex-shrink-0 border border-pink-100 cursor-pointer"
+                                onClick={(e) => handleOpenLightbox(e, category)}
+                              >
+                                <Image
+                                  src={getValidImageUrl(mediaItem)}
+                                  alt={mediaItem.file_name || category.name}
+                                  fill
+                                  sizes="5rem"
+                                  className="object-cover"
+                                />
+                                {mediaItem.media_type === 'video' && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white" stroke="none">
+                                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                        </div>
+                                )}
+                                {mediaItem.is_thumbnail && (
+                                  <div className="absolute top-1 right-1 bg-pink-600 rounded-full w-4 h-4"></div>
+                        )}
                       </div>
+                            ))}
                     </div>
-                    {category.description && (
-                      <p className="text-gray-600 mt-1 ml-6">{category.description}</p>
+                        </td>
+                      </tr>
                     )}
-                  </div>
+                    
+                    {/* Media Uploader (expanded row) */}
+                    {expandedCategory === category.id && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-4 bg-gray-50">
+                        <MediaUploader
+                          entityType="categories"
+                          entityId={category.id}
+                          media={category.media || []}
+                          onMediaChange={(media) => handleMediaChange(category.id, media)}
+                          onThumbnailChange={(thumbnailUrl) => handleThumbnailChange(category.id, thumbnailUrl)}
+                        />
+                        </td>
+                      </tr>
                 )}
-              </li>
+                  </React.Fragment>
             ))}
+                
             {filteredCategories.length === 0 && (
-              <li className="py-4 text-center text-gray-500">{t('common.noResults')}</li>
+                  <tr>
+                    <td colSpan={3} className="px-6 py-4 text-center text-gray-500">{t('common.noResults')}</td>
+                  </tr>
             )}
-          </ul>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

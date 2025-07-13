@@ -7,7 +7,8 @@ export async function GET() {
     // Use server-side admin client with service role
     const supabase = await createAdminClient();
     
-    const { data, error } = await supabase
+    // First fetch categories
+    const { data: categories, error } = await supabase
       .from('categories')
       .select('*')
       .order('name');
@@ -17,7 +18,41 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
     
-    return NextResponse.json(data);
+    // If we have categories, fetch media for each one
+    if (categories && categories.length > 0) {
+      // Fetch all category media in one query
+      const { data: allCategoryMedia, error: mediaError } = await supabase
+        .from('category_media')
+        .select('*')
+        .in('category_id', categories.map(cat => cat.id))
+        .order('display_order');
+      
+      if (mediaError) {
+        console.error('Failed to fetch category media:', mediaError);
+        // Continue without media rather than failing completely
+      } else if (allCategoryMedia) {
+        // Group media by category_id
+        const mediaByCategory = allCategoryMedia.reduce<Record<string, any[]>>((acc, media) => {
+          if (!acc[media.category_id]) {
+            acc[media.category_id] = [];
+          }
+          acc[media.category_id].push(media);
+          return acc;
+        }, {});
+        
+        // Add media to each category
+        categories.forEach(category => {
+          category.media = mediaByCategory[category.id] || [];
+          // Find thumbnail
+          const thumbnail = category.media.find((m: any) => m.is_thumbnail);
+          if (thumbnail) {
+            category.thumbnail_url = thumbnail.file_url || '';
+          }
+        });
+      }
+    }
+    
+    return NextResponse.json(categories);
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });

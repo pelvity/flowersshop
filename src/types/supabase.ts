@@ -87,6 +87,50 @@ export interface Database {
           updated_at?: string;
         };
       };
+      category_media: {
+        Row: {
+          id: string;
+          category_id: string;
+          media_type: string;
+          file_path: string;
+          file_url: string | null;
+          file_name: string;
+          file_size: number;
+          content_type: string;
+          display_order: number;
+          is_thumbnail: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          category_id: string;
+          media_type: string;
+          file_path: string;
+          file_url?: string | null;
+          file_name: string;
+          file_size: number;
+          content_type: string;
+          display_order?: number;
+          is_thumbnail?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          category_id?: string;
+          media_type?: string;
+          file_path?: string;
+          file_url?: string | null;
+          file_name?: string;
+          file_size?: number;
+          content_type?: string;
+          display_order?: number;
+          is_thumbnail?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       flowers: {
         Row: {
           id: string;
