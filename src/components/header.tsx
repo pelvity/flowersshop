@@ -35,7 +35,7 @@ export default function Header() {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link href={getLocalePath("/")} className="flex items-center">
-                <h1 className={`text-5xl text-amber-600 ${dancingScript.className} static-shine`}>{t('common.brandName')}</h1>
+                <h1 className={`text-5xl ${dancingScript.className} shine`}>{t('common.brandName')}</h1>
               </Link>
             </div>
           </div>
