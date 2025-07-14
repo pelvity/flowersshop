@@ -285,7 +285,13 @@ export default function StoreSettingsPage() {
   // Get friendly name from key
   const getSocialName = (key: string) => {
     const name = key.replace('_url', '');
-    return name.charAt(0).toUpperCase() + name.slice(1);
+    // Try to get from translations first
+    try {
+      return t(`settings.${name}`);
+    } catch (e) {
+      // Fallback to capitalized name
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
   };
   
   const saveSettings = async () => {
@@ -392,24 +398,24 @@ export default function StoreSettingsPage() {
   
   // If still checking auth or not authenticated, show loading or access denied
   if (isAuthLoading) {
-    return <div className="p-8">Loading...</div>;
+    return <div className="p-8">{t('common.loading')}</div>;
   }
   
   if (!isAuthenticated) {
-    return <div className="p-8">Access denied. Admin privileges required.</div>;
+    return <div className="p-8">{t('settings.accessDenied')}</div>;
   }
   
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Store Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t('settings.title')}</h1>
         <button
           onClick={saveSettings}
           disabled={isLoading || isSaving}
           className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-md flex items-center gap-2 disabled:opacity-50"
         >
           <Save size={18} />
-          {isSaving ? 'Saving...' : 'Save Changes'}
+          {isSaving ? t('settings.saving') : t('settings.saveChanges')}
         </button>
       </div>
       
@@ -435,13 +441,13 @@ export default function StoreSettingsPage() {
       {isLoading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-400 border-t-transparent"></div>
-          <p className="mt-2 text-gray-500">Loading settings...</p>
+          <p className="mt-2 text-gray-500">{t('settings.loadingSettings')}</p>
         </div>
       ) : (
         <div className="space-y-8">
           {/* General Settings */}
           <div>
-            <h2 className="text-xl font-medium text-gray-800 mb-4">General Information</h2>
+            <h2 className="text-xl font-medium text-gray-800 mb-4">{t('settings.generalInformation')}</h2>
             <div className="bg-white rounded-md shadow-sm border border-gray-200">
               {generalSettings
                 .filter(setting => setting.key !== 'store_address' && setting.key !== 'delivery_price') // Filter out address and delivery price settings as we handle them separately
@@ -509,9 +515,9 @@ export default function StoreSettingsPage() {
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
                     <MapPin size={18} className="text-pink-600" />
-                    <h3 className="text-lg font-medium text-gray-800">Store Address</h3>
+                    <h3 className="text-lg font-medium text-gray-800">{t('settings.storeAddress')}</h3>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Enter the store's physical address for the contact page map</p>
+                  <p className="text-xs text-gray-500 mt-1">{t('settings.addressDescription')}</p>
                 </div>
                 
                 <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
@@ -537,7 +543,7 @@ export default function StoreSettingsPage() {
 
           {/* Social Media Settings */}
           <div>
-            <h2 className="text-xl font-medium text-gray-800 mb-4">Social Media</h2>
+            <h2 className="text-xl font-medium text-gray-800 mb-4">{t('settings.socialMedia')}</h2>
             <div className="bg-white rounded-md shadow-sm border border-gray-200">
               {socialSettings.map((setting) => (
                 <div 
@@ -561,7 +567,7 @@ export default function StoreSettingsPage() {
                       type="url"
                       value={setting.value || ''}
                       onChange={(e) => handleChange(setting.id, e.target.value)}
-                      placeholder={`https://www.${setting.key.replace('_url', '')}.com/your-profile`}
+                      placeholder={t('settings.socialPlaceholder').replace('{0}', setting.key.replace('_url', ''))}
                       className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500"
                     />
                   </div>
