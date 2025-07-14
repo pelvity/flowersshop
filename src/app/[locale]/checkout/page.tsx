@@ -54,6 +54,7 @@ export default function CheckoutPage() {
   const [products, setProducts] = useState<Bouquet[]>([]);
   const [calculatedTotalPrice, setCalculatedTotalPrice] = useState(0);
   const [shopOwnerTelegramUsername, setShopOwnerTelegramUsername] = useState('vvrtem');
+  const [deliveryPrice, setDeliveryPrice] = useState(0);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -100,8 +101,8 @@ Zamówienie:
 ${orderItems}
 
 Suma częściowa: ${formatPrice(totalPrice, currentLocale)}
-Dostawa: ${formatPrice(100, currentLocale)}
-Razem: ${formatPrice(totalPrice + 100, currentLocale)}
+Dostawa: ${formatPrice(deliveryPrice, currentLocale)}
+Razem: ${formatPrice(totalPrice + deliveryPrice, currentLocale)}
 
 Data: ${orderDate}
 Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' : 'Płatność kartą'}
@@ -116,6 +117,12 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
       try {
         const telegramUsername = await getStoreSetting('store_telegram_username', 'vvrtem');
         setShopOwnerTelegramUsername(telegramUsername);
+        
+        // Get delivery price setting
+        const deliveryPriceSetting = await getStoreSetting('delivery_price', '0');
+        // Convert to number and handle any parsing errors
+        const parsedDeliveryPrice = parseFloat(deliveryPriceSetting);
+        setDeliveryPrice(isNaN(parsedDeliveryPrice) ? 0 : parsedDeliveryPrice);
       } catch (error) {
         console.error('Error fetching store settings:', error);
       }
@@ -329,8 +336,8 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
           orderId: "EMAIL-" + Date.now(),
           orderDate,
           totalPrice,
-          shippingPrice: 100,
-          orderTotal: totalPrice + 100,
+          shippingPrice: deliveryPrice,
+          orderTotal: totalPrice + deliveryPrice,
           locale: currentLocale
         }),
       });
@@ -435,11 +442,11 @@ Płatność: ${formData.paymentMethod === 'cash' ? 'Płatność przy odbiorze' :
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 mb-2">
                   <p>{t('shipping')}</p>
-                  <p>{formatPrice(100, currentLocale)}</p>
+                  <p>{formatPrice(deliveryPrice, currentLocale)}</p>
                 </div>
                 <div className="flex justify-between text-lg font-bold text-gray-900 mt-4 pt-4 border-t border-pink-100">
                   <p>{t('total')}</p>
-                  <p className="text-amber-600">{formatPrice(totalPrice + 100, currentLocale)}</p>
+                  <p className="text-amber-600">{formatPrice(totalPrice + deliveryPrice, currentLocale)}</p>
                 </div>
               </div>
             </div>
